@@ -1,33 +1,77 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { CreateEventFormData } from '../types/home';
 import '../styles/fonts.css';
 
 export interface CreateEventScreenProps {
+  eventId?: string;
   onBack?: () => void;
   onNavigate?: (route: string) => void;
 }
 
 export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
+  eventId,
   onBack,
   onNavigate,
 }) => {
-  // Estado del formulario
+  const isEditMode = Boolean(eventId);
+
+  // Estado del formulario (inicialmente limpio si es nuevo, o precargado al editar)
   const [formData, setFormData] = useState<CreateEventFormData>({
-    artImage: './assets/images/pantalla_crear_evento.webp',
+    artImage: null,
     name: '',
-    startDate: '2026-09-20',
-    startTime: '21:00',
-    endDate: '2026-09-21',
-    endTime: '04:30',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
     location: '',
     privacy: 'public',
     allowPlusOne: true,
     maxCapacity: 150,
   });
+
+  const [isLoadingEvent, setIsLoadingEvent] = useState(isEditMode);
+
+  // Cargar datos del evento existente desde Firestore cuando se pasa eventId
+  useEffect(() => {
+    if (!eventId) return;
+
+    let isMounted = true;
+    const fetchEventData = async () => {
+      setIsLoadingEvent(true);
+      try {
+        const eventRef = doc(db, 'events', eventId);
+        const snap = await getDoc(eventRef);
+        if (snap.exists() && isMounted) {
+          const d = snap.data();
+          setFormData({
+            artImage: d.imageUrl || d.artImage || null,
+            name: d.title || '',
+            startDate: d.date || '',
+            startTime: d.startTime || '',
+            endDate: d.endDate || d.date || '',
+            endTime: d.endTime || '',
+            location: d.location || '',
+            privacy: (d.type as 'public' | 'private') || 'public',
+            allowPlusOne: d.allowsPlusOne !== undefined ? Boolean(d.allowsPlusOne) : true,
+            maxCapacity: d.guestLimit || d.maxCapacity || 150,
+          });
+        }
+      } catch (err) {
+        console.error('Error al cargar datos del evento para editar:', err);
+      } finally {
+        if (isMounted) setIsLoadingEvent(false);
+      }
+    };
+
+    fetchEventData();
+    return () => {
+      isMounted = false;
+    };
+  }, [eventId]);
 
   // Estado de publicación y modales
   const [isPublished, setIsPublished] = useState(false);
@@ -120,37 +164,59 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     setIsSaving(true);
 
     try {
-      // Microinteracción con confeti de partículas brillantes
-      try {
-        confetti({
-          particleCount: 70,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF'],
+      if (isEditMode && eventId) {
+        // Actualización atómica en Firestore
+        await updateDoc(doc(db, 'events', eventId), {
+          title: eventTitle,
+          type: formData.privacy,
+          date: formData.startDate,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          location: formData.location || 'Por definir',
+          allowsPlusOne: formData.allowPlusOne,
+          guestLimit: Number(formData.maxCapacity),
+          maxCapacity: Number(formData.maxCapacity),
+          imageUrl: formData.artImage || null,
+          artImage: formData.artImage || null,
+          updatedAt: Date.now(),
         });
-      } catch {
-        // Fallback silencioso
+
+        setIsPublished(true);
+        showToast('🟢 EVENTO ACTUALIZADO CORRECTAMENTE');
+      } else {
+        // Microinteracción con confeti de partículas brillantes
+        try {
+          confetti({
+            particleCount: 70,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF'],
+          });
+        } catch {
+          // Fallback silencioso
+        }
+
+        // Inserción directa en Firestore
+        await addDoc(collection(db, 'events'), {
+          title: eventTitle,
+          type: formData.privacy,
+          date: formData.startDate,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          location: formData.location || 'Por definir',
+          allowsPlusOne: formData.allowPlusOne,
+          guestLimit: Number(formData.maxCapacity),
+          maxCapacity: Number(formData.maxCapacity),
+          imageUrl: formData.artImage || null,
+          artImage: formData.artImage || null,
+          hostUserId: auth.currentUser?.uid || 'anon_' + Date.now(),
+          hostName: auth.currentUser?.displayName || 'Anfitrión',
+          createdAt: Date.now(),
+        });
+
+        setIsPublished(true);
+        showToast('¡Evento publicado en vivo con éxito!');
       }
-
-      // Inserción directa en Firestore
-      await addDoc(collection(db, 'events'), {
-        title: eventTitle,
-        type: formData.privacy,
-        date: formData.startDate,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        location: formData.location || 'Por definir',
-        allowsPlusOne: formData.allowPlusOne,
-        maxCapacity: formData.maxCapacity,
-        imageUrl: formData.artImage || null,
-        artImage: formData.artImage || null,
-        hostUserId: auth.currentUser?.uid || 'anon_' + Date.now(),
-        hostName: auth.currentUser?.displayName || 'Anfitrión',
-        createdAt: Date.now(),
-      });
-
-      setIsPublished(true);
-      showToast('¡Evento publicado en vivo con éxito!');
 
       // Redirigir al Home tras guardar exitosamente
       setTimeout(() => {
@@ -159,7 +225,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         } else if (onBack) {
           onBack();
         }
-      }, 1200);
+      }, 1000);
     } catch (err) {
       console.error('Error al guardar evento en Firestore:', err);
       showToast('Error al conectar con Firestore');
@@ -221,7 +287,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             className="flex items-center space-x-1.5 focus:outline-none group px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
           >
             <h1 className="font-display text-white text-xl sm:text-2xl font-black tracking-wider uppercase">
-              CREAR EVENTO
+              {isEditMode ? 'EDITAR EVENTO' : 'CREAR NUEVO EVENTO'}
             </h1>
             <span className="text-neutral-500 group-hover:text-neutral-300 text-xs font-bold leading-none transition-colors">
               ⓘ
@@ -485,7 +551,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                   : 'bg-[#12C061] hover:bg-[#0fa854] text-black active:scale-98'
               }`}
             >
-              {isPublished ? '¡EVENTO PUBLICADO! ✓' : isSaving ? 'PUBLICANDO...' : 'PUBLICAR EVENTO'}
+              {isPublished
+                ? (isEditMode ? '¡CAMBIOS GUARDADOS! ✓' : '¡EVENTO PUBLICADO! ✓')
+                : isSaving
+                ? (isEditMode ? 'GUARDANDO...' : 'PUBLICANDO...')
+                : (isEditMode ? 'GUARDAR CAMBIOS' : 'PUBLICAR EVENTO')}
             </motion.button>
           </div>
 

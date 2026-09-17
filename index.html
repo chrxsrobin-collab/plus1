@@ -161,8 +161,8 @@
 
       <!-- 2. SALUDO PRINCIPAL: HEY, [NOMBRE DE USUARIO] -->
       <div class="anim-greeting px-6 pt-1 pb-1">
-        <h1 id="homeGreetingTitle" class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-          HEY, CHRIS G.
+        <h1 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+          HEY, <span id="homeUserName">CHRIS G.</span>
         </h1>
       </div>
 
@@ -1070,8 +1070,8 @@
 
           <!-- Título Clickeable: CREAR EVENTO (Abre Modal de Buenas Prácticas) -->
           <button onclick="openBestPracticesModal()" class="flex items-center space-x-1.5 focus:outline-none group px-2 py-1 rounded-lg hover:bg-white/5 transition-colors">
-            <h1 class="font-display text-white text-xl sm:text-2xl font-black tracking-wider uppercase">
-              CREAR EVENTO
+            <h1 id="createEventScreenTitle" class="font-display text-white text-xl sm:text-2xl font-black tracking-wider uppercase">
+              CREAR NUEVO EVENTO
             </h1>
             <span class="text-neutral-500 group-hover:text-neutral-300 text-xs font-bold leading-none transition-colors">
               ⓘ
@@ -1323,9 +1323,16 @@
             <img src="./assets/images/avatar_chris.png" alt="Avatar Chris G." class="w-full h-full object-cover rounded-full" />
           </div>
 
-          <h2 class="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none mt-3">
-            CHRIS G.
-          </h2>
+          <div class="flex items-center justify-center space-x-2 mt-3">
+            <h2 id="profileDisplayName" class="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none">
+              CHRIS G.
+            </h2>
+            <button onclick="openEditNameModal()" class="w-8 h-8 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-[#9CA3AF] hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer" aria-label="Editar nombre de usuario" title="Editar nombre">
+              <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            </button>
+          </div>
 
           <div class="mt-2">
             <span class="inline-flex items-center px-3.5 py-1 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider shadow-md">
@@ -1417,9 +1424,9 @@
             </div>
           </div>
 
-          <!-- Botón Cerrar Sesión -->
+          <!-- Botón Cerrar Sesión Real -->
           <div class="mt-8 text-center pb-4">
-            <button onclick="showToast('Sesión cerrada')" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none">
+            <button onclick="handleLogout()" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer">
               CERRAR SESIÓN
             </button>
           </div>
@@ -1593,6 +1600,86 @@
           ACTIVAR SUSCRIPCIÓN PLUS
         </button>
       </div>
+    <!-- MODAL EDITAR NOMBRE DE USUARIO -->
+    <div id="editNameModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-center anim-modal-zoom">
+        <button onclick="closeEditNameModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors focus:outline-none">
+          ✕
+        </button>
+        <h3 class="font-display text-white text-xl font-black tracking-wide uppercase mb-2 text-left">
+          EDITAR NOMBRE
+        </h3>
+        <p class="font-sans text-neutral-400 text-xs text-left mb-3.5 leading-relaxed">
+          Tu nombre se reflejará de inmediato en tus pases, eventos creados y saludo de bienvenida.
+        </p>
+        <input type="text" id="editUserNameInput" placeholder="TU NOMBRE" class="w-full h-12 px-4 rounded-xl bg-[#101114] border border-[#E87A72] text-white font-display text-xl font-black uppercase text-center focus:outline-none shadow-lg tracking-wide mb-4" />
+        <div class="flex space-x-2">
+          <button onclick="closeEditNameModal()" class="w-1/3 py-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 font-sans text-xs font-bold uppercase transition-all">
+            CANCELAR
+          </button>
+          <button onclick="saveUserName()" class="w-2/3 py-3 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-sm font-black uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer">
+            GUARDAR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA COMPLETA DE LOGIN / BIENVENIDA (AuthScreen) -->
+    <div id="authScreenView" class="hidden fixed inset-0 z-[100] bg-[#000000] text-white flex flex-col justify-between overflow-hidden font-sans select-none px-6 py-10">
+      <!-- Fondo texturizado sutil -->
+      <div class="fixed inset-0 pointer-events-none z-0 opacity-35 bg-cover bg-center" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
+      
+      <!-- Degradados ambientales -->
+      <div class="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#E87A72]/10 rounded-full blur-3xl pointer-events-none z-0"></div>
+      <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#12C061]/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+
+      <!-- Header superior de status -->
+      <div class="relative z-10 flex justify-between items-center w-full max-w-sm mx-auto pt-2">
+        <span class="font-sans text-[11px] font-bold tracking-[0.2em] text-neutral-500 uppercase">
+          ACCESO EXCLUSIVO
+        </span>
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-neutral-900/80 border border-neutral-800">
+          <span class="w-2 h-2 rounded-full bg-[#12C061] animate-pulse"></span>
+          <span class="font-mono text-[10px] text-neutral-300 uppercase font-semibold">
+            EN VIVO
+          </span>
+        </div>
+      </div>
+
+      <!-- Zona Central: Branding y Logotipo -->
+      <div class="relative z-10 flex flex-col items-center justify-center flex-1 max-w-sm mx-auto w-full my-auto text-center py-8">
+        <h1 class="font-display text-[#E87A72] text-8xl sm:text-9xl font-black tracking-tighter leading-none select-none filter drop-shadow-[0_10px_30px_rgba(232,122,114,0.25)]">
+          +1
+        </h1>
+        <p class="font-sans text-[#8E8E93] text-xs sm:text-sm font-extrabold tracking-[0.3em] uppercase mt-3">
+          DONDE EMPIEZA LA NOCHE
+        </p>
+        <div class="w-12 h-0.5 bg-gradient-to-r from-transparent via-[#E87A72]/60 to-transparent my-4"></div>
+        <p class="font-sans text-neutral-400 text-xs sm:text-sm max-w-[260px] leading-relaxed">
+          Pases VIP digitales, confirmación con +1 en puerta y eventos exclusivos en tiempo real.
+        </p>
+      </div>
+
+      <!-- Zona Inferior: Botones de Onboarding Rápido -->
+      <div class="relative z-10 w-full max-w-sm mx-auto space-y-3 pb-4">
+        <button onclick="loginWithGoogleAuth()" class="w-full py-4 px-5 rounded-2xl bg-white hover:bg-neutral-100 active:scale-98 text-black font-display text-base sm:text-lg font-black tracking-wider uppercase flex items-center justify-center space-x-3 transition-all shadow-2xl focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          <span>CONTINUAR CON GOOGLE</span>
+        </button>
+
+        <button onclick="loginWithGuestAuth()" class="w-full py-3.5 px-4 rounded-2xl bg-transparent hover:bg-white/5 border border-[#26282E] active:scale-98 text-neutral-400 hover:text-white font-sans text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center justify-center transition-all focus:outline-none cursor-pointer">
+          ENTRAR COMO INVITADO
+        </button>
+
+        <p class="text-center font-sans text-[10px] text-neutral-600 pt-2">
+          Al continuar aceptas los Términos de Servicio y Privacidad de +1 VIP.
+        </p>
+      </div>
     </div>
   </div>
 
@@ -1634,8 +1721,133 @@
           fbCurrentUser = user;
           if (user) {
             console.log('[+1 Firebase Auth] Conectado:', user.uid, user.displayName || 'Invitado');
+            closeAuthScreen();
+            const initialName = user.displayName || (user.isAnonymous ? 'INVITADO +1' : 'USUARIO +1');
+            updateUserNameDisplay(initialName);
+
+            // Sincronizar con documento users/{uid}
+            if (fbDb) {
+              fbDb.collection('users').doc(user.uid).get().then((snap) => {
+                if (snap.exists && snap.data().name) {
+                  updateUserNameDisplay(snap.data().name);
+                } else {
+                  fbDb.collection('users').doc(user.uid).set({
+                    name: initialName,
+                    displayName: initialName,
+                    email: user.email || null,
+                    isAnonymous: user.isAnonymous,
+                    updatedAt: Date.now()
+                  }, { merge: true });
+                }
+              }).catch((e) => console.warn('[+1 Auth] Error doc usuario:', e));
+            }
+          } else {
+            console.log('[+1 Firebase Auth] Sin sesión activa -> mostrando AuthScreen');
+            openAuthScreen();
           }
         });
+
+    let currentUserName = 'CHRIS G.';
+
+    function updateUserNameDisplay(name) {
+      if (!name) return;
+      currentUserName = name;
+      const profileName = document.getElementById('profileDisplayName');
+      const homeName = document.getElementById('homeUserName');
+      if (profileName) profileName.innerText = name;
+      if (homeName) homeName.innerText = name;
+    }
+
+    function openEditNameModal() {
+      const modal = document.getElementById('editNameModal');
+      const input = document.getElementById('editUserNameInput');
+      if (input) input.value = currentUserName;
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeEditNameModal() {
+      const modal = document.getElementById('editNameModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function saveUserName() {
+      const input = document.getElementById('editUserNameInput');
+      const newName = input ? input.value.trim().toUpperCase() : '';
+      if (!newName) {
+        showToast('Ingresa un nombre válido');
+        return;
+      }
+
+      updateUserNameDisplay(newName);
+
+      try {
+        if (fbAuth && fbAuth.currentUser) {
+          await fbAuth.currentUser.updateProfile({ displayName: newName });
+        }
+        if (fbDb && fbCurrentUser) {
+          await fbDb.collection('users').doc(fbCurrentUser.uid).set({
+            name: newName,
+            displayName: newName,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+        showToast('🟢 NOMBRE ACTUALIZADO');
+      } catch (err) {
+        console.warn('Error al guardar nombre:', err);
+      }
+      closeEditNameModal();
+    }
+
+    function openAuthScreen() {
+      const authScreen = document.getElementById('authScreenView');
+      if (authScreen) authScreen.classList.remove('hidden');
+    }
+
+    function closeAuthScreen() {
+      const authScreen = document.getElementById('authScreenView');
+      if (authScreen) authScreen.classList.add('hidden');
+    }
+
+    async function loginWithGoogleAuth() {
+      if (!fbAuth) {
+        showToast('Firebase no disponible');
+        return;
+      }
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await fbAuth.signInWithPopup(provider);
+      } catch (err) {
+        console.error('Error login Google:', err);
+        showToast('Error al autenticar con Google');
+      }
+    }
+
+    async function loginWithGuestAuth() {
+      if (!fbAuth) {
+        showToast('Firebase no disponible');
+        return;
+      }
+      try {
+        await fbAuth.signInAnonymously();
+      } catch (err) {
+        console.error('Error login Guest:', err);
+        showToast('Error al entrar como invitado');
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        if (fbAuth) {
+          await fbAuth.signOut();
+        }
+        showToast('Sesión cerrada');
+        closeProfileScreen();
+        openAuthScreen();
+      } catch (err) {
+        console.error('Error al cerrar sesión:', err);
+        showToast('Error al cerrar sesión');
+      }
+    }
 
         // Sincronización en tiempo real de la invitación de cumpleaños
         fbDb.collection('invites').doc('pepe-birthday').onSnapshot((docSnapshot) => {
@@ -2315,11 +2527,99 @@
     let createPlusOneEnabled = true;
     let createCapacity = 150;
     let createPrivacyMode = 'public';
+    let editingEventId = null;
 
-    function openCreateEventScreen() {
+    function openCreateEventScreen(editId = null) {
+      editingEventId = editId;
       const screen = document.getElementById('createEventScreenView');
+      const titleEl = document.getElementById('createEventScreenTitle');
+      const btnEl = document.getElementById('publishEventBtn');
+
+      if (editId) {
+        if (titleEl) titleEl.innerText = "EDITAR EVENTO";
+        if (btnEl) btnEl.innerText = "GUARDAR CAMBIOS";
+
+        // Cargar datos del evento existente
+        const existing = userCreatedEvents.find(e => e.id === editId);
+        if (existing) {
+          populateCreateEventForm(existing);
+        }
+        if (fbDb) {
+          fbDb.collection('events').doc(editId).get().then(snap => {
+            if (snap.exists) {
+              populateCreateEventForm({ id: snap.id, ...snap.data() });
+            }
+          }).catch(err => console.warn('[+1 Edit] Error al cargar evento:', err));
+        }
+      } else {
+        if (titleEl) titleEl.innerText = "CREAR NUEVO EVENTO";
+        if (btnEl) btnEl.innerText = "PUBLICAR EVENTO";
+        resetCreateEventForm();
+      }
+
       if (screen) {
         screen.classList.remove('hidden');
+      }
+    }
+
+    function resetCreateEventForm() {
+      editingEventId = null;
+      isEventPublished = false;
+      currentEventArtBase64 = null;
+      const nameInput = document.getElementById('createEventNameInput');
+      const dateInput = document.getElementById('createEventDateInput');
+      const startTimeInput = document.getElementById('createEventStartTimeInput');
+      const endTimeInput = document.getElementById('createEventEndTimeInput');
+      const locationInput = document.getElementById('createEventLocationInput');
+      const previewImg = document.getElementById('createArtPreviewImg');
+      const btn = document.getElementById('publishEventBtn');
+
+      if (nameInput) nameInput.value = '';
+      if (dateInput) dateInput.value = '';
+      if (startTimeInput) startTimeInput.value = '';
+      if (endTimeInput) endTimeInput.value = '';
+      if (locationInput) locationInput.value = '';
+      if (previewImg) previewImg.src = './assets/images/pantalla_crear_evento.webp';
+      setCreatePrivacy('public');
+      createCapacity = 150;
+      const display = document.getElementById('createCapacityDisplay');
+      if (display) display.innerText = createCapacity;
+      if (btn) {
+        btn.innerText = "PUBLICAR EVENTO";
+        btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
+        btn.removeAttribute('disabled');
+      }
+    }
+
+    function populateCreateEventForm(data) {
+      isEventPublished = false;
+      const nameInput = document.getElementById('createEventNameInput');
+      const dateInput = document.getElementById('createEventDateInput');
+      const startTimeInput = document.getElementById('createEventStartTimeInput');
+      const endTimeInput = document.getElementById('createEventEndTimeInput');
+      const locationInput = document.getElementById('createEventLocationInput');
+      const previewImg = document.getElementById('createArtPreviewImg');
+      const btn = document.getElementById('publishEventBtn');
+
+      if (nameInput) nameInput.value = data.title || '';
+      if (dateInput) dateInput.value = data.date || data.startDate || '';
+      if (startTimeInput) startTimeInput.value = data.startTime || '';
+      if (endTimeInput) endTimeInput.value = data.endTime || '';
+      if (locationInput) locationInput.value = data.location || '';
+      if (data.type) setCreatePrivacy(data.type);
+      if (data.maxCapacity || data.guestLimit) {
+        createCapacity = Number(data.maxCapacity || data.guestLimit);
+        const display = document.getElementById('createCapacityDisplay');
+        if (display) display.innerText = createCapacity;
+      }
+      if (data.imageUrl || data.artImage) {
+        currentEventArtBase64 = data.imageUrl || data.artImage;
+        if (previewImg) previewImg.src = currentEventArtBase64;
+      }
+      if (btn) {
+        btn.innerText = "GUARDAR CAMBIOS";
+        btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
+        btn.removeAttribute('disabled');
       }
     }
 
@@ -2460,6 +2760,35 @@
       };
 
       try {
+        if (editingEventId) {
+          if (fbDb) {
+            await fbDb.collection('events').doc(editingEventId).update({
+              title: eventPayload.title,
+              type: eventPayload.type,
+              date: eventPayload.date,
+              startTime: eventPayload.startTime,
+              endTime: eventPayload.endTime,
+              location: eventPayload.location,
+              allowsPlusOne: eventPayload.allowsPlusOne,
+              guestLimit: Number(eventPayload.maxCapacity),
+              maxCapacity: Number(eventPayload.maxCapacity),
+              imageUrl: eventPayload.imageUrl,
+              artImage: eventPayload.artImage,
+              updatedAt: Date.now()
+            });
+          }
+          isEventPublished = true;
+          if (btn) {
+            btn.innerText = "¡CAMBIOS GUARDADOS! ✓";
+            btn.className = "w-full py-4 px-5 rounded-2xl bg-neutral-900 text-[#12C061] border border-[#12C061] font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none";
+          }
+          showToast('🟢 EVENTO ACTUALIZADO CORRECTAMENTE');
+          setTimeout(() => {
+            closeCreateEventScreen();
+          }, 1000);
+          return;
+        }
+
         if (fbDb) {
           await fbDb.collection('events').add(eventPayload);
         } else {
@@ -2815,7 +3144,7 @@
           <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
             <span class="font-sans text-neutral-400">${evt.guestsCount || 0} / ${evt.maxCapacity || 150} invitados</span>
             <div class="flex space-x-2">
-              <button onclick="showToast('Editando ${evt.title}')" class="font-display text-neutral-300 hover:text-white font-bold uppercase">Editar</button>
+              <button onclick="closeMyEventsModal(); closeProfileScreen(); openCreateEventScreen('${evt.id}')" class="font-display text-neutral-300 hover:text-white font-bold uppercase cursor-pointer">Editar</button>
               <button onclick="openDoorModal()" class="font-display text-[#12C061] hover:underline font-bold uppercase">Puerta</button>
             </div>
           </div>
