@@ -12,32 +12,33 @@ export const ActionFooter: React.FC<ActionFooterProps> = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 35 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.35 }}
-      className="w-full px-4 mb-3 z-20"
+      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.4 }}
+      className="w-full px-4 z-20"
     >
-      {/* Contenedor Rosa Base */}
-      <div className="relative w-full h-14 rounded-2xl bg-[#fe97de] p-1.5 flex items-center justify-between shadow-lg">
-        {/* Botón Principal: CREAR EVENTO */}
+      {/* Contenedor estilo cápsula con fondo Salmón / Coral #E87A72 */}
+      <div className="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
+        {/* Botón Principal Izquierda: [ + ] CREAR EVENTO en tipografía Antonio Bold negra */}
         <button
           onClick={onCreateEventClick}
-          className="flex-1 h-full flex items-center justify-center pl-4 pr-2 text-left focus:outline-none group"
+          className="flex-1 h-full flex items-center justify-center pl-3 pr-2 text-left focus:outline-none group"
         >
-          <span className="font-display text-black text-2xl sm:text-3xl font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform">
-            CREAR EVENTO
+          <span className="font-display text-black text-2xl sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+            <span className="text-xl font-bold">[ + ]</span>
+            <span>CREAR EVENTO</span>
           </span>
         </button>
 
-        {/* Botón Secundario Brutalista: ESCANEAR QR con animación zoom desde el fondo */}
+        {/* Botón Pastilla Negro Derecha: [ ⛶ ESCANEAR QR ] con borde fino #26282E */}
         <motion.button
           initial={{ scale: 0.2, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, ease: 'backOut', delay: 0.45 }}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.96 }}
           onClick={onScanQrClick}
-          className="h-full px-3.5 bg-black hover:bg-neutral-900 rounded-xl flex items-center space-x-1.5 border border-black focus:outline-none transition-colors"
+          className="h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none transition-colors"
         >
           {/* Ícono de Escáner QR brutalista */}
           <svg
@@ -54,3 +55,5 @@ export const ActionFooter: React.FC<ActionFooterProps> = ({
     </motion.div>
   );
 };
+
+export default ActionFooter;

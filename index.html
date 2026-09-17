@@ -66,10 +66,11 @@
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
-<body class="bg-[#0A0A0C] text-white h-[100dvh] max-h-[100dvh] md:h-auto md:min-h-screen flex items-center justify-center p-0 md:p-6 overflow-hidden font-sans select-none">
+</head>
+<body class="bg-[#0A0A0C] text-white min-h-[100dvh] flex items-center justify-center p-0 md:p-6 overflow-x-hidden font-sans select-none">
 
   <!-- Simulador iPhone 393x852 px (Escritorio) / 100% Pantalla Nativa (Celular) -->
-  <div class="relative w-full h-[100dvh] max-h-[100dvh] md:h-[852px] md:w-[393px] bg-[#0B0C0E] rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
+  <div class="relative w-full min-h-screen md:min-h-0 md:w-[393px] md:h-[852px] bg-[#0B0C0E] rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
     
     <!-- Dynamic Island Superior Hardware (120x35 px, centrada, z-50, pointer-events-none) -->
     <div class="absolute top-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50 pointer-events-none hidden md:flex items-center justify-between px-3">
@@ -87,213 +88,210 @@
     <!-- Sombra sutil degradada superior para HUD -->
     <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#0B0C0E] via-[#0B0C0E]/70 to-transparent pointer-events-none z-10"></div>
 
-    <!-- Contenedor Interior Nativo Zero-Scroll (h-[100dvh] md:h-full max-h-[100dvh] md:max-h-full overflow-hidden flex flex-col justify-between p-4 pb-2) -->
-    <div class="relative z-20 flex-1 flex flex-col justify-between h-[100dvh] md:h-full max-h-[100dvh] md:max-h-full overflow-hidden p-4 pb-2 select-none">
+    <!-- Contenedor Interior Nativo (overflow-y-auto h-full) -->
+    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-24">
       
-      <!-- 1. ZONA SUPERIOR (HEADER & SALUDO COMPACTO) -->
-      <div class="w-full flex flex-col z-20 flex-shrink-0">
-        <!-- Top Bar / HUD -->
-        <header class="anim-hud flex items-center justify-between px-2 pt-1 md:pt-6 pb-1 w-full">
-          <!-- Logo +1 en color Salmón / Coral #E87A72 -->
-          <div class="flex items-center cursor-pointer">
-            <span class="font-display text-[#E87A72] text-[36px] sm:text-[40px] font-black tracking-tight leading-none">
-              +1
+      <!-- 1. TOP BAR / HUD -->
+      <header class="anim-hud flex items-center justify-between px-6 pt-5 md:pt-11 pb-1 w-full">
+        <!-- Logo +1 en color Salmón / Coral #E87A72 -->
+        <div class="flex items-center cursor-pointer">
+          <span class="font-display text-[#E87A72] text-[42px] font-black tracking-tight leading-none">
+            +1
+          </span>
+        </div>
+
+        <!-- Acciones Derecha: Campana con Badge Rojo y Avatar -->
+        <div class="flex items-center space-x-3.5">
+          <!-- Campana con Badge Rojo 2 -->
+          <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+            </svg>
+            <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
+              2
             </span>
+          </button>
+
+          <!-- Avatar Retro Pixel Art -->
+          <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
+            <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
           </div>
-
-          <!-- Acciones Derecha: Campana con Badge Rojo y Avatar -->
-          <div class="flex items-center space-x-3">
-            <!-- Campana con Badge Rojo 2 -->
-            <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
-              <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-              </svg>
-              <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
-                2
-              </span>
-            </button>
-
-            <!-- Avatar Retro Pixel Art -->
-            <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
-              <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
-            </div>
-          </div>
-        </header>
-
-        <!-- 2. SALUDO PRINCIPAL: HEY, CHRISTIAN -->
-        <div class="anim-greeting px-2 pt-0.5 pb-0.5 my-0.5">
-          <h1 class="font-display text-white text-[32px] sm:text-[38px] font-black tracking-tight leading-none uppercase">
-            HEY, CHRISTIAN
-          </h1>
         </div>
+      </header>
 
-        <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
-        <div class="anim-greeting px-2 mb-1.5">
-          <h2 class="font-sans text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase m-0 leading-none">
-            PROXIMOS EVENTOS
-          </h2>
-        </div>
+      <!-- 2. SALUDO PRINCIPAL: HEY, CHRISTIAN -->
+      <div class="anim-greeting px-6 pt-1 pb-1">
+        <h1 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+          HEY, CHRISTIAN
+        </h1>
       </div>
 
-      <!-- 2. ZONA CENTRAL ELÁSTICA (CARRUSEL DE EVENTOS) -->
-      <main class="anim-main-card flex-1 min-h-0 flex flex-col justify-center w-full my-auto py-1 z-10 overflow-hidden">
-        <div class="relative w-full flex-1 min-h-0 max-h-[420px] flex items-center justify-center py-1" style="perspective: 1100px;">
+      <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
+      <div class="anim-greeting px-6 pt-1 pb-2">
+        <h2 class="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
+          PROXIMOS EVENTOS
+        </h2>
+      </div>
+
+      <!-- 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (DESPLAZAMIENTO EN BLOQUE) -->
+      <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1">
+        <div class="relative w-full h-[425px] sm:h-[440px] flex items-center justify-center py-2" style="perspective: 1100px;">
           <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
             
             <!-- TARJETA COMPLETA 0: CLUB DUBAI -->
-            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(0)">
+            <div class="cf-fullcard absolute w-[285px] sm:w-[305px] h-[390px] sm:h-[405px] rounded-[24px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(0)">
               <!-- Miniatura Superior -->
-              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-2 flex-shrink-0 mb-1">
-                <div class="px-2.5 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mb-1">
-                  <span class="text-[#00f3ff] font-display text-[10px] sm:text-xs tracking-widest font-black uppercase">
+              <div class="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-3 flex-shrink-0">
+                <div class="px-2.5 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mb-1.5">
+                  <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
                     CLUB DUBÁI
                   </span>
                 </div>
-                <span class="font-display text-white text-sm sm:text-base font-bold tracking-wider uppercase">
+                <span class="font-display text-white text-base font-bold tracking-wider uppercase">
                   VIP NIGHT
                 </span>
               </div>
               <!-- Bloque Descriptivo y Metadatos Requeridos -->
-              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
-                <div class="space-y-0.5">
-                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+              <div class="w-full flex-1 flex flex-col justify-between">
+                <div class="space-y-1">
+                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
                     FLYER VIP: CLUB DUBÁI
                   </h4>
                   <!-- Fecha y Horario (la hora debajo de la fecha) -->
                   <div>
-                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                    <p class="font-display text-white text-xs font-bold tracking-wide uppercase">
                       SÁB. 14 DE SEPTIEMBRE
                     </p>
-                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                    <p class="font-sans text-zinc-400 text-xs font-medium mt-0.5">
                       22:00 — 04:30
                     </p>
                   </div>
-                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                  <p class="font-sans text-neutral-300 text-xs font-normal line-clamp-1">
                     Club Dubái · Sopocachi
                   </p>
-                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                  <p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">
                     ÚLTIMOS 18 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-2.5 py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
             </div>
 
             <!-- TARJETA COMPLETA 1: INDIE NIGHT -->
-            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(1)">
+            <div class="cf-fullcard absolute w-[285px] sm:w-[305px] h-[390px] sm:h-[405px] rounded-[24px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(1)">
               <!-- Miniatura Superior -->
-              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-2 flex-shrink-0 mb-1">
-                <div class="flex items-center space-x-1.5 text-xl mb-0.5">
+              <div class="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-3 flex-shrink-0">
+                <div class="flex items-center space-x-2 text-2xl mb-1">
                   <span>🎸</span><span>🎤</span><span>⚡</span>
                 </div>
-                <span class="font-display text-cyan-400 text-sm sm:text-base font-black tracking-widest uppercase">
+                <span class="font-display text-cyan-400 text-base font-black tracking-widest uppercase">
                   INDIE LIVE
                 </span>
               </div>
               <!-- Bloque Descriptivo y Metadatos Requeridos -->
-              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
-                <div class="space-y-0.5">
-                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+              <div class="w-full flex-1 flex flex-col justify-between">
+                <div class="space-y-1">
+                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
                     FLYER CONCIERTO: INDIE NIGHT
                   </h4>
                   <!-- Fecha y Horario (la hora debajo de la fecha) -->
                   <div>
-                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                    <p class="font-display text-white text-xs font-bold tracking-wide uppercase">
                       VIE. 20 DE SEPTIEMBRE
                     </p>
-                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                    <p class="font-sans text-zinc-400 text-xs font-medium mt-0.5">
                       21:00 — 03:00
                     </p>
                   </div>
-                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                  <p class="font-sans text-neutral-300 text-xs font-normal line-clamp-1">
                     Teatro Equinoccio · San Miguel
                   </p>
-                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                  <p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">
                     ÚLTIMOS 5 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-2.5 py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
             </div>
 
             <!-- TARJETA COMPLETA 2: MAMACITA REGGAETON (INICIAL ACTIVA) -->
-            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(2)">
+            <div class="cf-fullcard absolute w-[285px] sm:w-[305px] h-[390px] sm:h-[405px] rounded-[24px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(2)">
               <!-- Miniatura Superior -->
-              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-2 text-center flex-shrink-0 mb-1">
-                <div class="flex items-center space-x-1 mb-0.5">
-                  <span class="text-xl filter drop-shadow">🔥</span>
-                  <span class="text-xl filter drop-shadow">💃</span>
+              <div class="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-3 text-center flex-shrink-0">
+                <div class="flex items-center space-x-1 mb-1">
+                  <span class="text-2xl filter drop-shadow">🔥</span>
+                  <span class="text-2xl filter drop-shadow">💃</span>
                 </div>
-                <span class="font-display text-[#fab205] text-base sm:text-lg font-black tracking-widest uppercase leading-tight">
+                <span class="font-display text-[#fab205] text-lg font-black tracking-widest uppercase leading-tight">
                   LATIN PERREO
                 </span>
               </div>
               <!-- Bloque Descriptivo y Metadatos Requeridos -->
-              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
-                <div class="space-y-0.5">
-                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+              <div class="w-full flex-1 flex flex-col justify-between">
+                <div class="space-y-1">
+                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
                     FLYER: MAMACITA REGGAETON
                   </h4>
                   <!-- Fecha y Horario (la hora debajo de la fecha) -->
                   <div>
-                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                    <p class="font-display text-white text-xs font-bold tracking-wide uppercase">
                       SÁB. 21 DE SEPTIEMBRE
                     </p>
-                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                    <p class="font-sans text-zinc-400 text-xs font-medium mt-0.5">
                       22:30 — 05:00
                     </p>
                   </div>
-                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                  <p class="font-sans text-neutral-300 text-xs font-normal line-clamp-1">
                     Foro Club · Calacoto
                   </p>
-                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                  <p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">
                     ÚLTIMOS 25 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-2.5 py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
             </div>
 
             <!-- TARJETA COMPLETA 3: BASEMENT AFTER -->
-            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(3)">
+            <div class="cf-fullcard absolute w-[285px] sm:w-[305px] h-[390px] sm:h-[405px] rounded-[24px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(3)">
               <!-- Miniatura Superior -->
-              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-2 flex-shrink-0 mb-1">
-                <div class="w-7 h-7 border border-[#12c061] rounded-full flex items-center justify-center mb-0.5">
-                  <span class="font-display text-[#12c061] text-[9px] font-mono font-bold">135</span>
+              <div class="relative w-full h-[150px] sm:h-[160px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-3 flex-shrink-0">
+                <div class="w-9 h-9 border border-[#12c061] rounded-full flex items-center justify-center mb-1">
+                  <span class="font-display text-[#12c061] text-[10px] font-mono font-bold">135</span>
                 </div>
-                <span class="font-display text-white text-sm sm:text-base font-bold tracking-wider uppercase">
+                <span class="font-display text-white text-base font-bold tracking-wider uppercase">
                   TECHNO AFTER
                 </span>
               </div>
               <!-- Bloque Descriptivo y Metadatos Requeridos -->
-              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
-                <div class="space-y-0.5">
-                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+              <div class="w-full flex-1 flex flex-col justify-between">
+                <div class="space-y-1">
+                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
                     FLYER: BASEMENT AFTER
                   </h4>
                   <!-- Fecha y Horario (la hora debajo de la fecha) -->
                   <div>
-                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                    <p class="font-display text-white text-xs font-bold tracking-wide uppercase">
                       DOM. 22 DE SEPTIEMBRE
                     </p>
-                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                    <p class="font-sans text-zinc-400 text-xs font-medium mt-0.5">
                       03:00 — 09:00
                     </p>
                   </div>
-                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                  <p class="font-sans text-neutral-300 text-xs font-normal line-clamp-1">
                     The Basement Club · Centro
                   </p>
-                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                  <p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">
                     ÚLTIMOS 10 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-2.5 py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
@@ -303,7 +301,7 @@
         </div>
 
         <!-- Paginador Dots Centrados -->
-        <div class="flex items-center justify-center space-x-1.5 mt-1 flex-shrink-0">
+        <div class="flex items-center justify-center space-x-2 mt-3">
           <button onclick="setFullCard(0)" id="dot0" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
           <button onclick="setFullCard(1)" id="dot1" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
           <button onclick="setFullCard(2)" id="dot2" class="w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none"></button>
@@ -311,60 +309,57 @@
         </div>
       </main>
 
-      <!-- 3. ZONA INFERIOR ANCLADA (ACCIONES Y NAVEGACIÓN) -->
-      <div class="w-full flex flex-col flex-shrink-0 z-30 -mx-4 -mb-2 w-[calc(100%+2rem)]">
-        <!-- Barra de Acción: Separación fija de 8px a 10px encima de Bottom Nav -->
-        <div class="anim-footer px-4 mb-[9px] z-20">
-          <div class="relative w-full h-12 sm:h-13 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
-            <!-- CREAR EVENTO CON [ + ] -->
-            <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-2.5 pr-2 text-left focus:outline-none group">
-              <span class="font-display text-black text-xl sm:text-[22px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
-                <span class="text-lg font-bold">[ + ]</span>
-                <span>CREAR EVENTO</span>
-              </span>
-            </button>
+      <!-- 4. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] -->
+      <div class="anim-footer px-4 mt-auto pt-2 mb-2 z-20">
+        <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
+          <!-- CREAR EVENTO CON [ + ] -->
+          <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
+            <span class="font-display text-black text-[24px] sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+              <span class="text-xl font-bold">[ + ]</span>
+              <span>CREAR EVENTO</span>
+            </span>
+          </button>
 
-            <!-- ESCANEAR QR -->
-            <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
-              <svg class="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24">
-                <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
-              </svg>
-              <span class="font-display text-white text-xs font-bold tracking-wider uppercase whitespace-nowrap">
-                ESCANEAR QR
-              </span>
-            </button>
-          </div>
+          <!-- ESCANEAR QR -->
+          <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
+            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
+              <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
+            </svg>
+            <span class="font-display text-white text-[12px] sm:text-xs font-bold tracking-wider uppercase whitespace-nowrap">
+              ESCANEAR QR
+            </span>
+          </button>
         </div>
-
-        <!-- Bottom Navigation Bar al ras inferior -->
-        <nav class="anim-bottom-nav w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-2.5 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)] relative">
-          <!-- Home -->
-          <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </button>
-
-          <!-- Pases / Ticket -->
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
-            <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-            </svg>
-          </button>
-
-          <!-- Buscar / Lupa -->
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-
-          <!-- Home Indicator Bar Inferior -->
-          <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
-        </nav>
       </div>
 
     </div>
+
+    <!-- 5. BOTTOM NAVIGATION BAR FIJA AL FONDO -->
+    <nav class="anim-bottom-nav fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+      <!-- Home -->
+      <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </button>
+
+      <!-- Pases / Ticket -->
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
+        <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+        </svg>
+      </button>
+
+      <!-- Buscar / Lupa -->
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      <!-- Home Indicator Bar Inferior -->
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
+    </nav>
 
     <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
     <div id="doorModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">

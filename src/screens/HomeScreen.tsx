@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TopHud } from '../components/TopHud';
-import { PassCard } from '../components/PassCard';
-import { VipFlyerCard } from '../components/VipFlyerCard';
+import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
 import { ActionFooter } from '../components/ActionFooter';
 import { BottomNav } from '../components/BottomNav';
 import { NoEventsModal } from '../components/NoEventsModal';
-import { MarqueeTicker } from '../components/MarqueeTicker';
-import { CoverFlowCarousel } from '../components/CoverFlowCarousel';
+import { EventDetailModal } from '../components/EventDetailModal';
 import {
   mockUserProfile,
-  mockUpcomingPasses,
   mockVipFlyers,
 } from '../data/mockData';
-import { TabType } from '../types/home';
+import { TabType, VipFlyerItem } from '../types/home';
 import '../styles/fonts.css';
 
 export interface HomeScreenProps {
@@ -23,38 +20,27 @@ export interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedEvent, setSelectedEvent] = useState<VipFlyerItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const user = mockUserProfile;
 
-  // Manejo de navegación
   const handleNavigate = (route: string) => {
     if (onNavigate) {
       onNavigate(route);
     } else {
       console.log(`[Navigation] -> ${route}`);
-      // Fallback para entornos con window.location o react-router
-      if (typeof window !== 'undefined' && window.location) {
-        // En SPA o router se puede sincronizar
-      }
     }
   };
 
-  // Botón "VER MI ENTRADA QR"
-  const handleViewQr = (passId: string) => {
-    handleNavigate(`/pass/${passId}`);
-  };
-
-  // Botón "SOLICITAR VIP"
   const handleApplyVip = (flyerId: string) => {
     handleNavigate(`/vip/${flyerId}`);
   };
 
-  // Botón "CREAR EVENTO"
   const handleCreateEvent = () => {
     setIsModalOpen(false);
     handleNavigate('/create-event');
   };
 
-  // Botón "ESCANEAR QR" (Valida si tiene eventos creados)
   const handleScanQr = () => {
     if (user.activeEventsCount === 0) {
       setIsModalOpen(true);
@@ -63,7 +49,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     }
   };
 
-  // Pestañas inferiores
   const handleTabSelect = (tab: TabType) => {
     setActiveTab(tab);
     if (tab === 'passes') {
@@ -74,104 +59,84 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-black flex flex-col justify-between overflow-x-hidden font-sans select-none">
-      {/* Fondo con textura/patrón geométrico */}
+    <div className="relative w-full min-h-[100dvh] bg-[#0B0C0E] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none">
+      {/* Fondo con textura/patrón geométrico oscuro fondo_iniciob.webp */}
       <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-90 bg-cover bg-bottom"
+        className="fixed inset-0 pointer-events-none z-0 opacity-90 bg-cover bg-center"
         style={{
-          backgroundImage: "url(./assets/images/fondo_inicio.webp)",
-          backgroundPosition: 'bottom center',
+          backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
+          backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
         }}
       />
 
-      {/* Degradado superior para contraste con HUD */}
-      <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-black via-black/80 to-transparent pointer-events-none z-10" />
+      {/* Degradado superior sutil para HUD */}
+      <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-[#0B0C0E] via-[#0B0C0E]/70 to-transparent pointer-events-none z-10" />
 
       {/* Contenedor central móvil estructurado */}
-      <div className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto">
-        {/* 1. TOP BAR / HUD */}
+      <div className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto pb-24">
+        
+        {/* 1. TOP BAR / HUD (Logo +1 en #E87A72, Notificaciones y Avatar) */}
         <TopHud
           user={user}
           onNotificationsClick={() => handleNavigate('/notifications')}
           onProfileClick={() => handleNavigate('/profile')}
         />
 
-        {/* CONTENIDO PRINCIPAL CON SCROLL VERTICAL SUAVE */}
-        <main className="flex-1 flex flex-col pt-1 pb-4 overflow-y-auto no-scrollbar">
-          {/* 2. BARRA "PRÓXIMOS PASES" CON EXPANSIÓN HORIZONTAL */}
-          <section className="w-full mt-2 mb-3">
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.35, ease: 'easeInOut', delay: 0.1 }}
-              style={{ transformOrigin: 'left' }}
-              className="w-full bg-[#12c061] py-1 px-4 flex items-center shadow-sm"
-            >
-              <motion.h2
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2, delay: 0.25 }}
-                className="font-display text-black text-xl font-black tracking-wider uppercase m-0 leading-none"
-              >
-                PRÓXIMOS PASES
-              </motion.h2>
-            </motion.div>
+        {/* 2. SALUDO PRINCIPAL: HEY, CHRISTIAN */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut', delay: 0.1 }}
+          className="px-6 pt-1 pb-1"
+        >
+          <h1 className="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+            HEY, CHRISTIAN
+          </h1>
+        </motion.div>
 
-            {/* 3. CARRUSEL DE PASES ("TU PRÓXIMO PASE") - Borde a borde (edge-to-edge) */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut', delay: 0.2 }}
-              className="w-full mt-3"
-            >
-              <div className="flex space-x-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-3 py-2">
-                {mockUpcomingPasses.map((pass) => (
-                  <div key={pass.id} className="w-[calc(100vw-24px)] max-w-[390px] flex-shrink-0 snap-center">
-                    <PassCard pass={pass} onViewQrClick={handleViewQr} />
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </section>
+        {/* 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) */}
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
+          className="px-6 pt-1 pb-2"
+        >
+          <h2 className="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
+            PROXIMOS EVENTOS
+          </h2>
+        </motion.div>
 
-          {/* 4. LETRERO MARQUEE TICKER EN LOOP CONTINUO */}
-          <section className="w-full mt-3 mb-2">
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 0.35, ease: 'easeInOut', delay: 0.25 }}
-              style={{ transformOrigin: 'right' }}
-              className="w-full"
-            >
-              <MarqueeTicker text="VIP & EVENTOS · " speed={48} />
-            </motion.div>
+        {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (CENTRADO CON ZOOM-IN SUAVE) */}
+        <motion.main
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+          className="flex-1 flex flex-col items-center justify-center my-auto py-1"
+        >
+          <FullCardCoverFlow
+            flyers={mockVipFlyers}
+            onApplyVipClick={handleApplyVip}
+            onSelectEvent={(event) => {
+              setSelectedEvent(event);
+              setIsDetailModalOpen(true);
+            }}
+          />
+        </motion.main>
 
-            {/* 5. CARRUSEL 3D COVER FLOW (ITUNES STYLE) */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: 'easeOut', delay: 0.3 }}
-              className="w-full"
-            >
-              <CoverFlowCarousel
-                flyers={mockVipFlyers}
-                onApplyVipClick={handleApplyVip}
-              />
-            </motion.div>
-          </section>
-        </main>
+        {/* 5. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] */}
+        <div className="mt-auto pt-2 mb-2">
+          <ActionFooter
+            onCreateEventClick={handleCreateEvent}
+            onScanQrClick={handleScanQr}
+          />
+        </div>
 
-        {/* 6. CONTENEDOR INFERIOR DE ACCIONES (CREAR EVENTO + ESCANEAR QR) */}
-        <ActionFooter
-          onCreateEventClick={handleCreateEvent}
-          onScanQrClick={handleScanQr}
-        />
       </div>
 
-      {/* 7. BOTTOM NAVIGATION BAR FIJA */}
-      <div className="sticky bottom-0 left-0 right-0 z-30 max-w-md mx-auto w-full">
+      {/* 6. BOTTOM NAVIGATION BAR FIJA AL FONDO */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto w-full">
         <BottomNav activeTab={activeTab} onTabSelect={handleTabSelect} />
       </div>
 
@@ -180,6 +145,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreateEvent={handleCreateEvent}
+      />
+
+      {/* MODAL DE DETALLE DEL EVENTO PÚBLICO */}
+      <EventDetailModal
+        event={selectedEvent}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        onApplyVip={handleApplyVip}
       />
     </div>
   );

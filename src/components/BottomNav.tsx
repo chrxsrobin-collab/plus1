@@ -16,7 +16,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: 'easeOut', delay: 0.4 }}
-      className="w-full bg-black/90 backdrop-blur-md border-t border-neutral-800/80 px-8 py-3 flex items-center justify-between z-30 select-none"
+      className="w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-50 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.8)]"
     >
       {/* 1. Home (Casa) */}
       <button
@@ -77,3 +77,5 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     </motion.nav>
   );
 };
+
+export default BottomNav;

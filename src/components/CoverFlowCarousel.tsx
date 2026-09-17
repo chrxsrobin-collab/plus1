@@ -32,10 +32,10 @@ export const CoverFlowCarousel: React.FC<CoverFlowCarouselProps> = ({
   };
 
   return (
-    <div className="relative w-full py-2 overflow-hidden select-none">
-      {/* Contenedor Cover Flow con perspectiva física pura (sin reflejos ni glow) */}
+    <div className="relative w-full py-1 overflow-hidden select-none">
+      {/* Contenedor Cover Flow con altura maximizada a 350px */}
       <div
-        className="relative w-full h-[315px] flex items-center justify-center"
+        className="relative w-full h-[350px] flex items-center justify-center"
         style={{
           perspective: '1000px',
           perspectiveOrigin: '50% 50%',
@@ -64,18 +64,18 @@ export const CoverFlowCarousel: React.FC<CoverFlowCarouselProps> = ({
             if (offset < 0) {
               // Tarjetas a la izquierda: rotación 60° a 65°, translateZ(-80px)
               rotateY = 62;
-              scale = 0.85;
+              scale = 0.86;
               opacity = Math.max(0.4, 0.75 + offset * 0.15);
               zIndex = 10 + offset;
-              translateX = -120 + (offset + 1) * 35; // Cascada apilada compacta
+              translateX = -140 + (offset + 1) * 38;
               translateZ = -80;
             } else if (offset > 0) {
               // Tarjetas a la derecha: rotación -60° a -65°, translateZ(-80px)
               rotateY = -62;
-              scale = 0.85;
+              scale = 0.86;
               opacity = Math.max(0.4, 0.75 - offset * 0.15);
               zIndex = 10 - offset;
-              translateX = 120 + (offset - 1) * 35; // Cascada apilada compacta
+              translateX = 140 + (offset - 1) * 38;
               translateZ = -80;
             }
 

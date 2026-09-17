@@ -18,24 +18,23 @@ export const TopHud: React.FC<TopHudProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="flex items-center justify-between px-5 pt-4 pb-2 w-full select-none z-20"
+      className="flex items-center justify-between px-6 pt-4 pb-2 w-full select-none z-20"
     >
-      {/* Logo +1 */}
-      <div className="flex items-center space-x-1 cursor-pointer group">
-        <span className="font-display text-white text-3xl font-extrabold tracking-tighter leading-none hover:opacity-90 transition-opacity">
+      {/* Logo +1 en color Salmón / Coral #E87A72 */}
+      <div className="flex items-center cursor-pointer group">
+        <span className="font-display text-[#E87A72] text-[40px] font-black tracking-tight leading-none hover:opacity-90 transition-opacity">
           +1
         </span>
       </div>
 
-      {/* Acciones Derecha: Campana con Badge y Avatar Pixel Art */}
-      <div className="flex items-center space-x-4">
+      {/* Acciones Derecha: Campana con Badge Rojo 2 y Avatar */}
+      <div className="flex items-center space-x-3.5">
         {/* Notificaciones */}
         <button
           onClick={onNotificationsClick}
           aria-label="Notificaciones"
-          className="relative p-1.5 text-white hover:text-[#fe97de] transition-colors focus:outline-none"
+          className="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none"
         >
-          {/* SVG Campana */}
           <svg
             className="w-6 h-6 fill-current"
             viewBox="0 0 24 24"
@@ -45,26 +44,27 @@ export const TopHud: React.FC<TopHudProps> = ({
 
           {/* Badge Contador Rojo */}
           {user.unreadNotifications > 0 && (
-            <span className="absolute top-0.5 right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
+            <span className="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
               {user.unreadNotifications}
             </span>
           )}
         </button>
 
-        {/* Avatar Pixel Art con borde circular brutalista */}
+        {/* Avatar Pixel Art con borde circular */}
         <button
           onClick={onProfileClick}
           aria-label="Perfil de usuario"
-          className="relative rounded-full p-0.5 bg-[#101114] border border-[#333] hover:border-[#12c061] transition-all overflow-hidden focus:outline-none"
+          className="relative rounded-full p-0.5 bg-[#101114] border border-[#333] hover:border-[#E87A72] transition-all overflow-hidden focus:outline-none"
         >
           <img
             src={user.avatarUrl}
             alt={user.name}
-            className="w-8 h-8 rounded-full object-cover pixelated"
-            style={{ imageRendering: 'pixelated' }}
+            className="w-8 h-8 rounded-full object-cover"
           />
         </button>
       </div>
     </motion.header>
   );
 };
+
+export default TopHud;

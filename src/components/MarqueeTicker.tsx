@@ -17,7 +17,7 @@ export const MarqueeTicker: React.FC<MarqueeTickerProps> = ({
 
   return (
     <div
-      className={`w-full h-10 bg-black/95 border-y border-neutral-900 flex items-center overflow-hidden whitespace-nowrap select-none ${className}`}
+      className={`w-full h-11 bg-[#12c061] border-y border-[#0fa352] flex items-center overflow-hidden whitespace-nowrap select-none shadow-sm ${className}`}
       style={{ willChange: 'transform' }}
     >
       <motion.div
@@ -29,10 +29,10 @@ export const MarqueeTicker: React.FC<MarqueeTickerProps> = ({
           repeat: Infinity,
         }}
       >
-        <span className="font-display text-[#12c061] text-xl sm:text-2xl font-black tracking-wider uppercase pr-2">
+        <span className="font-display text-black text-xl sm:text-2xl font-black tracking-wider uppercase pr-2">
           {repeatedText}
         </span>
-        <span className="font-display text-[#12c061] text-xl sm:text-2xl font-black tracking-wider uppercase pr-2">
+        <span className="font-display text-black text-xl sm:text-2xl font-black tracking-wider uppercase pr-2">
           {repeatedText}
         </span>
       </motion.div>

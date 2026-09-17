@@ -12,45 +12,66 @@ export const PassCard: React.FC<PassCardProps> = ({ pass, onViewQrClick }) => {
 
   return (
     <div
-      className="relative flex-shrink-0 w-full rounded-2xl p-5 bg-[#101114] select-none transition-transform duration-200"
+      className="relative flex-shrink-0 w-full rounded-2xl p-3 bg-[#101114] select-none flex flex-row items-center gap-3 shadow-none transition-transform duration-200"
       style={{
-        border: `2px solid ${borderColor}`,
-        boxShadow: '0 6px 0px 0px #fe97de',
+        border: `1.5px solid ${borderColor}`,
       }}
     >
-      {/* Cabecera del Pase: Emoji calendario + Título + Emoji fin */}
-      <div className="flex items-center justify-center space-x-2 text-center mb-2">
-        {pass.badgeNumber && (
-          <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#1f232b] text-white text-xs font-bold font-mono border border-neutral-700">
-            📅 {pass.badgeNumber}
-          </span>
+      {/* 1. Miniatura Cuadrada Estricta 1:1 a la izquierda */}
+      <div className="relative w-20 h-20 sm:w-[88px] sm:h-[88px] aspect-square flex-shrink-0 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800">
+        {pass.imageUrl ? (
+          <img
+            src={pass.imageUrl}
+            alt={pass.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1c1f26] to-[#0d0e12]">
+            <span className="text-2xl">{pass.emoji || '🎟️'}</span>
+          </div>
         )}
-        <h3 className="font-display text-white text-2xl font-bold tracking-tight uppercase">
-          {pass.title}
-        </h3>
-        {pass.emoji && <span className="text-xl">{pass.emoji}</span>}
+        {/* Badge de fecha sobre la miniatura */}
+        {pass.badgeNumber && (
+          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm border border-neutral-700/80">
+            <span className="font-mono text-[9px] font-bold text-white leading-none">
+              {pass.badgeNumber}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Fecha, hora y ubicación */}
-      <p className="font-sans text-white/90 text-sm text-center font-medium tracking-wide mb-1">
-        {pass.dateStr} • {pass.timeStr} | {pass.location}
-      </p>
+      {/* 2. Bloque de Información (Columna Derecha) */}
+      <div className="flex flex-col justify-between flex-1 min-w-0 h-full py-0.5">
+        <div>
+          {/* Título del evento */}
+          <h3 className="font-display text-white text-lg sm:text-xl font-bold tracking-tight uppercase truncate leading-tight">
+            {pass.title} {pass.emoji}
+          </h3>
 
-      {/* Estado del Pase */}
-      <p className="font-sans text-center text-sm font-semibold mb-4 text-[#fe97de]">
-        {pass.statusText}
-      </p>
+          {/* Metadatos: Fecha, hora y zona */}
+          <p className="font-sans text-neutral-400 text-xs font-medium tracking-normal mt-0.5 truncate">
+            {pass.dateStr} • {pass.timeStr} | {pass.location}
+          </p>
 
-      {/* Botón Brutalista Blanco: VER MI ENTRADA QR */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => onViewQrClick(pass.id)}
-        className="w-full py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-extrabold tracking-wider uppercase flex items-center justify-center space-x-2 shadow transition-colors focus:outline-none"
-      >
-        <span>VER MI ENTRADA QR</span>
-        <span className="text-lg leading-none">🎟️</span>
-      </motion.button>
+          {/* Estado del pase */}
+          <p className="font-sans text-xs font-semibold mt-1 text-[#fe97de] truncate">
+            Estado: {pass.statusText}
+          </p>
+        </div>
+
+        {/* 3. Botón de Acción Actualizado: VER MI QR */}
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onViewQrClick(pass.id)}
+          className="w-full mt-2 py-1.5 px-3 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-extrabold tracking-wider uppercase flex items-center justify-center space-x-1.5 shadow-none transition-colors focus:outline-none"
+        >
+          <span>VER MI QR</span>
+          <span className="text-sm leading-none">🎟️</span>
+        </motion.button>
+      </div>
     </div>
   );
 };
+
+export default PassCard;
