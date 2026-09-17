@@ -49,19 +49,27 @@
       0% { opacity: 0; transform: scale(0.2); }
       100% { opacity: 1; transform: scale(1); }
     }
+    @keyframes smoothZoomIn {
+      0% { opacity: 0; transform: scale(0.88); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes cardEnterZoom {
+      0% { opacity: 0; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1); }
+    }
 
     .anim-hud { animation: hudDown 0.35s ease-out forwards; }
     .anim-greeting { animation: slideUpFade 0.35s ease-out 0.1s both; }
-    .anim-main-card { animation: slideUpFade 0.4s ease-out 0.2s both; }
+    .anim-main-card { animation: cardEnterZoom 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
     .anim-footer { animation: slideUpFade 0.4s ease-out 0.35s both; }
     .anim-qr-btn { animation: zoomIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.45s both; }
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
+    .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
-</head>
-<body class="bg-[#0A0A0C] text-white min-h-[100dvh] flex items-center justify-center p-0 md:p-6 overflow-x-hidden font-sans select-none">
+<body class="bg-[#0A0A0C] text-white h-[100dvh] max-h-[100dvh] md:h-auto md:min-h-screen flex items-center justify-center p-0 md:p-6 overflow-hidden font-sans select-none">
 
   <!-- Simulador iPhone 393x852 px (Escritorio) / 100% Pantalla Nativa (Celular) -->
-  <div class="relative w-full min-h-screen md:min-h-0 md:w-[393px] md:h-[852px] bg-[#0B0C0E] rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
+  <div class="relative w-full h-[100dvh] max-h-[100dvh] md:h-[852px] md:w-[393px] bg-[#0B0C0E] rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
     
     <!-- Dynamic Island Superior Hardware (120x35 px, centrada, z-50, pointer-events-none) -->
     <div class="absolute top-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50 pointer-events-none hidden md:flex items-center justify-between px-3">
@@ -79,185 +87,284 @@
     <!-- Sombra sutil degradada superior para HUD -->
     <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#0B0C0E] via-[#0B0C0E]/70 to-transparent pointer-events-none z-10"></div>
 
-    <!-- Contenedor Interior Nativo (overflow-y-auto h-full) -->
-    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-24">
+    <!-- Contenedor Interior Nativo Zero-Scroll (h-[100dvh] md:h-full max-h-[100dvh] md:max-h-full overflow-hidden flex flex-col justify-between p-4 pb-2) -->
+    <div class="relative z-20 flex-1 flex flex-col justify-between h-[100dvh] md:h-full max-h-[100dvh] md:max-h-full overflow-hidden p-4 pb-2 select-none">
       
-      <!-- 1. TOP BAR / HUD -->
-      <header class="anim-hud flex items-center justify-between px-6 pt-5 md:pt-11 pb-1 w-full">
-        <!-- Logo +1 en color Salmón / Coral #E87A72 -->
-        <div class="flex items-center cursor-pointer">
-          <span class="font-display text-[#E87A72] text-[42px] font-black tracking-tight leading-none">
-            +1
-          </span>
-        </div>
-
-        <!-- Acciones Derecha: Campana con Badge Rojo y Avatar -->
-        <div class="flex items-center space-x-3.5">
-          <!-- Campana con Badge Rojo 2 -->
-          <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
-            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-            </svg>
-            <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
-              2
+      <!-- 1. ZONA SUPERIOR (HEADER & SALUDO COMPACTO) -->
+      <div class="w-full flex flex-col z-20 flex-shrink-0">
+        <!-- Top Bar / HUD -->
+        <header class="anim-hud flex items-center justify-between px-2 pt-1 md:pt-6 pb-1 w-full">
+          <!-- Logo +1 en color Salmón / Coral #E87A72 -->
+          <div class="flex items-center cursor-pointer">
+            <span class="font-display text-[#E87A72] text-[36px] sm:text-[40px] font-black tracking-tight leading-none">
+              +1
             </span>
-          </button>
-
-          <!-- Avatar Retro Pixel Art -->
-          <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
-            <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
           </div>
-        </div>
-      </header>
 
-      <!-- 2. SALUDO PRINCIPAL: HEY, CHRISTIAN -->
-      <div class="anim-greeting px-6 pt-1 pb-2">
-        <h1 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-          HEY, CHRISTIAN
-        </h1>
+          <!-- Acciones Derecha: Campana con Badge Rojo y Avatar -->
+          <div class="flex items-center space-x-3">
+            <!-- Campana con Badge Rojo 2 -->
+            <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
+              <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+              </svg>
+              <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
+                2
+              </span>
+            </button>
+
+            <!-- Avatar Retro Pixel Art -->
+            <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
+              <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </header>
+
+        <!-- 2. SALUDO PRINCIPAL: HEY, CHRISTIAN -->
+        <div class="anim-greeting px-2 pt-0.5 pb-0.5 my-0.5">
+          <h1 class="font-display text-white text-[32px] sm:text-[38px] font-black tracking-tight leading-none uppercase">
+            HEY, CHRISTIAN
+          </h1>
+        </div>
+
+        <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
+        <div class="anim-greeting px-2 mb-1.5">
+          <h2 class="font-sans text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase m-0 leading-none">
+            PROXIMOS EVENTOS
+          </h2>
+        </div>
       </div>
 
-      <!-- 3. CONTENIDO PRINCIPAL: TARJETA UNIFICADA CON BORDE #E87A72 -->
-      <main class="anim-main-card flex-1 flex flex-col justify-center px-4 my-auto py-1">
-        <div class="relative w-full rounded-[24px] bg-[#181A1E] border-[1.5px] border-[#E87A72] p-5 flex flex-col justify-between shadow-2xl overflow-hidden">
-          
-          <!-- Encabezado Interno: PROXIMOS EVENTOS -->
-          <div class="w-full mb-3">
-            <h3 class="font-display text-[#9CA3AF] text-xl font-bold tracking-wider uppercase m-0 leading-none">
-              PROXIMOS EVENTOS
-            </h3>
-          </div>
-
-          <!-- Vitrina Cover Flow 3D tipo Poster Horizontal -->
-          <div class="relative w-full h-[180px] flex items-center justify-center overflow-hidden my-1" style="perspective: 1000px;">
-            <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
-              
-              <!-- POSTER 0: DUBAI -->
-              <div class="cf-poster absolute w-[255px] h-[150px] rounded-2xl overflow-hidden border border-neutral-800 shadow-lg flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4 cursor-pointer transition-all duration-300 ease-out" onclick="setPoster(0)">
-                <div class="px-2.5 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mb-1.5">
-                  <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
+      <!-- 2. ZONA CENTRAL ELÁSTICA (CARRUSEL DE EVENTOS) -->
+      <main class="anim-main-card flex-1 min-h-0 flex flex-col justify-center w-full my-auto py-1 z-10 overflow-hidden">
+        <div class="relative w-full flex-1 min-h-0 max-h-[420px] flex items-center justify-center py-1" style="perspective: 1100px;">
+          <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
+            
+            <!-- TARJETA COMPLETA 0: CLUB DUBAI -->
+            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(0)">
+              <!-- Miniatura Superior -->
+              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-2 flex-shrink-0 mb-1">
+                <div class="px-2.5 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mb-1">
+                  <span class="text-[#00f3ff] font-display text-[10px] sm:text-xs tracking-widest font-black uppercase">
                     CLUB DUBÁI
                   </span>
                 </div>
-                <span class="font-display text-white text-base font-bold tracking-wider uppercase">
+                <span class="font-display text-white text-sm sm:text-base font-bold tracking-wider uppercase">
                   VIP NIGHT
                 </span>
               </div>
+              <!-- Bloque Descriptivo y Metadatos Requeridos -->
+              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
+                <div class="space-y-0.5">
+                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+                    FLYER VIP: CLUB DUBÁI
+                  </h4>
+                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
+                  <div>
+                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                      SÁB. 14 DE SEPTIEMBRE
+                    </p>
+                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                      22:00 — 04:30
+                    </p>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                    Club Dubái · Sopocachi
+                  </p>
+                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                    ÚLTIMOS 18 CUPOS ·
+                  </p>
+                </div>
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                  SOLICITAR VIP
+                </button>
+              </div>
+            </div>
 
-              <!-- POSTER 1: INDIE NIGHT -->
-              <div class="cf-poster absolute w-[255px] h-[150px] rounded-2xl overflow-hidden border border-neutral-800 shadow-lg flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-4 cursor-pointer transition-all duration-300 ease-out" onclick="setPoster(1)">
-                <div class="flex items-center space-x-2 text-2xl mb-1">
+            <!-- TARJETA COMPLETA 1: INDIE NIGHT -->
+            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(1)">
+              <!-- Miniatura Superior -->
+              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-2 flex-shrink-0 mb-1">
+                <div class="flex items-center space-x-1.5 text-xl mb-0.5">
                   <span>🎸</span><span>🎤</span><span>⚡</span>
                 </div>
-                <span class="font-display text-cyan-400 text-base font-black tracking-widest uppercase">
+                <span class="font-display text-cyan-400 text-sm sm:text-base font-black tracking-widest uppercase">
                   INDIE LIVE
                 </span>
               </div>
-
-              <!-- POSTER 2: MAMACITA REGGAETON (ACTIVO POR DEFECTO COMO EN REFERENCIA) -->
-              <div class="cf-poster absolute w-[255px] h-[150px] rounded-2xl overflow-hidden border border-neutral-800 shadow-lg flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-4 cursor-pointer transition-all duration-300 ease-out" onclick="setPoster(2)">
-                <div class="flex items-center space-x-1 mb-1">
-                  <span class="text-2xl filter drop-shadow">🔥</span>
-                  <span class="text-2xl filter drop-shadow">💃</span>
+              <!-- Bloque Descriptivo y Metadatos Requeridos -->
+              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
+                <div class="space-y-0.5">
+                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+                    FLYER CONCIERTO: INDIE NIGHT
+                  </h4>
+                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
+                  <div>
+                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                      VIE. 20 DE SEPTIEMBRE
+                    </p>
+                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                      21:00 — 03:00
+                    </p>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                    Teatro Equinoccio · San Miguel
+                  </p>
+                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                    ÚLTIMOS 5 CUPOS ·
+                  </p>
                 </div>
-                <span class="font-display text-[#fab205] text-lg font-black tracking-widest uppercase leading-tight">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                  SOLICITAR VIP
+                </button>
+              </div>
+            </div>
+
+            <!-- TARJETA COMPLETA 2: MAMACITA REGGAETON (INICIAL ACTIVA) -->
+            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(2)">
+              <!-- Miniatura Superior -->
+              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-2 text-center flex-shrink-0 mb-1">
+                <div class="flex items-center space-x-1 mb-0.5">
+                  <span class="text-xl filter drop-shadow">🔥</span>
+                  <span class="text-xl filter drop-shadow">💃</span>
+                </div>
+                <span class="font-display text-[#fab205] text-base sm:text-lg font-black tracking-widest uppercase leading-tight">
                   LATIN PERREO
                 </span>
               </div>
-
-              <!-- POSTER 3: BASEMENT AFTER -->
-              <div class="cf-poster absolute w-[255px] h-[150px] rounded-2xl overflow-hidden border border-neutral-800 shadow-lg flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-4 cursor-pointer transition-all duration-300 ease-out" onclick="setPoster(3)">
-                <div class="w-9 h-9 border border-[#12c061] rounded-full flex items-center justify-center mb-1">
-                  <span class="font-display text-[#12c061] text-[10px] font-mono font-bold">135</span>
+              <!-- Bloque Descriptivo y Metadatos Requeridos -->
+              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
+                <div class="space-y-0.5">
+                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+                    FLYER: MAMACITA REGGAETON
+                  </h4>
+                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
+                  <div>
+                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                      SÁB. 21 DE SEPTIEMBRE
+                    </p>
+                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                      22:30 — 05:00
+                    </p>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                    Foro Club · Calacoto
+                  </p>
+                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                    ÚLTIMOS 25 CUPOS ·
+                  </p>
                 </div>
-                <span class="font-display text-white text-base font-bold tracking-wider uppercase">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                  SOLICITAR VIP
+                </button>
+              </div>
+            </div>
+
+            <!-- TARJETA COMPLETA 3: BASEMENT AFTER -->
+            <div class="cf-fullcard absolute w-[275px] sm:w-[295px] h-[340px] sm:h-[370px] max-h-full rounded-[22px] bg-[#181A1E] border-[3.5px] border-[#E87A72] p-3 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(3)">
+              <!-- Miniatura Superior -->
+              <div class="relative w-full h-[35%] max-h-[135px] min-h-[90px] rounded-xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-2 flex-shrink-0 mb-1">
+                <div class="w-7 h-7 border border-[#12c061] rounded-full flex items-center justify-center mb-0.5">
+                  <span class="font-display text-[#12c061] text-[9px] font-mono font-bold">135</span>
+                </div>
+                <span class="font-display text-white text-sm sm:text-base font-bold tracking-wider uppercase">
                   TECHNO AFTER
                 </span>
               </div>
-
+              <!-- Bloque Descriptivo y Metadatos Requeridos -->
+              <div class="w-full flex-1 min-h-0 flex flex-col justify-between pt-0.5">
+                <div class="space-y-0.5">
+                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight line-clamp-1">
+                    FLYER: BASEMENT AFTER
+                  </h4>
+                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
+                  <div>
+                    <p class="font-display text-white text-[11px] sm:text-xs font-bold tracking-wide uppercase leading-tight">
+                      DOM. 22 DE SEPTIEMBRE
+                    </p>
+                    <p class="font-sans text-zinc-400 text-[10px] sm:text-[11px] font-medium leading-tight mt-0.5">
+                      03:00 — 09:00
+                    </p>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-[11px] font-normal line-clamp-1 leading-tight">
+                    The Basement Club · Centro
+                  </p>
+                  <p class="font-sans text-[#E87A72] text-[11px] font-bold tracking-wide leading-tight">
+                    ÚLTIMOS 10 CUPOS ·
+                  </p>
+                </div>
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-1.5 py-2 px-3.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                  SOLICITAR VIP
+                </button>
+              </div>
             </div>
+
           </div>
-
-          <!-- Datos del Evento Seleccionado -->
-          <div class="w-full mt-2.5">
-            <h4 id="eventTitle" class="font-display text-white text-xl font-black tracking-tight uppercase leading-tight">
-              FLYER: MAMACITA REGGAETON
-            </h4>
-            <p id="eventSubtitle" class="font-sans text-[#E87A72] text-sm font-medium tracking-normal mt-0.5 leading-tight">
-              Open Bar Mujeres hasta las 01:00
-            </p>
-            <p id="eventDetails" class="font-sans text-neutral-400 text-xs font-normal mt-1">
-              Quedan 25 cupos •
-            </p>
-          </div>
-
-          <!-- Botón Blanco Ancho: SOLICITAR VIP -->
-          <button onclick="requestCurrentVip()" class="w-full mt-4 py-2.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-            SOLICITAR VIP
-          </button>
-
         </div>
 
         <!-- Paginador Dots Centrados -->
-        <div class="flex items-center justify-center space-x-2 mt-3.5">
-          <button onclick="setPoster(0)" id="dot0" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setPoster(1)" id="dot1" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setPoster(2)" id="dot2" class="w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setPoster(3)" id="dot3" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
+        <div class="flex items-center justify-center space-x-1.5 mt-1 flex-shrink-0">
+          <button onclick="setFullCard(0)" id="dot0" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
+          <button onclick="setFullCard(1)" id="dot1" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
+          <button onclick="setFullCard(2)" id="dot2" class="w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none"></button>
+          <button onclick="setFullCard(3)" id="dot3" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
         </div>
       </main>
 
-      <!-- 4. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] -->
-      <div class="anim-footer px-4 mt-auto pt-2 mb-2 z-20">
-        <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
-          <!-- CREAR EVENTO CON [ + ] -->
-          <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
-            <span class="font-display text-black text-[24px] sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
-              <span class="text-xl font-bold">[ + ]</span>
-              <span>CREAR EVENTO</span>
-            </span>
+      <!-- 3. ZONA INFERIOR ANCLADA (ACCIONES Y NAVEGACIÓN) -->
+      <div class="w-full flex flex-col flex-shrink-0 z-30 -mx-4 -mb-2 w-[calc(100%+2rem)]">
+        <!-- Barra de Acción: Separación fija de 8px a 10px encima de Bottom Nav -->
+        <div class="anim-footer px-4 mb-[9px] z-20">
+          <div class="relative w-full h-12 sm:h-13 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
+            <!-- CREAR EVENTO CON [ + ] -->
+            <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-2.5 pr-2 text-left focus:outline-none group">
+              <span class="font-display text-black text-xl sm:text-[22px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+                <span class="text-lg font-bold">[ + ]</span>
+                <span>CREAR EVENTO</span>
+              </span>
+            </button>
+
+            <!-- ESCANEAR QR -->
+            <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
+              <svg class="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24">
+                <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
+              </svg>
+              <span class="font-display text-white text-xs font-bold tracking-wider uppercase whitespace-nowrap">
+                ESCANEAR QR
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bottom Navigation Bar al ras inferior -->
+        <nav class="anim-bottom-nav w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-2.5 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)] relative">
+          <!-- Home -->
+          <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
           </button>
 
-          <!-- ESCANEAR QR -->
-          <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
-            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
-              <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
+          <!-- Pases / Ticket -->
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
+            <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
             </svg>
-            <span class="font-display text-white text-[12px] sm:text-xs font-bold tracking-wider uppercase whitespace-nowrap">
-              ESCANEAR QR
-            </span>
           </button>
-        </div>
+
+          <!-- Buscar / Lupa -->
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
+          <!-- Home Indicator Bar Inferior -->
+          <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
+        </nav>
       </div>
 
     </div>
-
-    <!-- 5. BOTTOM NAVIGATION BAR FIJA AL FONDO -->
-    <nav class="anim-bottom-nav fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-      <!-- Home -->
-      <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      </button>
-
-      <!-- Pases / Ticket -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/passes')">
-        <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-        </svg>
-      </button>
-
-      <!-- Buscar / Lupa -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </button>
-
-      <!-- Home Indicator Bar Inferior -->
-      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
-    </nav>
 
     <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
     <div id="doorModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
@@ -289,6 +396,214 @@
       </div>
     </div>
 
+    <!-- MODAL DE DETALLE DEL EVENTO PÚBLICO (TARJETA CENTRADA CON ZOOM-IN SUAVE) -->
+    <div id="eventDetailModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
+      <!-- Fondo con oscurecimiento y desenfoque intenso (Backdrop Blur) -->
+      <div onclick="closeEventDetail()" class="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity"></div>
+
+      <!-- Contenedor de la Tarjeta Centrada en Pantalla con Animación Zoom In Suave -->
+      <div id="modalCardContainer" class="anim-modal-zoom relative w-full max-w-[345px] sm:max-w-[360px] max-h-[84%] bg-[#181A1E] border-2 border-[#E87A72] rounded-[28px] p-5 shadow-2xl z-10 flex flex-col overflow-hidden">
+        <!-- Botón de Cierre Superior Derecho (✕) -->
+        <button onclick="closeEventDetail()" aria-label="Cerrar modal" class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white/80 hover:text-white flex items-center justify-center text-base z-20 border border-neutral-700/60 focus:outline-none transition-colors">
+          ✕
+        </button>
+
+        <!-- Contenido con scroll vertical -->
+        <div class="overflow-y-auto no-scrollbar pr-1 pb-3 flex-1 min-h-0">
+          <!-- 1. Cabecera Gráfica: Flyer visual -->
+          <div id="modalBanner" class="relative w-full h-[145px] sm:h-[155px] rounded-2xl overflow-hidden border border-neutral-800 shadow mb-3.5 flex-shrink-0">
+          </div>
+
+          <!-- Título Principal y Subtítulo -->
+          <h3 id="modalTitle" class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-tight"></h3>
+          <p id="modalSubtitle" class="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1"></p>
+
+          <!-- 2. Metadatos Completos -->
+          <div class="mt-3.5 p-3 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
+            <div class="flex items-center text-white/90 text-xs sm:text-sm font-sans">
+              <span class="w-5 text-center mr-2 text-base">📅</span>
+              <span id="modalDate" class="font-display uppercase tracking-wide font-bold"></span>
+            </div>
+            <div class="flex items-center text-neutral-300 text-xs sm:text-sm font-sans">
+              <span class="w-5 text-center mr-2 text-base">⏰</span>
+              <span id="modalTime" class="font-sans"></span>
+            </div>
+            <div class="flex items-center text-neutral-300 text-xs sm:text-sm font-sans">
+              <span class="w-5 text-center mr-2 text-base text-neutral-500">•</span>
+              <span id="modalAddress" class="font-sans"></span>
+            </div>
+          </div>
+
+          <!-- 3. Sección "Detalles y Motivo" -->
+          <div class="mt-4">
+            <h4 class="font-display text-neutral-400 text-xs font-bold uppercase tracking-wider mb-1.5">
+              DETALLES Y TEMÁTICA
+            </h4>
+            <p id="modalDescription" class="font-sans text-neutral-200 text-xs sm:text-sm leading-relaxed"></p>
+          </div>
+
+          <!-- 4. Sección "Activaciones y Promociones" -->
+          <div class="mt-4">
+            <h4 class="font-display text-neutral-400 text-xs font-bold uppercase tracking-wider mb-2">
+              ACTIVACIONES Y BENEFICIOS VIP
+            </h4>
+            <ul id="modalPromotions" class="space-y-1.5"></ul>
+          </div>
+        </div>
+
+        <!-- 5. Botón de Conversión Fijo al pie del modal: SOLICITAR VIP -->
+        <div class="pt-3 border-t border-neutral-800/80 mt-auto flex-shrink-0">
+          <button id="modalCtaBtn" class="w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-95 focus:outline-none">
+            SOLICITAR VIP
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA DEL PASE INDIVIDUAL: /pass/:passId (PassScreen) -->
+    <div id="passScreenView" class="hidden absolute inset-0 z-50 bg-[#07080A] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-6">
+      
+      <!-- Fondo sutil con opacidad -->
+      <div class="absolute inset-0 z-0 bg-cover bg-center opacity-30 pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
+
+      <!-- Sombra degradada superior -->
+      <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-[#07080A] via-[#07080A]/80 to-transparent pointer-events-none z-10"></div>
+
+      <!-- Contenedor interior estructurado -->
+      <div class="relative z-20 flex-1 flex flex-col justify-between h-full px-5 pt-5 md:pt-11 pb-3">
+        
+        <!-- 1. TOP NAVIGATION BAR -->
+        <header class="flex items-center justify-between pb-2 w-full relative z-30">
+          <!-- Botón de retroceso (←) -->
+          <button onclick="closePassScreen()" aria-label="Regresar a inicio" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white transition-all active:scale-90 focus:outline-none">
+            <span class="text-xl font-bold leading-none">←</span>
+          </button>
+
+          <!-- Título central: Pase (Puerta) -->
+          <h1 class="font-sans text-white text-base sm:text-lg font-semibold tracking-wide text-center flex-1 pr-10">
+            Pase (Puerta)
+          </h1>
+        </header>
+
+        <!-- 2. SILUETA FÍSICA DEL TICKET (VECTOR SVG CON PERFORACIONES Y BORDES VERDES) -->
+        <div class="flex-1 flex items-center justify-center my-auto py-1">
+          <div class="relative w-[320px] sm:w-[335px] h-[510px] sm:h-[530px] flex items-center justify-center mx-auto select-none filter drop-shadow-2xl">
+            
+            <!-- Silueta SVG de fondo del ticket con perforaciones festoneadas y muescas circulares -->
+            <svg viewBox="0 0 340 540" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+              <path
+                d="M 0 0 H 10 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 9 A 21 21 0 0 0 191 0 h 9 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 10 L 340 0 L 340 123 a 12 12 0 0 0 0 24 L 340 403 a 12 12 0 0 0 0 24 L 340 540 H 330 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -9 A 21 21 0 0 0 149 540 h -9 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -10 L 0 540 L 0 427 a 12 12 0 0 0 0 -24 L 0 147 a 12 12 0 0 0 0 -24 Z"
+                fill="#0E1013"
+                stroke="#12c061"
+                stroke-width="1.75"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+              />
+              <!-- Línea punteada superior -->
+              <line x1="14" y1="135" x2="326" y2="135" stroke="#272C35" stroke-width="1.5" stroke-dasharray="5 5" />
+              <!-- Línea punteada inferior -->
+              <line x1="14" y1="415" x2="326" y2="415" stroke="#272C35" stroke-width="1.5" stroke-dasharray="5 5" />
+            </svg>
+
+            <!-- Contenido Interior del Ticket -->
+            <div class="relative z-10 w-full h-full flex flex-col justify-between py-6 px-5">
+              
+              <!-- 1. Cabecera del Evento -->
+              <div class="flex flex-col items-center justify-center text-center pt-2">
+                <span class="font-sans text-white text-xl sm:text-2xl font-bold tracking-widest leading-none mb-1 opacity-90">
+                  妈妈
+                </span>
+                <h2 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+                  MAMACITA
+                </h2>
+              </div>
+
+              <!-- 2. Visor y Código QR Central -->
+              <div class="flex-1 flex items-center justify-center my-2 relative">
+                <div class="relative w-[205px] h-[205px] sm:w-[218px] sm:h-[218px] flex items-center justify-center p-3">
+                  <!-- Esquinas tipo visor de cámara en color verde #12c061 -->
+                  <div class="absolute top-0 left-0 w-8 h-8 border-t-[3.5px] border-l-[3.5px] border-[#12c061] rounded-tl-xl pointer-events-none"></div>
+                  <div class="absolute top-0 right-0 w-8 h-8 border-t-[3.5px] border-r-[3.5px] border-[#12c061] rounded-tr-xl pointer-events-none"></div>
+                  <div class="absolute bottom-0 left-0 w-8 h-8 border-b-[3.5px] border-l-[3.5px] border-[#12c061] rounded-bl-xl pointer-events-none"></div>
+                  <div class="absolute bottom-0 right-0 w-8 h-8 border-b-[3.5px] border-r-[3.5px] border-[#12c061] rounded-br-xl pointer-events-none"></div>
+
+                  <!-- Código QR estilo idéntico a referencia -->
+                  <div class="w-[170px] h-[170px] sm:w-[185px] sm:h-[185px] flex items-center justify-center p-1 rounded-lg overflow-hidden bg-[#0A0C0E]">
+                    <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
+                      <rect x="5" y="5" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="9" y="9" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
+
+                      <rect x="67" y="5" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="71" y="9" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
+
+                      <rect x="5" y="67" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="9" y="71" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
+
+                      <rect x="38" y="6" width="6" height="6" fill="currentColor" />
+                      <rect x="48" y="6" width="12" height="6" fill="currentColor" />
+                      <rect x="38" y="16" width="6" height="12" fill="currentColor" />
+                      <rect x="54" y="16" width="6" height="6" fill="currentColor" />
+                      <rect x="48" y="26" width="12" height="6" fill="currentColor" />
+
+                      <rect x="6" y="38" width="12" height="6" fill="currentColor" />
+                      <rect x="22" y="38" width="6" height="6" fill="currentColor" />
+                      <rect x="32" y="38" width="18" height="6" fill="currentColor" />
+                      <rect x="56" y="38" width="12" height="6" fill="currentColor" />
+                      <rect x="74" y="38" width="6" height="12" fill="currentColor" />
+                      <rect x="86" y="38" width="8" height="6" fill="currentColor" />
+
+                      <rect x="16" y="48" width="12" height="6" fill="currentColor" />
+                      <rect x="34" y="48" width="6" height="18" fill="currentColor" />
+                      <rect x="46" y="48" width="14" height="6" fill="currentColor" />
+                      <rect x="66" y="48" width="8" height="6" fill="currentColor" />
+                      <rect x="80" y="48" width="14" height="6" fill="currentColor" />
+
+                      <rect x="6" y="58" width="6" height="6" fill="currentColor" />
+                      <rect x="16" y="58" width="12" height="6" fill="currentColor" />
+                      <rect x="46" y="58" width="6" height="12" fill="currentColor" />
+                      <rect x="58" y="58" width="16" height="6" fill="currentColor" />
+                      <rect x="86" y="58" width="8" height="12" fill="currentColor" />
+
+                      <rect x="38" y="70" width="8" height="6" fill="currentColor" />
+                      <rect x="52" y="70" width="12" height="6" fill="currentColor" />
+                      <rect x="70" y="70" width="6" height="12" fill="currentColor" />
+                      <rect x="82" y="70" width="12" height="6" fill="currentColor" />
+
+                      <rect x="38" y="80" width="18" height="6" fill="currentColor" />
+                      <rect x="62" y="80" width="8" height="14" fill="currentColor" />
+                      <rect x="76" y="86" width="18" height="8" fill="currentColor" />
+                      <rect x="44" y="90" width="12" height="5" fill="currentColor" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Pie del Ticket -->
+              <div class="flex flex-col items-center justify-center text-center pb-2">
+                <h3 class="font-display text-white text-xl sm:text-[22px] font-black tracking-wide uppercase leading-tight">
+                  CRIS PÉREZ · LISTA G.
+                </h3>
+                <p class="font-sans text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase mt-1 leading-tight">
+                  ID: #4092 · VERIFICADO CON GOOGLE
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. BOTÓN INFERIOR DE RESPALDO (IN-APP) -->
+        <div class="w-full pt-3 pb-2 flex justify-center">
+          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-5 rounded-2xl bg-white hover:bg-neutral-100 active:scale-95 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-lg focus:outline-none">
+            DESCARGAR QR / GUARDAR EN FOTOS
+          </button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <script>
@@ -297,41 +612,87 @@
         id: 'vip_dubai_01',
         title: 'FLYER VIP: CLUB DUBÁI',
         subtitle: 'Ingreso VIP Free hasta las 00:30',
-        badgeDetail: 'Quedan 18 cupos •',
+        dateDisplay: 'SÁB. 14 DE SEPTIEMBRE',
+        timeRange: '22:00 — 04:30',
+        location: 'Club Dubái · Sopocachi',
+        availabilityText: 'ÚLTIMOS 18 CUPOS ·',
+        theme: 'dubai',
+        exactAddress: 'Av. 20 de Octubre #2450, Sopocachi, La Paz',
+        description: 'Noche de glamour y fiesta electrónica en el club insignia de la ciudad. Contaremos con warm-up de DJ Mateo y cierre exclusivo con ritmos tech-house hasta el amanecer.',
+        promotions: [
+          'Ingreso VIP Free exclusivo hasta las 00:30',
+          '2x1 en gin tonic y cócteles de autor toda la noche',
+          'Acceso directo sin fila por puerta VIP',
+          'Mesa en terraza lounge sujeta a llegada temprana'
+        ],
         route: '/vip/dubai'
       },
       {
         id: 'vip_indie_02',
         title: 'FLYER CONCIERTO: INDIE NIGHT',
         subtitle: 'Lista de Invitados Especiales',
-        badgeDetail: 'Últimos 5 cupos •',
+        dateDisplay: 'VIE. 20 DE SEPTIEMBRE',
+        timeRange: '21:00 — 03:00',
+        location: 'Teatro Equinoccio · San Miguel',
+        availabilityText: 'ÚLTIMOS 5 CUPOS ·',
+        theme: 'indie',
+        exactAddress: 'Calle Sánchez Lima #2191, San Miguel',
+        description: 'Encuentro imperdible de bandas indie emergentes en vivo, sesiones acústicas y vinyl set experimental para los amantes de la música independiente.',
+        promotions: [
+          'Acceso preferencial a soundcheck y backstage',
+          'Bebida de cortesía de bienvenida (Cerveza artesanal)',
+          'Descuento del 20% en merch oficial de las bandas'
+        ],
         route: '/vip/indie'
       },
       {
         id: 'vip_mamacita_03',
         title: 'FLYER: MAMACITA REGGAETON',
         subtitle: 'Open Bar Mujeres hasta las 01:00',
-        badgeDetail: 'Quedan 25 cupos •',
+        dateDisplay: 'SÁB. 21 DE SEPTIEMBRE',
+        timeRange: '22:30 — 05:00',
+        location: 'Foro Club · Calacoto',
+        availabilityText: 'ÚLTIMOS 25 CUPOS ·',
+        theme: 'reggaeton',
+        exactAddress: 'Calle 15 de Calacoto, Esq. Julio Patiño #802',
+        description: 'La sesión urbana más encendida de la temporada. Perreo clásico y new wave de la mano de los DJs más top de la escena, animación en vivo y shows de baile.',
+        promotions: [
+          'Open Bar mujeres hasta la 01:00 en tragos seleccionados',
+          '2x1 en shots de tequila hasta la medianoche',
+          'Acceso exclusivo a zona de palcos VIP y guardarropa free',
+          'Drop digital sorpresa con beneficios para la próxima edición'
+        ],
         route: '/vip/mamacita'
       },
       {
         id: 'vip_basement_04',
         title: 'FLYER: BASEMENT AFTER',
         subtitle: 'Acceso exclusivo lista de puerta',
-        badgeDetail: 'Quedan 10 cupos •',
+        dateDisplay: 'DOM. 22 DE SEPTIEMBRE',
+        timeRange: '03:00 — 09:00',
+        location: 'The Basement Club · Centro',
+        availabilityText: 'ÚLTIMOS 10 CUPOS ·',
+        theme: 'techno',
+        exactAddress: 'Calle Murillo #1024, Subsuelo 2, Centro Histórico',
+        description: 'Sesión non-stop de techno industrial, visuales inmersivos y atmósfera underground para los que nunca quieren que termine la fiesta.',
+        promotions: [
+          'Entrada prioritaria por lista digital',
+          'Shots energizantes de bienvenida cortesía del club',
+          'Acceso libre a chill out zone con hidratación libre'
+        ],
         route: '/vip/basement'
       }
     ];
 
-    let currentPosterIndex = 2; // Inicia en Mamacita como en la imagen
-    const totalPosters = eventsData.length;
+    let currentCardIndex = 2; // Inicia en Mamacita como en la imagen
+    const totalCards = 4;
 
-    function setPoster(targetIndex) {
-      currentPosterIndex = Math.max(0, Math.min(totalPosters - 1, targetIndex));
-      const posters = document.querySelectorAll('.cf-poster');
+    function setFullCard(targetIndex) {
+      currentCardIndex = Math.max(0, Math.min(totalCards - 1, targetIndex));
+      const cards = document.querySelectorAll('.cf-fullcard');
       
-      posters.forEach((poster, idx) => {
-        const offset = idx - currentPosterIndex;
+      cards.forEach((card, idx) => {
+        const offset = idx - currentCardIndex;
         let rotateY = 0;
         let scale = 1;
         let opacity = 1;
@@ -340,37 +701,31 @@
         let translateZ = 0;
 
         if (offset < 0) {
-          rotateY = 55;
-          scale = 0.85;
+          rotateY = 50;
+          scale = 0.86;
           opacity = Math.max(0.3, 0.7 + offset * 0.2);
           zIndex = 10 + offset;
-          translateX = -120 + (offset + 1) * 30;
+          translateX = -140 + (offset + 1) * 35;
           translateZ = -70;
         } else if (offset > 0) {
-          rotateY = -55;
-          scale = 0.85;
+          rotateY = -50;
+          scale = 0.86;
           opacity = Math.max(0.3, 0.7 - offset * 0.2);
           zIndex = 10 - offset;
-          translateX = 120 + (offset - 1) * 30;
+          translateX = 140 + (offset - 1) * 35;
           translateZ = -70;
         }
 
-        poster.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
-        poster.style.opacity = opacity;
-        poster.style.zIndex = zIndex;
+        card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        card.style.opacity = opacity;
+        card.style.zIndex = zIndex;
       });
 
-      // Actualizar texto del evento seleccionado
-      const cur = eventsData[currentPosterIndex];
-      document.getElementById('eventTitle').innerText = cur.title;
-      document.getElementById('eventSubtitle').innerText = cur.subtitle;
-      document.getElementById('eventDetails').innerText = cur.badgeDetail;
-
       // Actualizar dots
-      for (let i = 0; i < totalPosters; i++) {
+      for (let i = 0; i < totalCards; i++) {
         const dot = document.getElementById(`dot${i}`);
         if (dot) {
-          if (i === currentPosterIndex) {
+          if (i === currentCardIndex) {
             dot.className = "w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none";
           } else {
             dot.className = "w-1.5 h-1.5 bg-neutral-600 hover:bg-neutral-400 rounded-full transition-all duration-300 focus:outline-none";
@@ -379,14 +734,111 @@
       }
     }
 
-    function requestCurrentVip() {
-      const cur = eventsData[currentPosterIndex];
-      handleNavigation(cur.route);
+    function handleCardTap(index) {
+      if (currentCardIndex === index) {
+        openEventDetail(index);
+      } else {
+        setFullCard(index);
+      }
+    }
+
+    function openEventDetail(index) {
+      const event = eventsData[index];
+      if (!event) return;
+
+      let bannerHtml = '';
+      if (event.theme === 'reggaeton') {
+        bannerHtml = `
+          <div class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-3 text-center">
+            <div class="flex items-center space-x-1 mb-1">
+              <span class="text-2xl filter drop-shadow">🔥</span>
+              <span class="text-2xl filter drop-shadow">💃</span>
+            </div>
+            <span class="font-display text-[#fab205] text-xl font-black tracking-widest uppercase leading-tight">
+              LATIN PERREO
+            </span>
+          </div>`;
+      } else if (event.theme === 'dubai') {
+        bannerHtml = `
+          <div class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-3">
+            <div class="px-2.5 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mb-1.5">
+              <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
+                CLUB DUBÁI
+              </span>
+            </div>
+            <span class="font-display text-white text-base font-bold tracking-wider uppercase">
+              VIP NIGHT & COCKTAILS
+            </span>
+          </div>`;
+      } else if (event.theme === 'indie') {
+        bannerHtml = `
+          <div class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-3">
+            <div class="flex items-center space-x-2 text-2xl mb-1">
+              <span>🎸</span><span>🎤</span><span>⚡</span>
+            </div>
+            <span class="font-display text-cyan-400 text-lg font-black tracking-widest uppercase">
+              INDIE LIVE CONCERT
+            </span>
+          </div>`;
+      } else if (event.theme === 'techno') {
+        bannerHtml = `
+          <div class="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-3">
+            <div class="w-10 h-10 border border-[#12c061] rounded-full flex items-center justify-center mb-1">
+              <span class="font-display text-[#12c061] text-[10px] font-mono font-bold">135 BPM</span>
+            </div>
+            <span class="font-display text-white text-base font-bold tracking-wider uppercase">
+              TECHNO BASEMENT AFTER
+            </span>
+          </div>`;
+      }
+
+      bannerHtml += `
+        <div class="absolute bottom-2 left-2.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm border border-neutral-700/80">
+          <span class="font-sans text-xs font-bold text-[#E87A72] tracking-wide">
+            ${event.availabilityText}
+          </span>
+        </div>
+      `;
+
+      document.getElementById('modalBanner').innerHTML = bannerHtml;
+      document.getElementById('modalTitle').innerText = event.title;
+      document.getElementById('modalSubtitle').innerText = event.subtitle;
+      document.getElementById('modalDate').innerText = event.dateDisplay;
+      document.getElementById('modalTime').innerText = event.timeRange;
+      document.getElementById('modalAddress').innerText = event.exactAddress || event.location;
+      document.getElementById('modalDescription').innerText = event.description;
+
+      const promosUl = document.getElementById('modalPromotions');
+      promosUl.innerHTML = (event.promotions || []).map(p => `
+        <li class="flex items-start text-xs sm:text-sm text-neutral-300 font-sans">
+          <span class="text-[#E87A72] mr-2 leading-tight">✦</span>
+          <span>${p}</span>
+        </li>
+      `).join('');
+
+      const ctaBtn = document.getElementById('modalCtaBtn');
+      ctaBtn.onclick = () => {
+        handleNavigation(event.route);
+        closeEventDetail();
+      };
+
+      const modalEl = document.getElementById('eventDetailModal');
+      modalEl.classList.remove('hidden');
+      const cardEl = document.getElementById('modalCardContainer');
+      if (cardEl) {
+        cardEl.classList.remove('anim-modal-zoom');
+        void cardEl.offsetWidth;
+        cardEl.classList.add('anim-modal-zoom');
+      }
+    }
+
+    function closeEventDetail() {
+      document.getElementById('eventDetailModal').classList.add('hidden');
     }
 
     // Inicializar Cover Flow y eventos táctiles / swipe
     window.addEventListener('DOMContentLoaded', () => {
-      setPoster(2);
+      setFullCard(2);
 
       const track = document.getElementById('coverFlowTrack');
       if (track) {
@@ -402,8 +854,8 @@
           if (!isDragging) return;
           const endX = e.changedTouches[0].clientX;
           const diffX = endX - startX;
-          if (diffX < -30) setPoster(currentPosterIndex + 1);
-          else if (diffX > 30) setPoster(currentPosterIndex - 1);
+          if (diffX < -30) setFullCard(currentCardIndex + 1);
+          else if (diffX > 30) setFullCard(currentCardIndex - 1);
           isDragging = false;
         });
 
@@ -415,8 +867,8 @@
         window.addEventListener('mouseup', (e) => {
           if (!isDragging) return;
           const diffX = e.clientX - startX;
-          if (diffX < -35) setPoster(currentPosterIndex + 1);
-          else if (diffX > 35) setPoster(currentPosterIndex - 1);
+          if (diffX < -35) setFullCard(currentCardIndex + 1);
+          else if (diffX > 35) setFullCard(currentCardIndex - 1);
           isDragging = false;
         });
       }
@@ -433,8 +885,30 @@
       setTimeout(() => toast.remove(), 2200);
     }
 
+    function openPassScreen() {
+      const passScreen = document.getElementById('passScreenView');
+      if (passScreen) {
+        passScreen.classList.remove('hidden');
+      }
+    }
+
+    function closePassScreen() {
+      const passScreen = document.getElementById('passScreenView');
+      if (passScreen) {
+        passScreen.classList.add('hidden');
+      }
+    }
+
+    function downloadPassQr() {
+      showToast('Pase guardado en Fotos');
+    }
+
     function handleNavigation(route) {
       console.log("Navegando a:", route);
+      if (route === '/passes' || route.startsWith('/pass')) {
+        openPassScreen();
+        return;
+      }
       showToast("Ruta: " + route);
     }
 
