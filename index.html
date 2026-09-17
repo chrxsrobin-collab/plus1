@@ -85,27 +85,33 @@
     }
   </style>
 </head>
-<body class="bg-[#080808] text-white flex justify-center items-center min-h-[100dvh] p-0 sm:p-4 overflow-x-hidden font-sans select-none">
+<body class="bg-[#0A0A0C] text-white min-h-[100dvh] flex items-center justify-center p-0 md:p-6 overflow-x-hidden font-sans select-none">
 
-  <!-- Marco de Dispositivo Móvil (100dvh dinámico, scroll vertical natural) -->
-  <div class="relative w-full sm:max-w-[390px] min-h-[100dvh] sm:h-[844px] bg-black sm:rounded-[42px] overflow-y-auto overflow-x-hidden flex flex-col justify-between shadow-[0_0_60px_rgba(0,0,0,0.95)] border-0 sm:border-[8px] sm:border-[#1c1d22] no-scrollbar">
+  <!-- Simulador iPhone 393x852 px (Escritorio) / 100% Pantalla Nativa (Celular) -->
+  <div class="relative w-full min-h-screen md:min-h-0 md:w-[393px] md:h-[852px] bg-black rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
     
-    <!-- Dynamic Island Mockup para escritorio -->
-    <div class="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-40 hidden sm:block"></div>
+    <!-- Dynamic Island Superior Hardware (120x35 px, centrada, z-50, pointer-events-none) -->
+    <div class="absolute top-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50 pointer-events-none hidden md:flex items-center justify-between px-3">
+      <!-- Sensor / Cámara simulada sutil -->
+      <div class="w-3 h-3 rounded-full bg-[#111] border border-neutral-800/80"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-[#080d1a] border border-[#162038]/60 flex items-center justify-center">
+        <div class="w-1 h-1 rounded-full bg-[#001845]"></div>
+      </div>
+    </div>
 
     <!-- Fondo Memphis con textura de gradiente verde a negro -->
-    <div class="fixed sm:absolute inset-0 z-0 bg-cover bg-bottom opacity-85 pointer-events-none"
+    <div class="absolute inset-0 z-0 bg-cover bg-bottom opacity-85 pointer-events-none"
          style="background-image: url('./assets/images/fondo_inicio.webp');">
     </div>
     
     <!-- Sombra / Degradado Superior para HUD -->
-    <div class="fixed sm:absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-black via-black/85 to-transparent pointer-events-none z-10"></div>
+    <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-black via-black/85 to-transparent pointer-events-none z-10"></div>
 
-    <!-- Contenedor Interior con padding inferior de seguridad amplio (pb-28) -->
-    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-x-hidden pb-28">
+    <!-- Scroll Interior Nativo de la App (overflow-y-auto h-full) -->
+    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-24">
       
-      <!-- 1. TOP BAR / HUD -->
-      <header class="anim-hud flex items-center justify-between px-5 pt-6 pb-2 w-full">
+      <!-- 1. TOP BAR / HUD (pt-12 en desktop para respetar Dynamic Island) -->
+      <header class="anim-hud flex items-center justify-between px-5 pt-6 md:pt-12 pb-2 w-full">
         <!-- Logo +1 -->
         <div class="flex items-center cursor-pointer">
           <span class="font-display text-white text-[32px] font-black tracking-tight leading-none">
@@ -135,14 +141,14 @@
       <!-- SECCIONES DE CONTENIDO CON NUEVA DISPOSICIÓN -->
       <div class="flex-1 flex flex-col pt-1">
         
-        <!-- 2. SECCIÓN TICKER MARQUEE EN LOOP (VIP & EVENTOS ·) -->
+        <!-- 2. SECCIÓN TICKER MARQUEE EN LOOP (FONDO VERDE NEÓN + LETRAS NEGRAS) -->
         <div class="w-full mt-1 mb-2">
-          <div class="anim-bar-right w-full bg-black/95 py-1.5 overflow-hidden flex border-y border-neutral-900">
+          <div class="anim-bar-right w-full h-11 bg-[#12c061] px-4 overflow-hidden flex items-center border-y border-[#0fa352] shadow-sm">
             <div class="anim-marquee will-change-transform">
-              <span class="font-display text-[#12c061] text-[20px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
+              <span class="font-display text-black text-[20px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
                 VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS ·&nbsp;
               </span>
-              <span class="font-display text-[#12c061] text-[20px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
+              <span class="font-display text-black text-[20px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
                 VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS ·&nbsp;
               </span>
             </div>
@@ -150,14 +156,14 @@
 
           <!-- 3. CARRUSEL 3D COVER FLOW (VITRINA DE EVENTOS INMEDIATA) -->
           <div class="anim-coverflow w-full my-2 overflow-hidden">
-            <div class="relative w-full h-[280px] flex items-center justify-center overflow-visible bg-transparent" style="perspective: 1000px; transform-style: preserve-3d;">
+            <div class="relative w-full h-[350px] flex items-center justify-center overflow-visible bg-transparent" style="perspective: 1000px; transform-style: preserve-3d;">
               <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y overflow-visible bg-transparent">
                 
                 <!-- CARD 0: CLUB DUBAI -->
-                <div class="cf-card absolute w-[205px] h-[265px] rounded-2xl p-2.5 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(0)">
+                <div class="cf-card absolute w-[260px] h-[330px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(0)">
                   <div>
                     <!-- Arte Pixel Club Dubái -->
-                    <div class="relative w-full h-[115px] rounded-xl overflow-hidden bg-[#0c0919] mb-1.5 flex flex-col items-center justify-center border border-purple-900/50 p-1.5">
+                    <div class="relative w-full h-[155px] rounded-xl overflow-hidden bg-[#0c0919] mb-1.5 flex flex-col items-center justify-center border border-purple-900/50 p-1.5">
                       <div class="w-full h-full border border-purple-500/40 rounded flex flex-col items-center justify-between p-1 bg-gradient-to-b from-[#190d35] via-[#090b1c] to-[#04040a]">
                         <div class="px-2 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm">
                           <span class="text-[#00f3ff] font-display text-[10px] tracking-widest font-black uppercase">
@@ -185,10 +191,10 @@
                 </div>
 
                 <!-- CARD 1: INDIE NIGHT -->
-                <div class="cf-card absolute w-[205px] h-[265px] rounded-2xl p-2.5 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(1)">
+                <div class="cf-card absolute w-[260px] h-[330px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(1)">
                   <div>
                     <!-- Arte Concierto Indie -->
-                    <div class="relative w-full h-[115px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0c1626] to-[#04070e] mb-1.5 flex flex-col items-center justify-end border border-neutral-800 p-1.5">
+                    <div class="relative w-full h-[155px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0c1626] to-[#04070e] mb-1.5 flex flex-col items-center justify-end border border-neutral-800 p-1.5">
                       <div class="absolute inset-0 flex justify-around opacity-40 pointer-events-none">
                         <div class="w-6 h-full bg-gradient-to-b from-cyan-400 to-transparent -rotate-12 transform origin-top"></div>
                         <div class="w-6 h-full bg-gradient-to-b from-pink-500 to-transparent rotate-6 transform origin-top"></div>
@@ -215,10 +221,10 @@
                 </div>
 
                 <!-- CARD 2: MAMACITA REGGAETON -->
-                <div class="cf-card absolute w-[205px] h-[265px] rounded-2xl p-2.5 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(2)">
+                <div class="cf-card absolute w-[260px] h-[330px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(2)">
                   <div>
                     <!-- Arte Mamacita Reggaeton -->
-                    <div class="relative w-full h-[115px] rounded-xl overflow-hidden bg-gradient-to-br from-[#ff0055] via-[#4a0024] to-[#14000b] mb-1.5 flex flex-col items-center justify-center border border-[#ff0055]/40 p-1.5">
+                    <div class="relative w-full h-[155px] rounded-xl overflow-hidden bg-gradient-to-br from-[#ff0055] via-[#4a0024] to-[#14000b] mb-1.5 flex flex-col items-center justify-center border border-[#ff0055]/40 p-1.5">
                       <span class="text-2xl filter drop-shadow">🔥💃</span>
                       <p class="font-display text-[#fab205] text-[10px] font-black tracking-widest uppercase mt-0.5">
                         LATIN PERREO
@@ -240,10 +246,10 @@
                 </div>
 
                 <!-- CARD 3: BASEMENT AFTER -->
-                <div class="cf-card absolute w-[205px] h-[265px] rounded-2xl p-2.5 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(3)">
+                <div class="cf-card absolute w-[260px] h-[330px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(3)">
                   <div>
                     <!-- Arte Techno Basement -->
-                    <div class="relative w-full h-[115px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] mb-1.5 flex flex-col items-center justify-center border border-neutral-700/60 p-1.5">
+                    <div class="relative w-full h-[155px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] mb-1.5 flex flex-col items-center justify-center border border-neutral-700/60 p-1.5">
                       <div class="w-10 h-10 border border-[#12c061] rounded-full flex items-center justify-center">
                         <span class="font-display text-[#12c061] text-[10px] font-mono font-bold tracking-widest">
                           135 BPM
@@ -279,11 +285,11 @@
           </div>
         </div>
 
-        <!-- 4. SECCIÓN "PRÓXIMOS PASES" -->
-        <div class="w-full mt-1 mb-2.5">
-          <div class="anim-bar-left w-full bg-[#12c061] py-1 px-4 flex items-center">
-            <h2 class="font-display text-black text-[20px] font-black tracking-wider uppercase m-0 leading-none">
-              PROXIMOS PASES
+        <!-- 4. SECCIÓN "PRÓXIMOS EVENTOS" (FONDO NEGRO MATE + TEXTO VERDE NEÓN - H-11) -->
+        <div class="w-full mt-2 mb-1.5">
+          <div class="anim-bar-left w-full h-11 bg-[#0E0F12] border-y border-neutral-900 px-4 flex items-center shadow-sm">
+            <h2 class="font-display text-[#12c061] text-[20px] font-black tracking-wider uppercase m-0 leading-none">
+              PRÓXIMOS EVENTOS
             </h2>
           </div>
 
@@ -291,54 +297,66 @@
           <div class="anim-passes w-full mt-2">
             <div class="flex space-x-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-3 py-1.5">
               
-              <!-- CARD 1: CUMPLE DE PEPE -->
-              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-3.5 bg-[#101114] border-[2px] border-[#fe97de] shadow-[0_6px_0px_0px_#fe97de] flex flex-col items-center">
-                <div class="flex items-center justify-center space-x-1.5 mb-1">
-                  <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#1f232b] text-white text-[11px] font-bold font-mono border border-neutral-700">
-                    📅 24
-                  </span>
-                  <h3 class="font-display text-white text-[20px] font-black tracking-tight uppercase">
-                    CUMPLE DE PEPE
-                  </h3>
-                  <span class="text-base">🎂</span>
+              <!-- CARD 1: CUMPLE DE PEPE (HORIZONTAL CON MINIATURA 1:1) -->
+              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-row items-center gap-3">
+                <!-- Miniatura Cuadrada 1:1 -->
+                <div class="relative w-20 h-20 sm:w-[88px] sm:h-[88px] aspect-square flex-shrink-0 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800">
+                  <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=300&q=80" alt="Cumple Pepe" class="w-full h-full object-cover">
+                  <div class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm border border-neutral-700/80">
+                    <span class="font-mono text-[9px] font-bold text-white leading-none">24</span>
+                  </div>
                 </div>
-                
-                <p class="font-sans text-white/95 text-[12px] text-center font-medium tracking-wide mb-0.5">
-                  Vie, 24 Oct • 22:00 | Sopocachi
-                </p>
-                <p class="font-sans text-center text-[12px] font-semibold text-[#fe97de] mb-2.5">
-                  Estado: Confirmado (Tú + 1)
-                </p>
 
-                <button onclick="handleNavigation('/pass/pepe_101')" class="w-full py-2 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[14px] font-black tracking-wider uppercase flex items-center justify-center space-x-2 active:scale-95 transition-all shadow-md">
-                  <span>VER MI ENTRADA QR</span>
-                  <span class="text-base">🎟️</span>
-                </button>
+                <!-- Bloque de Información -->
+                <div class="flex flex-col justify-between flex-1 min-w-0 h-full py-0.5">
+                  <div>
+                    <h3 class="font-display text-white text-lg sm:text-xl font-bold tracking-tight uppercase truncate leading-tight">
+                      CUMPLE DE PEPE 🎂
+                    </h3>
+                    <p class="font-sans text-neutral-400 text-xs font-medium tracking-normal mt-0.5 truncate">
+                      Vie, 24 Oct • 22:00 | Sopocachi
+                    </p>
+                    <p class="font-sans text-xs font-semibold mt-1 text-[#fe97de] truncate">
+                      Estado: Confirmado (Tú + 1)
+                    </p>
+                  </div>
+                  <!-- Botón VER MI QR -->
+                  <button onclick="handleNavigation('/pass/pepe_101')" class="w-full mt-2 py-1.5 px-3 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-extrabold tracking-wider uppercase flex items-center justify-center space-x-1.5 transition-colors focus:outline-none active:scale-95">
+                    <span>VER MI QR</span>
+                    <span class="text-sm leading-none">🎟️</span>
+                  </button>
+                </div>
               </div>
 
-              <!-- CARD 2: FIESTA PRIVADA NACHO -->
-              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-3.5 bg-[#101114] border-[2px] border-[#fab205] shadow-[0_6px_0px_0px_#fe97de] flex flex-col items-center">
-                <div class="flex items-center justify-center space-x-1.5 mb-1">
-                  <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#1f232b] text-white text-[11px] font-bold font-mono border border-neutral-700">
-                    📅 25
-                  </span>
-                  <h3 class="font-display text-white text-[20px] font-black tracking-tight uppercase">
-                    FIESTA PRIVADA NACHO
-                  </h3>
-                  <span class="text-base">⚡</span>
+              <!-- CARD 2: FIESTA PRIVADA NACHO (HORIZONTAL CON MINIATURA 1:1) -->
+              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fab205] flex flex-row items-center gap-3">
+                <!-- Miniatura Cuadrada 1:1 -->
+                <div class="relative w-20 h-20 sm:w-[88px] sm:h-[88px] aspect-square flex-shrink-0 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800">
+                  <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=300&q=80" alt="Fiesta Nacho" class="w-full h-full object-cover">
+                  <div class="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm border border-neutral-700/80">
+                    <span class="font-mono text-[9px] font-bold text-white leading-none">25</span>
+                  </div>
                 </div>
-                
-                <p class="font-sans text-white/95 text-[12px] text-center font-medium tracking-wide mb-0.5">
-                  Sáb, 25 Oct • 23:30 | Calacoto
-                </p>
-                <p class="font-sans text-center text-[12px] font-semibold text-[#fab205] mb-2.5">
-                  Estado: Pendiente
-                </p>
 
-                <button onclick="handleNavigation('/pass/nacho_102')" class="w-full py-2 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[14px] font-black tracking-wider uppercase flex items-center justify-center space-x-2 active:scale-95 transition-all shadow-md">
-                  <span>VER DETALLES</span>
-                  <span class="text-base">🕒</span>
-                </button>
+                <!-- Bloque de Información -->
+                <div class="flex flex-col justify-between flex-1 min-w-0 h-full py-0.5">
+                  <div>
+                    <h3 class="font-display text-white text-lg sm:text-xl font-bold tracking-tight uppercase truncate leading-tight">
+                      FIESTA PRIVADA NACHO ⚡
+                    </h3>
+                    <p class="font-sans text-neutral-400 text-xs font-medium tracking-normal mt-0.5 truncate">
+                      Sáb, 25 Oct • 23:30 | Calacoto
+                    </p>
+                    <p class="font-sans text-xs font-semibold mt-1 text-[#fab205] truncate">
+                      Estado: Pendiente
+                    </p>
+                  </div>
+                  <!-- Botón VER DETALLES -->
+                  <button onclick="handleNavigation('/pass/nacho_102')" class="w-full mt-2 py-1.5 px-3 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-extrabold tracking-wider uppercase flex items-center justify-center space-x-1.5 transition-colors focus:outline-none active:scale-95">
+                    <span>VER DETALLES</span>
+                    <span class="text-sm leading-none">🕒</span>
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -346,7 +364,7 @@
         </div>
 
         <!-- 6. ACCIONES INFERIORES (CREAR EVENTO + ESCANEAR QR) -->
-        <div class="anim-footer px-4 mt-2 mb-2 z-20">
+        <div class="anim-footer px-4 mt-2 mb-[10px] z-20">
           <div class="relative w-full h-12 rounded-xl bg-[#fe97de] p-1 flex items-center justify-between shadow-lg">
             <!-- CREAR EVENTO -->
             <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none">
@@ -371,8 +389,8 @@
 
     </div>
 
-    <!-- 7. BOTTOM NAVIGATION BAR FIJA AL FONDO (FIXED BOTTOM-0 Z-50) -->
-    <nav class="anim-bottom-nav fixed sm:absolute bottom-0 inset-x-0 max-w-md mx-auto w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+    <!-- 7. BOTTOM NAVIGATION BAR FIJA AL FONDO -->
+    <nav class="anim-bottom-nav fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
       <!-- Home -->
       <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,10 +411,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       </button>
+
+      <!-- Home Indicator Bar Inferior (134x5 px, centrado, z-50, pointer-events-none) -->
+      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
     </nav>
 
     <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
-    <div id="doorModal" class="hidden fixed sm:absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
+    <div id="doorModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
       <div class="relative w-full max-w-xs bg-[#101114] border-2 border-[#fe97de] rounded-2xl p-5 shadow-2xl">
         <div class="flex items-center space-x-2.5 mb-3">
           <div class="w-8 h-8 rounded-lg bg-[#fe97de]/20 border border-[#fe97de] flex items-center justify-center text-base">
@@ -445,20 +466,20 @@
         let translateZ = 0;
 
         if (offset < 0) {
-          // Cascada a la izquierda: ángulo cerrado 62deg y translateZ(-80px)
+          // Cascada a la izquierda para tarjetas de 260px
           rotateY = 62;
-          scale = 0.85;
+          scale = 0.86;
           opacity = Math.max(0.4, 0.75 + offset * 0.15);
           zIndex = 10 + offset;
-          translateX = -115 + (offset + 1) * 32;
+          translateX = -140 + (offset + 1) * 38;
           translateZ = -80;
         } else if (offset > 0) {
-          // Cascada a la derecha: ángulo cerrado -62deg y translateZ(-80px)
+          // Cascada a la derecha para tarjetas de 260px
           rotateY = -62;
-          scale = 0.85;
+          scale = 0.86;
           opacity = Math.max(0.4, 0.75 - offset * 0.15);
           zIndex = 10 - offset;
-          translateX = 115 + (offset - 1) * 32;
+          translateX = 140 + (offset - 1) * 38;
           translateZ = -80;
         }
 
