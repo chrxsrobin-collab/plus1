@@ -16,8 +16,11 @@ export * from './components/VipFlyerCard';
 export * from './components/SearchEventsModal';
 export * from './components/NotificationsModal';
 export * from './screens/TicketsScreen';
+export * from './screens/ScannerScreen';
 export * from './components/CoverFlowTicketCard';
 export * from './components/TicketsCoverFlow';
+export * from './components/EventInviteModal';
+export * from './lib/firebase';
 export * from './types/home';
 export * from './data/mockData';
 

@@ -113,7 +113,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
   return (
     <div
-      className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none pb-28"
+      className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none pb-[calc(7rem+env(safe-area-inset-bottom,0px))]"
       style={{
         backgroundImage: "url('./assets/images/fondo_c.webp')",
         backgroundSize: '100% auto',
@@ -129,7 +129,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       <div className="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5">
         
         {/* 1. HEADER DE NAVEGACIÓN (TOP BAR) */}
-        <header className="flex items-center justify-between pt-5 pb-3 w-full relative z-30">
+        <header className="flex items-center justify-between pt-[calc(1.25rem+env(safe-area-inset-top,0px))] pb-3 w-full relative z-30">
           {/* Botón de retroceso: ← */}
           <button
             onClick={handleBack}
@@ -236,43 +236,43 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             />
           </div>
 
-          {/* CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS) */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS ALINEADAS CON LOS OTROS CAMPOS) */}
+          <div className="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
             {/* Columna Inicio */}
-            <div className="space-y-1.5">
-              <label className="font-display text-neutral-300 text-xs font-bold tracking-wider uppercase block">
+            <div className="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 INICIO
               </label>
               <input
                 type="date"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none"
+                className="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border"
               />
               <input
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none"
+                className="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border"
               />
             </div>
 
             {/* Columna Fin */}
-            <div className="space-y-1.5">
-              <label className="font-display text-neutral-300 text-xs font-bold tracking-wider uppercase block">
+            <div className="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 TÉRMINO
               </label>
               <input
                 type="date"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none"
+                className="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border"
               />
               <input
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none"
+                className="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border"
               />
             </div>
           </div>
@@ -400,7 +400,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handlePublish}
-              className={`w-full py-4 px-5 rounded-2xl font-display text-lg font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none ${
+              className={`w-full py-4 px-5 rounded-2xl font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none ${
                 isPublished
                   ? 'bg-neutral-900 text-[#12C061] border border-[#12C061]'
                   : 'bg-[#12C061] hover:bg-[#0fa854] text-black active:scale-98'

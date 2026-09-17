@@ -8,6 +8,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Canvas Confetti CDN -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Firebase SDK (Compat para compatibilidad inmediata en navegadores de móviles y desktop) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <style>
     @font-face {
       font-family: 'Antonio';
@@ -155,10 +159,10 @@
         </div>
       </header>
 
-      <!-- 2. SALUDO PRINCIPAL: HEY, CHRISTIAN -->
+      <!-- 2. SALUDO PRINCIPAL: HEY, [NOMBRE DE USUARIO] -->
       <div class="anim-greeting px-6 pt-1 pb-1">
-        <h1 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-          HEY, CHRISTIAN
+        <h1 id="homeGreetingTitle" class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+          HEY, CHRIS G.
         </h1>
       </div>
 
@@ -637,11 +641,14 @@
                 <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
                   Te invitó a CUMPLE DE PEPE 🎂 (Viernes 24 Oct · Sopocachi). Tienes pase +1 incluido.
                 </p>
-                <div id="invitationActions_1" class="flex items-center space-x-2 mt-3">
-                  <button onclick="respondInvitation('1', true)" class="py-1.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow">
+                <div id="invitationActions_1" class="flex flex-wrap items-center gap-2 mt-3">
+                  <button onclick="openEventInviteModal('pepe-birthday'); closeNotificationsModal();" class="py-1.5 px-3.5 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow cursor-pointer">
+                    Ver Invitación
+                  </button>
+                  <button onclick="respondInvitation('1', true)" class="py-1.5 px-3 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow cursor-pointer">
                     Aceptar
                   </button>
-                  <button onclick="respondInvitation('1', false)" class="py-1.5 px-3.5 rounded-xl bg-transparent hover:bg-neutral-800 text-[#8E8E93] hover:text-white border border-[#26282E] font-sans text-xs transition-all active:scale-95 focus:outline-none">
+                  <button onclick="respondInvitation('1', false)" class="py-1.5 px-3 rounded-xl bg-transparent hover:bg-neutral-800 text-[#8E8E93] hover:text-white border border-[#26282E] font-sans text-xs transition-all active:scale-95 focus:outline-none cursor-pointer">
                     Rechazar
                   </button>
                 </div>
@@ -730,6 +737,283 @@
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE VISUALIZACIÓN DE INVITACIÓN DIRECTA (EventInviteModal / WhatsApp Link) -->
+    <div id="eventInviteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md select-none">
+      <!-- Fondo ambiental sutil -->
+      <div class="fixed inset-0 pointer-events-none opacity-20 bg-cover bg-center" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
+
+      <!-- Tarjeta Modal -->
+      <div class="relative z-10 w-full max-w-md max-h-[92vh] bg-[#16171B] border-[1.5px] border-[#26282E] rounded-3xl flex flex-col overflow-hidden shadow-2xl text-white font-sans">
+        
+        <!-- HEADER / FLYER CON BOTÓN DE CIERRE FLOTANTE -->
+        <div class="relative w-full h-44 sm:h-48 flex-shrink-0 bg-neutral-900 overflow-hidden">
+          <img id="inviteFlyerImg" src="./assets/images/pantalla_crear_evento.webp" alt="Flyer" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#16171B] via-transparent to-black/60 pointer-events-none"></div>
+
+          <!-- Badge de tipo flotante -->
+          <div class="absolute top-3.5 left-4 z-10">
+            <span id="invitePrivacyBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider">
+              <span>🔒</span>
+              <span id="invitePrivacyBadgeText">FIESTA PRIVADA</span>
+            </span>
+          </div>
+
+          <!-- Botón flotante de cierre ✕ -->
+          <button onclick="closeEventInviteModal()" aria-label="Cerrar invitación" class="absolute top-3.5 right-4 z-20 w-8 h-8 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 hover:text-white transition-transform active:scale-90 focus:outline-none cursor-pointer">
+            <span class="text-sm font-bold leading-none">✕</span>
+          </button>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL CON SCROLL VERTICAL -->
+        <div class="flex-1 overflow-y-auto px-5 py-3 space-y-4">
+          <!-- VISTA 1: DETALLES DE INVITACIÓN -->
+          <div id="inviteDetailsView" class="space-y-4">
+            <!-- 1. Título y Badge del Anfitrión -->
+            <div class="space-y-1">
+              <span id="inviteHostBadge" class="text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block">
+                INVITACIÓN PRIVADA POR PEPE G.
+              </span>
+              <h2 id="inviteTitleText" class="font-display text-2xl sm:text-3xl font-black tracking-tight uppercase leading-tight text-white">
+                CUMPLE DE PEPE 🎂
+              </h2>
+              <p id="inviteSubtitleText" class="font-sans text-xs text-neutral-400 font-medium">
+                Fiesta Privada de Cumpleaños
+              </p>
+            </div>
+
+            <!-- 2. Bloque de Fecha y Hora -->
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 text-lg">
+                📅
+              </div>
+              <div class="flex-1 min-w-0">
+                <p id="inviteDateText" class="font-display text-sm sm:text-base font-black uppercase text-white tracking-wide truncate">
+                  VIE. 24 DE OCTUBRE
+                </p>
+                <p id="inviteTimeText" class="font-sans text-xs text-neutral-400 font-semibold tracking-wider">
+                  22:00 — 04:30
+                </p>
+              </div>
+            </div>
+
+            <!-- 3. Ubicación (Dinámica Pública / Privada) -->
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 text-lg mt-0.5">
+                📍
+              </div>
+              <div class="flex-1 min-w-0">
+                <p id="inviteVenueText" class="font-display text-sm sm:text-base font-black uppercase text-white tracking-wide truncate">
+                  Terraza Privada Moncloa · Sopocachi
+                </p>
+                <div id="inviteLocationLocked" class="mt-1 flex items-center gap-1.5 text-xs text-neutral-400">
+                  <span>🔒</span>
+                  <span class="italic">Dirección exacta visible tras confirmar asistencia</span>
+                </div>
+                <div id="inviteLocationUnlocked" class="hidden mt-1">
+                  <span class="text-[11px] font-bold text-[#12C061] flex items-center gap-1">
+                    <span>🔓 Dirección desbloqueada:</span>
+                  </span>
+                  <p id="inviteExactAddressText" class="font-sans text-xs text-neutral-200 mt-0.5 font-medium leading-relaxed">
+                    Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Social Wall: Amigos Confirmados -->
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <div class="flex items-center -space-x-2 overflow-hidden py-0.5">
+                  <img src="./assets/images/avatar_chris.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
+                  <img src="./assets/images/avatar_1.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
+                  <img src="./assets/images/avatar_2.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
+                  <img src="./assets/images/avatar_3.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
+                </div>
+                <span id="inviteAttendeesText" class="font-sans text-xs font-semibold text-neutral-300">
+                  18 amigos confirmados
+                </span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-neutral-400 font-mono">
+                LISTA ACTIVA
+              </span>
+            </div>
+
+            <!-- Descripción -->
+            <p id="inviteDescriptionText" class="font-sans text-xs text-neutral-400 leading-relaxed px-1">
+              Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.
+            </p>
+
+            <!-- 5. Selector de Acompañante (+1) -->
+            <div id="invitePlusOneSection" class="space-y-2 pt-1">
+              <label class="block text-[11px] font-display font-extrabold uppercase tracking-wider text-neutral-400">
+                ACOMPAÑANTE (+1)
+              </label>
+              <div class="grid grid-cols-2 gap-2 p-1 bg-[#101114] rounded-2xl border border-[#26282E]">
+                <button type="button" id="inviteSoloBtn" onclick="setInvitePlusOne(false)" class="py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer">
+                  <span>👤</span>
+                  <span>SOLO YO</span>
+                </button>
+                <button type="button" id="invitePlusOneBtn" onclick="setInvitePlusOne(true)" class="py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer">
+                  <span>👥</span>
+                  <span>VOY CON MI +1</span>
+                </button>
+              </div>
+              <p id="invitePlusOneNote" class="text-[11px] font-sans font-medium text-center text-neutral-400">
+                Tu pase QR será válido para 1 ingreso individual.
+              </p>
+            </div>
+          </div>
+
+          <!-- VISTA 2: TICKET QR (DESPUÉS DE CONFIRMAR) -->
+          <div id="inviteTicketView" class="hidden py-2 space-y-4">
+            <div class="flex items-center justify-between pb-1">
+              <button type="button" onclick="switchInviteView('invite')" class="text-xs font-display font-bold text-neutral-400 hover:text-white flex items-center gap-1 cursor-pointer">
+                <span>←</span>
+                <span>DETALLES DEL EVENTO</span>
+              </button>
+              <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-[#12C061]/20 text-[#12C061] font-bold border border-[#12C061]/30">
+                PASE ACTIVO
+              </span>
+            </div>
+
+            <!-- TICKET CARD FÍSICO CON MUESCAS LATERALES -->
+            <div class="flex justify-center">
+              <div class="relative w-full max-w-[310px] bg-[#121316] border-[1.5px] border-[#12C061] rounded-3xl p-5 text-center flex flex-col items-center shadow-2xl">
+                <!-- Muesca izquierda -->
+                <div class="absolute left-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#16171B] border-r-[1.5px] border-[#12C061]"></div>
+                <!-- Muesca derecha -->
+                <div class="absolute right-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[#16171B] border-l-[1.5px] border-[#12C061]"></div>
+
+                <!-- Cabecera -->
+                <span id="ticketBadgeHeader" class="font-sans text-neutral-400 text-xs font-bold tracking-widest leading-none mb-1 uppercase">
+                  FIESTA PRIVADA
+                </span>
+                <h3 id="ticketTitleHeader" class="font-display text-white text-2xl font-black tracking-tight leading-none uppercase truncate max-w-[240px]">
+                  CUMPLE DE PEPE 🎂
+                </h3>
+
+                <!-- Visor QR con esquinas verde esmeralda -->
+                <div class="relative w-[180px] h-[180px] flex items-center justify-center p-2.5 my-3">
+                  <div class="absolute top-0 left-0 w-7 h-7 border-t-[3px] border-l-[3px] border-[#12C061] rounded-tl-lg pointer-events-none"></div>
+                  <div class="absolute top-0 right-0 w-7 h-7 border-t-[3px] border-r-[3px] border-[#12C061] rounded-tr-lg pointer-events-none"></div>
+                  <div class="absolute bottom-0 left-0 w-7 h-7 border-b-[3px] border-l-[3px] border-[#12C061] rounded-bl-lg pointer-events-none"></div>
+                  <div class="absolute bottom-0 right-0 w-7 h-7 border-b-[3px] border-r-[3px] border-[#12C061] rounded-br-lg pointer-events-none"></div>
+
+                  <div class="w-[150px] h-[150px] flex items-center justify-center p-1 rounded-md overflow-hidden bg-[#0A0C0E]">
+                    <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
+                      <rect x="5" y="5" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="9" y="9" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
+                      <rect x="67" y="5" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="71" y="9" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
+                      <rect x="5" y="67" width="28" height="28" rx="2" fill="currentColor" />
+                      <rect x="9" y="71" width="20" height="20" fill="#0A0C0E" />
+                      <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
+                      <rect x="38" y="6" width="6" height="6" fill="currentColor" />
+                      <rect x="48" y="6" width="12" height="6" fill="currentColor" />
+                      <rect x="38" y="16" width="6" height="12" fill="currentColor" />
+                      <rect x="54" y="16" width="6" height="6" fill="currentColor" />
+                      <rect x="48" y="26" width="12" height="6" fill="currentColor" />
+                      <rect x="6" y="38" width="12" height="6" fill="currentColor" />
+                      <rect x="22" y="38" width="6" height="6" fill="currentColor" />
+                      <rect x="32" y="38" width="18" height="6" fill="currentColor" />
+                      <rect x="56" y="38" width="12" height="6" fill="currentColor" />
+                      <rect x="74" y="38" width="6" height="12" fill="currentColor" />
+                      <rect x="86" y="38" width="8" height="6" fill="currentColor" />
+                      <rect x="16" y="48" width="12" height="6" fill="currentColor" />
+                      <rect x="34" y="48" width="6" height="18" fill="currentColor" />
+                      <rect x="46" y="48" width="14" height="6" fill="currentColor" />
+                      <rect x="66" y="48" width="8" height="6" fill="currentColor" />
+                      <rect x="80" y="48" width="14" height="6" fill="currentColor" />
+                      <rect x="6" y="58" width="6" height="6" fill="currentColor" />
+                      <rect x="16" y="58" width="12" height="6" fill="currentColor" />
+                      <rect x="46" y="58" width="6" height="12" fill="currentColor" />
+                      <rect x="58" y="58" width="16" height="6" fill="currentColor" />
+                      <rect x="86" y="58" width="8" height="12" fill="currentColor" />
+                      <rect x="38" y="70" width="8" height="6" fill="currentColor" />
+                      <rect x="52" y="70" width="12" height="6" fill="currentColor" />
+                      <rect x="70" y="70" width="6" height="12" fill="currentColor" />
+                      <rect x="82" y="70" width="12" height="6" fill="currentColor" />
+                      <rect x="38" y="80" width="18" height="6" fill="currentColor" />
+                      <rect x="62" y="80" width="8" height="14" fill="currentColor" />
+                      <rect x="76" y="86" width="18" height="8" fill="currentColor" />
+                      <rect x="44" y="90" width="12" height="5" fill="currentColor" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Titular -->
+                <h4 id="ticketHolderText" class="font-display text-white text-lg font-black tracking-wide uppercase leading-tight">
+                  CRIS G. · ADMISIÓN INDIVIDUAL
+                </h4>
+                <p id="ticketIdText" class="font-sans text-neutral-400 text-xs font-semibold tracking-wider uppercase mt-0.5">
+                  ID: #INV-PEPE · LISTA PUERTA
+                </p>
+              </div>
+            </div>
+
+            <!-- Dirección Revelada -->
+            <div id="ticketUnlockedAddressBox" class="bg-[#1C1E24] border border-[#12C061]/30 rounded-2xl p-3 flex items-start gap-2.5">
+              <span class="text-base">📍</span>
+              <div class="text-xs">
+                <span class="text-[#12C061] font-bold block uppercase tracking-wider">
+                  Dirección exacta confirmada:
+                </span>
+                <span id="ticketExactAddressDisplay" class="text-neutral-200 mt-0.5 block font-medium">
+                  Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12
+                </span>
+              </div>
+            </div>
+
+            <!-- Acciones del ticket -->
+            <div class="space-y-2 pt-1">
+              <button type="button" onclick="downloadInviteTicket()" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer">
+                <span>📸</span>
+                <span>GUARDAR COPIA EN FOTOS</span>
+              </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" onclick="addInviteToCalendar()" class="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 transition-colors border border-neutral-700 cursor-pointer">
+                  <span>📅</span>
+                  <span>CALENDARIO</span>
+                </button>
+                <button type="button" onclick="closeEventInviteModal(); navigateToPassesScreen();" class="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-[#12C061] font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 transition-colors border border-neutral-700 cursor-pointer">
+                  <span>🎟️</span>
+                  <span>BILLETERA</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOOTER CON BOTÓN DE ACCIÓN (SOLO EN MODO INVITE) -->
+        <div id="inviteFooterActionBox" class="p-4 bg-[#16171B] border-t border-[#26282E]">
+          <!-- Botón de Confirmación Privada -->
+          <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-3.5 px-4 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#12C061]/25 cursor-pointer">
+            <span>🎟️</span>
+            <span>ACEPTAR INVITACIÓN Y GENERAR QR</span>
+          </button>
+
+          <!-- Botón de Solicitud VIP Pública -->
+          <button id="inviteRequestVipBtn" type="button" onclick="requestInviteVip()" class="hidden w-full py-3.5 px-4 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-white font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/25 cursor-pointer">
+            <span>✨</span>
+            <span>SOLICITAR PASE VIP</span>
+          </button>
+
+          <!-- Estado Pendiente VIP Pública -->
+          <div id="invitePendingVipBox" class="hidden text-center space-y-1">
+            <button type="button" disabled class="w-full py-3.5 px-4 rounded-2xl bg-neutral-800/80 text-neutral-400 font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center gap-2 border border-neutral-700 cursor-default">
+              <span>⏳</span>
+              <span>SOLICITUD ENVIADA AL ANFITRIÓN (PENDIENTE)</span>
+            </button>
+            <p class="text-[11px] font-sans text-neutral-400">
+              Te notificaremos cuando el club apruebe tu cupo VIP.
+            </p>
           </div>
         </div>
       </div>
@@ -1452,7 +1736,7 @@
 
           <!-- 3. BOTÓN CTA "PUBLICAR EVENTO" -->
           <div class="pt-2">
-            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-lg font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none">
+            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer">
               PUBLICAR EVENTO
             </button>
           </div>
@@ -1602,14 +1886,14 @@
             </span>
           </div>
 
-          <!-- Tarjeta 3: PLUS POINTS -->
+          <!-- Tarjeta 3: PLUSCOINS -->
           <div onclick="openStoreModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
             <div class="text-xl mb-1">⭐</div>
-            <span class="font-display text-[#FAB205] text-xl sm:text-2xl font-black tracking-tight leading-tight my-auto text-center">
-              380 <span class="text-xs">PTS</span>
+            <span class="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
+              380
             </span>
             <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
-              PLUS POINTS
+              PLUSCOINS
             </span>
           </div>
         </div>
@@ -1650,7 +1934,7 @@
                     COMPARTIR APP
                   </span>
                   <span class="font-sans text-neutral-400 text-xs block">
-                    Invita a tus amigos y gana 50 Plus Points
+                    Invita a tus amigos y gana 50 Pluscoins
                   </span>
                 </div>
               </div>
@@ -1772,7 +2056,7 @@
         </h3>
 
         <p class="font-sans text-neutral-300 text-sm leading-relaxed mb-5">
-          Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Plus Points!
+          Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Pluscoins!
         </p>
 
         <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-[#F17D02] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-orange-600 transition-colors">
@@ -1781,7 +2065,7 @@
       </div>
     </div>
 
-    <!-- MODAL 3: TIENDA DE SOUVENIRS (PLUS POINTS) -->
+    <!-- MODAL 3: TIENDA DE SOUVENIRS (PLUSCOINS) -->
     <div id="storeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom">
         <button onclick="closeStoreModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
@@ -1791,12 +2075,12 @@
         <div class="flex items-center space-x-2 mb-1">
           <span class="text-xl">⭐</span>
           <h3 class="font-display text-white text-xl font-black tracking-wide uppercase">
-            TIENDA +1 STORE
+            380 PLUSCOINS · TIENDA +1
           </h3>
         </div>
 
-        <p class="font-sans text-neutral-400 text-xs mb-3.5">
-          Saldo disponible: <strong class="text-[#FAB205]">380 Puntos</strong>
+        <p class="font-sans text-neutral-300 text-xs mb-3.5 leading-relaxed">
+          Tus Pluscoins acumuladas por asistencia y rachas. Úsalas para canjear merchandising oficial y beneficios en puerta.
         </p>
 
         <div class="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
@@ -1805,10 +2089,10 @@
               <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">🧢</div>
               <div>
                 <h4 class="font-display text-white text-xs font-black uppercase">Gorra Trucker +1</h4>
-                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">450 PTS</span>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">450 +COINS</span>
               </div>
             </div>
-            <button onclick="showToast('Puntos insuficientes')" class="py-1.5 px-3 rounded-lg bg-neutral-800 text-neutral-400 font-display font-black text-xs uppercase">Canjear</button>
+            <button onclick="showToast('Pluscoins insuficientes')" class="py-1.5 px-3 rounded-lg bg-neutral-800 text-neutral-400 font-display font-black text-xs uppercase">Canjear</button>
           </div>
 
           <div class="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
@@ -1816,7 +2100,7 @@
               <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">🔑</div>
               <div>
                 <h4 class="font-display text-white text-xs font-black uppercase">Llavero Metálico +1</h4>
-                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">200 PTS</span>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">200 +COINS</span>
               </div>
             </div>
             <button onclick="showToast('¡Llavero Canjeado con éxito!')" class="py-1.5 px-3 rounded-lg bg-white text-black font-display font-black text-xs uppercase">Canjear</button>
@@ -1827,7 +2111,7 @@
               <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">☕</div>
               <div>
                 <h4 class="font-display text-white text-xs font-black uppercase">Taza Cerámica +1</h4>
-                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">320 PTS</span>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">320 +COINS</span>
               </div>
             </div>
             <button onclick="showToast('¡Taza Canjeada con éxito!')" class="py-1.5 px-3 rounded-lg bg-white text-black font-display font-black text-xs uppercase">Canjear</button>
@@ -1881,6 +2165,70 @@
   </div>
 
   <script>
+    // ==========================================
+    // INICIALIZACIÓN DE FIREBASE (FIRESTORE & AUTH)
+    // Sincronización en tiempo real multi-dispositivo (+1)
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-Bke46NSo1mpQPqz2wjZUyvIuxs6iMg4",
+      authDomain: "plus1vip.firebaseapp.com",
+      projectId: "plus1vip",
+      storageBucket: "plus1vip.firebasestorage.app",
+      messagingSenderId: "1080803964753",
+      appId: "1:1080803964753:web:d6dc0bc93f15625d1d8570",
+      measurementId: "G-GF6EY5QVCL"
+    };
+
+    let fbApp = null;
+    let fbDb = null;
+    let fbAuth = null;
+    let fbCurrentUser = null;
+
+    if (typeof firebase !== 'undefined') {
+      try {
+        fbApp = firebase.initializeApp(firebaseConfig);
+        fbDb = firebase.firestore();
+        fbAuth = firebase.auth();
+
+        // Soporte offline para persistencia de pases en puerta
+        fbDb.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+          if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
+            console.warn('[+1 Firebase] Persistencia offline nota:', err);
+          }
+        });
+
+        // Escucha del estado de autenticación
+        fbAuth.onAuthStateChanged((user) => {
+          fbCurrentUser = user;
+          if (user) {
+            console.log('[+1 Firebase Auth] Conectado:', user.uid, user.displayName || 'Invitado');
+          }
+        });
+
+        // Sincronización en tiempo real de la invitación de cumpleaños
+        fbDb.collection('invites').doc('pepe-birthday').onSnapshot((docSnapshot) => {
+          if (docSnapshot && docSnapshot.exists) {
+            const data = docSnapshot.data();
+            if (data && typeof data.confirmedCount === 'number') {
+              if (typeof currentInviteData !== 'undefined') {
+                currentInviteData.confirmedCount = data.confirmedCount;
+              }
+              const countElem = document.getElementById('inviteAttendeesText');
+              if (countElem) {
+                countElem.innerText = data.confirmedCount + " amigos confirmados";
+              }
+            }
+          }
+        }, (err) => {
+          console.warn('[+1 Firestore] Nota escucha invites:', err);
+        });
+
+        console.log('[+1 Firebase] Sincronización en vivo activa (Proyecto: plus1vip)');
+      } catch (e) {
+        console.warn('[+1 Firebase] Inicialización fallback:', e);
+      }
+    }
+
     const eventsData = [
       {
         id: 'vip_dubai_01',
@@ -2524,7 +2872,7 @@
       const btn = document.getElementById('publishEventBtn');
       if (btn) {
         btn.innerText = "¡EVENTO PUBLICADO! ✓";
-        btn.className = "w-full py-4 px-5 rounded-2xl bg-neutral-900 text-[#12C061] border border-[#12C061] font-display text-lg font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none";
+        btn.className = "w-full py-4 px-5 rounded-2xl bg-neutral-900 text-[#12C061] border border-[#12C061] font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none";
       }
 
       const shareBtn = document.getElementById('shareEventTopBtn');
@@ -3020,6 +3368,244 @@
           feedback.className = "mt-2 text-xs font-sans text-neutral-500";
           showToast('Invitación rechazada');
         }
+      }
+    }
+
+    // ==========================================
+    // CONTROLADOR DE INVITACIÓN DIRECTA (EventInviteModal)
+    // ==========================================
+    let currentInviteData = {
+      id: 'pepe-birthday',
+      title: 'CUMPLE DE PEPE 🎂',
+      subtitle: 'Fiesta Privada de Cumpleaños',
+      hostName: 'PEPE G.',
+      isPrivate: true,
+      flyerImage: './assets/images/pantalla_crear_evento.webp',
+      dateDisplay: 'VIE. 24 DE OCTUBRE',
+      timeRange: '22:00 — 04:30',
+      venueName: 'Terraza Privada Moncloa · Sopocachi',
+      exactAddress: 'Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12',
+      confirmedCount: 18,
+      allowsPlusOne: true,
+      description: 'Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.'
+    };
+
+    let invitePlusOneSelected = false;
+    let inviteHasConfirmed = false;
+    let inviteHasRequestedVip = false;
+
+    function openEventInviteModal(eventId) {
+      const modal = document.getElementById('eventInviteModal');
+      if (!modal) return;
+
+      invitePlusOneSelected = false;
+      inviteHasConfirmed = false;
+      inviteHasRequestedVip = false;
+
+      if (eventId === 'indie-night') {
+        currentInviteData = {
+          id: 'indie-night',
+          title: 'INDIE NIGHT LIVE',
+          subtitle: 'The Strokes + Foals Tribute',
+          hostName: 'EQUINOCCIO CLUB',
+          isPrivate: false,
+          flyerImage: './assets/images/fondo_b.webp',
+          dateDisplay: 'SÁB. 25 DE OCTUBRE',
+          timeRange: '21:00 — 03:30',
+          venueName: 'Teatro Equinoccio · San Miguel',
+          exactAddress: 'Av. 21 de Calacoto #8420, San Miguel, La Paz',
+          confirmedCount: 42,
+          allowsPlusOne: true,
+          description: 'La sesión indie más esperada del mes con tributo en vivo a The Strokes y Foals. Acceso preferencial a preventas y solicitudes VIP para miembros de la comunidad +1.'
+        };
+      } else {
+        currentInviteData = {
+          id: 'pepe-birthday',
+          title: 'CUMPLE DE PEPE 🎂',
+          subtitle: 'Fiesta Privada de Cumpleaños',
+          hostName: 'PEPE G.',
+          isPrivate: true,
+          flyerImage: './assets/images/pantalla_crear_evento.webp',
+          dateDisplay: 'VIE. 24 DE OCTUBRE',
+          timeRange: '22:00 — 04:30',
+          venueName: 'Terraza Privada Moncloa · Sopocachi',
+          exactAddress: 'Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12',
+          confirmedCount: 18,
+          allowsPlusOne: true,
+          description: 'Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.'
+        };
+      }
+
+      // Actualizar UI
+      document.getElementById('inviteTitleText').innerText = currentInviteData.title;
+      document.getElementById('ticketTitleHeader').innerText = currentInviteData.title;
+      document.getElementById('inviteSubtitleText').innerText = currentInviteData.subtitle || '';
+      document.getElementById('inviteDateText').innerText = currentInviteData.dateDisplay;
+      document.getElementById('inviteTimeText').innerText = currentInviteData.timeRange;
+      document.getElementById('inviteVenueText').innerText = currentInviteData.venueName;
+      document.getElementById('inviteDescriptionText').innerText = currentInviteData.description;
+      document.getElementById('inviteAttendeesText').innerText = currentInviteData.confirmedCount + " amigos confirmados";
+      document.getElementById('inviteExactAddressText').innerText = currentInviteData.exactAddress;
+      document.getElementById('ticketExactAddressDisplay').innerText = currentInviteData.exactAddress;
+
+      const badge = document.getElementById('invitePrivacyBadge');
+      const badgeText = document.getElementById('invitePrivacyBadgeText');
+      const hostBadge = document.getElementById('inviteHostBadge');
+      const locLocked = document.getElementById('inviteLocationLocked');
+      const locUnlocked = document.getElementById('inviteLocationUnlocked');
+      const confirmPrivBtn = document.getElementById('inviteConfirmPrivateBtn');
+      const requestVipBtn = document.getElementById('inviteRequestVipBtn');
+      const pendingVipBox = document.getElementById('invitePendingVipBox');
+
+      if (currentInviteData.isPrivate) {
+        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        badgeText.innerText = "FIESTA PRIVADA";
+        hostBadge.innerText = "INVITACIÓN PRIVADA POR " + currentInviteData.hostName;
+        hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block";
+        locLocked.classList.remove('hidden');
+        locUnlocked.classList.add('hidden');
+        confirmPrivBtn.classList.remove('hidden');
+        requestVipBtn.classList.add('hidden');
+        pendingVipBox.classList.add('hidden');
+      } else {
+        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#12C061]/40 text-[#12C061] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        badgeText.innerText = "EVENTO PÚBLICO";
+        hostBadge.innerText = "EVENTO PÚBLICO · LISTA VIP " + currentInviteData.hostName;
+        hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#12C061] uppercase block";
+        locLocked.classList.add('hidden');
+        locUnlocked.classList.remove('hidden');
+        confirmPrivBtn.classList.add('hidden');
+        requestVipBtn.classList.remove('hidden');
+        pendingVipBox.classList.add('hidden');
+      }
+
+      setInvitePlusOne(false);
+      switchInviteView('invite');
+      modal.classList.remove('hidden');
+    }
+
+    function closeEventInviteModal() {
+      const modal = document.getElementById('eventInviteModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setInvitePlusOne(isPlusOne) {
+      invitePlusOneSelected = isPlusOne;
+      const soloBtn = document.getElementById('inviteSoloBtn');
+      const plusOneBtn = document.getElementById('invitePlusOneBtn');
+      const note = document.getElementById('invitePlusOneNote');
+      const ticketHolder = document.getElementById('ticketHolderText');
+
+      if (isPlusOne) {
+        plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-[#12C061] text-black shadow-lg shadow-[#12C061]/20 border border-[#12C061] cursor-pointer";
+        soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
+        note.innerHTML = '<span class="text-[#12C061] font-semibold">✨ Tu pase QR habilitará 2 ingresos en puerta.</span>';
+        if (ticketHolder) ticketHolder.innerText = "CRIS G. · +1 INCLUIDO (2 INGRESOS)";
+      } else {
+        soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer";
+        plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
+        note.innerHTML = 'Tu pase QR será válido para 1 ingreso individual.';
+        if (ticketHolder) ticketHolder.innerText = "CRIS G. · ADMISIÓN INDIVIDUAL";
+      }
+    }
+
+    function switchInviteView(view) {
+      const detailsView = document.getElementById('inviteDetailsView');
+      const ticketView = document.getElementById('inviteTicketView');
+      const footerBox = document.getElementById('inviteFooterActionBox');
+
+      if (view === 'ticket') {
+        if (detailsView) detailsView.classList.add('hidden');
+        if (ticketView) ticketView.classList.remove('hidden');
+        if (footerBox) footerBox.classList.add('hidden');
+      } else {
+        if (detailsView) detailsView.classList.remove('hidden');
+        if (ticketView) ticketView.classList.add('hidden');
+        if (footerBox) footerBox.classList.remove('hidden');
+      }
+    }
+
+    function confirmInvitePrivate() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 65,
+          origin: { y: 0.75 },
+          colors: ['#12C061', '#E87A72', '#FFFFFF', '#FAB205']
+        });
+      }
+      inviteHasConfirmed = true;
+      document.getElementById('inviteLocationLocked').classList.add('hidden');
+      document.getElementById('inviteLocationUnlocked').classList.remove('hidden');
+      document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " amigos confirmados";
+      switchInviteView('ticket');
+      showToast('¡Asistencia confirmada! Pase QR generado');
+
+      // Sincronización en tiempo real con Firestore entre dispositivos
+      if (fbDb && typeof firebase !== 'undefined') {
+        try {
+          fbDb.collection('invites').doc('pepe-birthday').set({
+            confirmedCount: firebase.firestore.FieldValue.increment(1),
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true }).catch((err) => console.warn('Sync increment note:', err));
+
+          fbDb.collection('invites').doc('pepe-birthday').collection('attendees').add({
+            name: 'CRIS G.',
+            withPlusOne: invitePlusOneSelected,
+            confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).catch((err) => console.warn('Sync attendee doc note:', err));
+        } catch (e) {
+          console.warn('Firestore sync note:', e);
+        }
+      }
+    }
+
+    function requestInviteVip() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 60,
+          spread: 50,
+          origin: { y: 0.8 },
+          colors: ['#E87A72', '#12C061', '#FFFFFF']
+        });
+      }
+      inviteHasRequestedVip = true;
+      document.getElementById('inviteRequestVipBtn').classList.add('hidden');
+      document.getElementById('invitePendingVipBox').classList.remove('hidden');
+      showToast('Solicitud enviada al anfitrión');
+    }
+
+    function downloadInviteTicket() {
+      showToast('Pase guardado en Fotos');
+    }
+
+    function addInviteToCalendar() {
+      try {
+        const icsData = [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//PlusOne App//Event Invite//ES',
+          'BEGIN:VEVENT',
+          'SUMMARY:' + currentInviteData.title,
+          'DESCRIPTION:' + (currentInviteData.description || 'Pase oficial +1'),
+          'LOCATION:' + (currentInviteData.exactAddress || currentInviteData.venueName),
+          'STATUS:CONFIRMED',
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].join('\r\n');
+
+        const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', currentInviteData.id + '-invitacion.ics');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('Evento añadido al calendario');
+      } catch(e) {
+        showToast('No se pudo generar archivo de calendario');
       }
     }
   </script>

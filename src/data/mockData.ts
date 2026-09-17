@@ -1,4 +1,4 @@
-import { PassItem, VipFlyerItem, UserProfile, CreatedEventItem, SouvenirItem, NotificationItem } from '../types/home';
+import { PassItem, VipFlyerItem, UserProfile, CreatedEventItem, SouvenirItem, NotificationItem, EventInviteData } from '../types/home';
 
 export const mockUserProfile: UserProfile = {
   id: 'usr_001',
@@ -406,3 +406,50 @@ export const mockVipFlyers: VipFlyerItem[] = [
     categoryTag: 'reggaeton'
   }
 ];
+
+export const mockEventInvites: Record<string, EventInviteData> = {
+  'pepe-birthday': {
+    id: 'pepe-birthday',
+    title: 'CUMPLE DE PEPE 🎂',
+    subtitle: 'Fiesta Privada de Cumpleaños',
+    hostName: 'PEPE G.',
+    isPrivate: true,
+    flyerImage: './assets/images/pantalla_crear_evento.webp',
+    theme: 'birthday',
+    dateDisplay: 'VIE. 24 DE OCTUBRE',
+    timeRange: '22:00 — 04:30',
+    venueName: 'Terraza Privada Moncloa · Sopocachi',
+    exactAddress: 'Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12',
+    confirmedCount: 18,
+    confirmedAvatars: [
+      './assets/images/avatar_chris.png',
+      './assets/images/avatar_1.png',
+      './assets/images/avatar_2.png',
+      './assets/images/avatar_3.png',
+      './assets/images/avatar_4.png',
+    ],
+    allowsPlusOne: true,
+    description: 'Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.',
+  },
+  'indie-night': {
+    id: 'indie-night',
+    title: 'INDIE NIGHT LIVE',
+    subtitle: 'The Strokes + Foals Tribute',
+    hostName: 'EQUINOCCIO CLUB',
+    isPrivate: false,
+    theme: 'indie',
+    dateDisplay: 'SÁB. 25 DE OCTUBRE',
+    timeRange: '21:00 — 03:30',
+    venueName: 'Teatro Equinoccio · San Miguel',
+    exactAddress: 'Av. 21 de Calacoto #8420, San Miguel, La Paz',
+    confirmedCount: 42,
+    confirmedAvatars: [
+      './assets/images/avatar_chris.png',
+      './assets/images/avatar_1.png',
+      './assets/images/avatar_2.png',
+      './assets/images/avatar_3.png',
+    ],
+    allowsPlusOne: true,
+    description: 'La sesión indie más esperada del mes con tributo en vivo a The Strokes y Foals. Acceso preferencial a preventas y solicitudes VIP para miembros de la comunidad +1.',
+  },
+};

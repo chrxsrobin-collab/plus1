@@ -193,7 +193,7 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                         e.stopPropagation();
                         onApplyVipClick(flyer.id);
                       }}
-                      className="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm focus:outline-none"
+                      className="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm focus:outline-none"
                     >
                       SOLICITAR VIP
                     </motion.button>

@@ -24,7 +24,7 @@ export const ActionFooter: React.FC<ActionFooterProps> = ({
           onClick={onCreateEventClick}
           className="flex-1 h-full flex items-center justify-center pl-3 pr-2 text-left focus:outline-none group"
         >
-          <span className="font-display text-black text-2xl sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+          <span className="font-display text-black text-[26px] sm:text-[28px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
             <span className="text-xl font-bold">[ + ]</span>
             <span>CREAR EVENTO</span>
           </span>

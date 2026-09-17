@@ -95,3 +95,21 @@ export interface CreateEventFormData {
   allowPlusOne: boolean;
   maxCapacity: number;
 }
+
+export interface EventInviteData {
+  id: string;
+  title: string;
+  subtitle?: string;
+  hostName: string;
+  isPrivate: boolean;
+  flyerImage?: string;
+  theme?: 'reggaeton' | 'indie' | 'techno' | 'dubai' | 'birthday' | 'custom';
+  dateDisplay: string;
+  timeRange: string;
+  venueName: string;
+  exactAddress?: string;
+  confirmedCount: number;
+  confirmedAvatars?: string[];
+  allowsPlusOne: boolean;
+  description?: string;
+}

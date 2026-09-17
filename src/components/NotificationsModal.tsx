@@ -8,6 +8,7 @@ export interface NotificationsModalProps {
   onClose: () => void;
   notifications?: NotificationItem[];
   onViewPass?: (passId: string) => void;
+  onNavigate?: (route: string) => void;
 }
 
 export const NotificationsModal: React.FC<NotificationsModalProps> = ({
@@ -15,6 +16,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   onClose,
   notifications = mockNotifications,
   onViewPass,
+  onNavigate,
 }) => {
   const [items, setItems] = useState<NotificationItem[]>(notifications);
   const [actionFeedback, setActionFeedback] = useState<{ [id: string]: 'accepted' | 'rejected' }>({});
@@ -38,7 +40,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none">
+        <div className="fixed inset-0 z-50 flex flex-col justify-start items-center pt-[max(env(safe-area-inset-top),3.5rem)] px-3 pb-6 select-none overflow-hidden">
           {/* Backdrop con oscurecimiento y desenfoque intenso */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -48,19 +50,16 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             className="absolute inset-0 bg-black/85 backdrop-blur-md"
           />
 
-          {/* Tarjeta Modal Deslizable */}
+          {/* Tarjeta Modal Desplegable desde Arriba */}
           <motion.div
-            initial={{ y: '100%', opacity: 0 }}
+            initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-t-[28px] sm:rounded-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl z-10"
+            exit={{ y: -30, opacity: 0 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-2xl max-h-[82vh] flex flex-col overflow-hidden shadow-2xl z-10"
           >
-            {/* Tirador para móviles */}
-            <div className="w-12 h-1 bg-neutral-700/80 rounded-full mx-auto mt-2.5 mb-1 sm:hidden pointer-events-none" />
-
-            {/* 1. HEADER DEL MODAL */}
-            <div className="flex items-center justify-between px-5 pt-3 pb-3 border-b border-[#26282E]">
+            {/* 1. HEADER FIJO DEL MODAL */}
+            <div className="shrink-0 border-b border-[#26282E] p-4 flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
                 <h3 className="font-display text-white text-xl font-black tracking-wide uppercase leading-none">
                   NOTIFICACIONES
@@ -88,15 +87,15 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                 <button
                   onClick={onClose}
                   aria-label="Cerrar notificaciones"
-                  className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors active:scale-95 focus:outline-none"
+                  className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors active:scale-95 focus:outline-none cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* 2. LISTA VERTICAL DE NOTIFICACIONES */}
-            <div className="flex-1 overflow-y-auto space-y-3 p-4 pb-8 sm:pb-5">
+            {/* 2. LISTA VERTICAL DE NOTIFICACIONES (SCROLL DESCENDENTE) */}
+            <div className="flex-1 overflow-y-auto space-y-3 p-4">
               {items.map((notif) => {
                 const feedback = actionFeedback[notif.id];
 
@@ -170,18 +169,27 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                           </div>
                         )}
 
-                        {/* Acciones de Invitación (Aceptar / Rechazar) */}
+                        {/* Acciones de Invitación (Aceptar / Rechazar / Ver Enlace) */}
                         {notif.type === 'invitation' && !feedback && (
-                          <div className="flex items-center space-x-2 mt-3">
+                          <div className="flex flex-wrap items-center gap-2 mt-3">
+                            <button
+                              onClick={() => {
+                                onNavigate?.('/e/pepe-birthday');
+                                onClose();
+                              }}
+                              className="py-1.5 px-3.5 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow"
+                            >
+                              Ver Invitación
+                            </button>
                             <button
                               onClick={() => handleAcceptInvitation(notif.id)}
-                              className="py-1.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow"
+                              className="py-1.5 px-3 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow"
                             >
                               Aceptar
                             </button>
                             <button
                               onClick={() => handleRejectInvitation(notif.id)}
-                              className="py-1.5 px-3.5 rounded-xl bg-transparent hover:bg-neutral-800 text-[#8E8E93] hover:text-white border border-[#26282E] font-sans text-xs transition-all active:scale-95 focus:outline-none"
+                              className="py-1.5 px-3 rounded-xl bg-transparent hover:bg-neutral-800 text-[#8E8E93] hover:text-white border border-[#26282E] font-sans text-xs transition-all active:scale-95 focus:outline-none"
                             >
                               Rechazar
                             </button>

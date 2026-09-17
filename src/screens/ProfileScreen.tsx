@@ -54,7 +54,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-28">
+    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
       {/* Fondo abstracto sutil fondo_b.webp */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
@@ -73,7 +73,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <div className="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5">
         
         {/* 1. TOP BAR */}
-        <header className="flex items-center justify-between pt-5 pb-2 w-full relative z-30">
+        <header className="flex items-center justify-between pt-[calc(1.25rem+env(safe-area-inset-top,0px))] pb-2 w-full relative z-30">
           {/* Flecha retroceso: ← */}
           <button
             onClick={handleBack}
@@ -181,7 +181,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </span>
           </motion.div>
 
-          {/* Tarjeta 3: PLUS POINTS */}
+          {/* Tarjeta 3: PLUSCOINS */}
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
@@ -189,11 +189,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg"
           >
             <div className="text-xl mb-1">⭐</div>
-            <span className="font-display text-[#FAB205] text-xl sm:text-2xl font-black tracking-tight leading-tight my-auto text-center">
-              {user.plusPoints ?? 380} <span className="text-xs">PTS</span>
+            <span className="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
+              {user.plusPoints ?? 380}
             </span>
             <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
-              PLUS POINTS
+              PLUSCOINS
             </span>
           </motion.div>
 
@@ -245,7 +245,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     COMPARTIR APP
                   </span>
                   <span className="font-sans text-neutral-400 text-xs block">
-                    Invita a tus amigos y gana 50 Plus Points
+                    Invita a tus amigos y gana 50 Pluscoins
                   </span>
                 </div>
               </div>
@@ -390,7 +390,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </h3>
 
               <p className="font-sans text-neutral-300 text-sm leading-relaxed mb-5">
-                Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Plus Points!
+                Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Pluscoins!
               </p>
 
               <button
@@ -404,7 +404,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         )}
       </AnimatePresence>
 
-      {/* MODAL 3: TIENDA DE SOUVENIRS (PLUS POINTS) */}
+      {/* MODAL 3: TIENDA DE SOUVENIRS (PLUSCOINS) */}
       <AnimatePresence>
         {activeModal === 'store' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -425,12 +425,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <div className="flex items-center space-x-2 mb-1">
                 <span className="text-xl">⭐</span>
                 <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
-                  TIENDA +1 STORE
+                  380 PLUSCOINS · TIENDA +1
                 </h3>
               </div>
 
-              <p className="font-sans text-neutral-400 text-xs mb-3.5">
-                Saldo disponible: <strong className="text-[#FAB205]">{user.plusPoints ?? 380} Puntos</strong>
+              <p className="font-sans text-neutral-300 text-xs mb-3.5 leading-relaxed">
+                Tus Pluscoins acumuladas por asistencia y rachas. Úsalas para canjear merchandising oficial y beneficios en puerta.
               </p>
 
               <div className="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
@@ -448,7 +448,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                           {item.name}
                         </h4>
                         <span className="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">
-                          {item.pointsCost} PTS
+                          {item.pointsCost} +COINS
                         </span>
                       </div>
                     </div>

@@ -18,7 +18,7 @@ export const TopHud: React.FC<TopHudProps> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="flex items-center justify-between px-6 pt-4 pb-2 w-full select-none z-20"
+      className="flex items-center justify-between px-6 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2 w-full select-none z-20"
     >
       {/* Logo +1 en color Salmón / Coral #E87A72 */}
       <div className="flex items-center cursor-pointer group">

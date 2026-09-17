@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { TopHud } from '../components/TopHud';
 import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
@@ -17,9 +17,10 @@ import '../styles/fonts.css';
 
 export interface HomeScreenProps {
   onNavigate?: (route: string) => void;
+  user?: UserProfile;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUser }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<VipFlyerItem | null>(null);
@@ -27,7 +28,94 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(mockUserProfile.unreadNotifications);
-  const user = mockUserProfile;
+  
+  // Estado para la barra flotante dinámica (inicialmente oculta)
+  const [isNavVisible, setIsNavVisible] = useState<boolean>(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastScrollYRef = useRef<number>(0);
+  const touchStartYRef = useRef<number>(0);
+  
+  const user = propUser || mockUserProfile;
+
+  // Temporizador para auto-ocultar la barra tras 4 segundos de inactividad
+  const resetHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+    hideTimerRef.current = setTimeout(() => {
+      setIsNavVisible(false);
+    }, 4000);
+  }, []);
+
+  const showNav = useCallback(() => {
+    setIsNavVisible(true);
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  const hideNav = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+    }
+    setIsNavVisible(false);
+  }, []);
+
+  // Limpiar temporizador al desmontar
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Manejadores de interacción por scroll, wheel y touch
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const currentY = e.currentTarget.scrollTop;
+    const diff = currentY - lastScrollYRef.current;
+
+    if (diff > 4) {
+      // Scroll hacia abajo (usuario explora contenido) -> mostrar barra
+      showNav();
+    } else if (diff < -15) {
+      // Scroll opuesto prolongado -> ocultar barra
+      hideNav();
+    } else if (isNavVisible) {
+      resetHideTimer();
+    }
+    lastScrollYRef.current = currentY;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const currentY = e.touches[0].clientY;
+    const diff = touchStartYRef.current - currentY; // positivo = arrastre hacia arriba
+
+    if (diff > 8) {
+      showNav();
+    } else if (diff < -18) {
+      hideNav();
+    } else if (isNavVisible) {
+      resetHideTimer();
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY > 4) {
+      showNav();
+    } else if (e.deltaY < -15) {
+      hideNav();
+    } else if (isNavVisible) {
+      resetHideTimer();
+    }
+  };
+
+  const handleCanvasClick = () => {
+    // Tap en cualquier zona neutra del canvas / pantalla
+    showNav();
+  };
 
   const handleNavigate = (route: string) => {
     if (onNavigate) {
@@ -47,15 +135,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   };
 
   const handleScanQr = () => {
-    if (user.activeEventsCount === 0) {
-      setIsModalOpen(true);
-    } else {
-      handleNavigate('/app/door');
-    }
+    handleNavigate('/scanner');
   };
 
   const handleTabSelect = (tab: TabType) => {
     setActiveTab(tab);
+    resetHideTimer();
     if (tab === 'passes') {
       handleNavigate('/passes');
     } else if (tab === 'search') {
@@ -64,12 +149,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#000000] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none">
-      {/* Fondo con textura/patrón geométrico oscuro fondo_iniciob.webp */}
+    <div
+      onClick={handleCanvasClick}
+      onScroll={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onWheel={handleWheel}
+      className="w-full min-h-[100dvh] relative bg-[#000000] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none"
+    >
+      {/* Fondo con textura/patrón fondo_a.webp */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
         style={{
-          backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
+          backgroundImage: "url('./assets/images/fondo_a.webp')",
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'cover',
@@ -92,7 +184,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           onProfileClick={() => handleNavigate('/profile')}
         />
 
-        {/* 2. SALUDO PRINCIPAL: HEY, CHRISTIAN */}
+        {/* 2. SALUDO PRINCIPAL: HEY, [NOMBRE DE USUARIO] */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,19 +192,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           className="px-6 pt-1 pb-1"
         >
           <h1 className="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-            HEY, CHRISTIAN
+            HEY, {user.name || 'CHRIS G.'}
           </h1>
         </motion.div>
 
-        {/* 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) */}
+        {/* 3. ENCABEZADO INDEPENDIENTE: EVENTOS PARA TI (FUERA DE LA TARJETA) */}
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
           className="px-6 pt-1 pb-1 mt-2"
         >
-          <h2 className="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
-            PROXIMOS EVENTOS
+          <h2 className="font-sans text-[#9CA3AF] text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
+            EVENTOS PARA TI
           </h2>
         </motion.div>
 
@@ -143,10 +235,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
 
       </div>
 
-      {/* 6. BOTTOM NAVIGATION BAR FIJA AL FONDO */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto w-full">
-        <BottomNav activeTab={activeTab} onTabSelect={handleTabSelect} />
-      </div>
+      {/* 6. BOTTOM NAVIGATION BAR FLOTANTE DINÁMICA (Auto-Hiding Floating Capsule) */}
+      <BottomNav
+        activeTab={activeTab}
+        onTabSelect={handleTabSelect}
+        visible={isNavVisible}
+        variant="floating"
+      />
 
       {/* MODAL BRUTALISTA DE CONSOLA DE PUERTA */}
       <NoEventsModal
@@ -182,6 +277,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         onViewPass={(passId) => handleNavigate(`/pass/${passId}`)}
+        onNavigate={handleNavigate}
       />
     </div>
   );

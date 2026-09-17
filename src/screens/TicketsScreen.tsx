@@ -54,7 +54,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   };
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-28">
+    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
       {/* Fondo abstracto con textura sutil fondo_iniciob.webp */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
@@ -72,7 +72,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
       {/* Contenedor central móvil acotado */}
       <div className="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-4 justify-between">
         {/* 1. TOP BAR */}
-        <header className="flex items-center justify-between pt-5 pb-1 w-full relative z-30">
+        <header className="flex items-center justify-between pt-[calc(1.25rem+env(safe-area-inset-top,0px))] pb-1 w-full relative z-30">
           {/* Botón de retroceso (←) */}
           <button
             onClick={handleBack}
