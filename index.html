@@ -73,6 +73,11 @@
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
+    @keyframes modalSlideDown {
+      0% { opacity: 0; transform: translateY(-30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .anim-modal-slide-down { animation: modalSlideDown 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes scannerLaserScan {
       0% { top: 12px; }
       50% { top: calc(100% - 14px); }
@@ -581,18 +586,16 @@
       </div>
     </div>
 
-    <!-- MODAL DE NOTIFICACIONES DESLIZABLE (NotificationsModal) -->
-    <div id="notificationsModal" class="hidden fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none overflow-hidden">
+    <!-- MODAL DE NOTIFICACIONES DESPLEGABLE DESDE ARRIBA (NotificationsModal) -->
+    <div id="notificationsModal" class="hidden fixed inset-0 z-50 flex flex-col justify-start items-center pt-[max(env(safe-area-inset-top),3.5rem)] px-3 pb-6 select-none overflow-hidden">
       <!-- Backdrop -->
       <div onclick="closeNotificationsModal()" class="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity"></div>
 
-      <!-- Tarjeta Modal Deslizable -->
-      <div id="notificationsModalContainer" class="anim-modal-slide relative w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-t-[28px] sm:rounded-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl z-10">
-        <!-- Tirador móvil -->
-        <div class="w-12 h-1 bg-neutral-700/80 rounded-full mx-auto mt-2.5 mb-1 sm:hidden pointer-events-none"></div>
+      <!-- Tarjeta Modal Desplegable desde Arriba -->
+      <div id="notificationsModalContainer" class="anim-modal-slide-down relative w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-2xl max-h-[82vh] flex flex-col overflow-hidden shadow-2xl z-10">
 
-        <!-- 1. Header del Modal -->
-        <div class="flex items-center justify-between px-5 pt-3 pb-3 border-b border-[#26282E]">
+        <!-- 1. Header Fijo del Modal -->
+        <div class="shrink-0 border-b border-[#26282E] p-4 flex items-center justify-between">
           <div class="flex items-center space-x-2.5">
             <h3 class="font-display text-white text-xl font-black tracking-wide uppercase leading-none">
               NOTIFICACIONES
@@ -603,17 +606,17 @@
           </div>
 
           <div class="flex items-center space-x-2">
-            <button onclick="markAllNotificationsAsRead()" class="text-[11px] font-sans text-neutral-400 hover:text-white transition-colors focus:outline-none">
+            <button onclick="markAllNotificationsAsRead()" class="text-[11px] font-sans text-neutral-400 hover:text-white transition-colors focus:outline-none cursor-pointer">
               Marcar leídas
             </button>
-            <button onclick="closeNotificationsModal()" aria-label="Cerrar notificaciones" class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors active:scale-95 focus:outline-none">
+            <button onclick="closeNotificationsModal()" aria-label="Cerrar notificaciones" class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors active:scale-95 focus:outline-none cursor-pointer">
               ✕
             </button>
           </div>
         </div>
 
-        <!-- 2. Lista Vertical de Notificaciones -->
-        <div id="notificationsList" class="flex-1 overflow-y-auto space-y-3 p-4 pb-8 sm:pb-5">
+        <!-- 2. Lista Vertical de Notificaciones (Scroll Descendente) -->
+        <div id="notificationsList" class="flex-1 overflow-y-auto space-y-3 p-4">
           <!-- 1. Invitación a Evento Privado -->
           <div id="notifItem_1" class="rounded-2xl p-3.5 border bg-[#1A1C22] border-[#2E313A] shadow-md transition-all">
             <div class="flex items-start space-x-3">
@@ -2970,9 +2973,9 @@
         modal.classList.remove('hidden');
         const container = document.getElementById('notificationsModalContainer');
         if (container) {
-          container.classList.remove('anim-modal-slide');
+          container.classList.remove('anim-modal-slide-down');
           void container.offsetWidth;
-          container.classList.add('anim-modal-slide');
+          container.classList.add('anim-modal-slide-down');
         }
         // Desvanecer el badge rojo de la campana
         const topBadge = document.getElementById('topNotifBadge');
