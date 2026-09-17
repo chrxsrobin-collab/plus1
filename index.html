@@ -75,19 +75,11 @@
     .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
   </style>
 </head>
-<body class="bg-[#000000] text-white min-h-[100dvh] flex items-center justify-center p-0 md:p-6 overflow-x-hidden font-sans select-none">
+<body class="bg-black text-white min-h-[100dvh] w-full m-0 p-0 overflow-x-hidden font-sans select-none">
 
-  <!-- Simulador iPhone 393x852 px (Escritorio) / 100% Pantalla Nativa (Celular) -->
-  <div class="relative w-full min-h-screen md:min-h-0 md:w-[393px] md:h-[852px] bg-[#000000] rounded-none md:rounded-[52px] border-none md:border-[10px] md:border-[#1C1C1E] shadow-none md:shadow-2xl overflow-hidden flex flex-col justify-between">
+  <!-- Contenedor Raíz Nativo (100% Pantalla) -->
+  <div class="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden">
     
-    <!-- Dynamic Island Superior Hardware (120x35 px, centrada, z-50, pointer-events-none) -->
-    <div class="absolute top-2.5 left-1/2 -translate-x-1/2 w-[120px] h-[35px] bg-black rounded-full z-50 pointer-events-none hidden md:flex items-center justify-between px-3">
-      <div class="w-3 h-3 rounded-full bg-[#111] border border-neutral-800/80"></div>
-      <div class="w-2.5 h-2.5 rounded-full bg-[#080d1a] border border-[#162038]/60 flex items-center justify-center">
-        <div class="w-1 h-1 rounded-full bg-[#001845]"></div>
-      </div>
-    </div>
-
     <!-- Fondo de Pantalla: fondo_iniciob.webp con textura abstracta oscura muy sutil -->
     <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none"
          style="background-image: url('./assets/images/fondo_iniciob.webp');">
@@ -97,10 +89,10 @@
     <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
     <!-- Contenedor Interior Nativo (overflow-y-auto h-full con pb-28) -->
-    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-28">
+    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-28 w-full max-w-md mx-auto">
       
       <!-- 1. TOP BAR / HUD -->
-      <header class="anim-hud flex items-center justify-between px-6 pt-5 md:pt-11 pb-1 w-full">
+      <header class="anim-hud flex items-center justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-1 w-full">
         <!-- Logo +1 en color Salmón / Coral #E87A72 -->
         <div class="flex items-center cursor-pointer">
           <span class="font-display text-[#E87A72] text-[42px] font-black tracking-tight leading-none">
@@ -344,34 +336,33 @@
     </div>
 
     <!-- 5. BOTTOM NAVIGATION BAR FIJA AL FONDO -->
-    <nav class="anim-bottom-nav fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-      <!-- Home -->
-      <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      </button>
+    <nav class="anim-bottom-nav fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+      <div class="w-full max-w-md mx-auto flex items-center justify-between">
+        <!-- Home -->
+        <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </button>
 
-      <!-- Pases / Ticket -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
-        <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-        </svg>
-      </button>
+        <!-- Pases / Ticket -->
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
+          <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+          </svg>
+        </button>
 
-      <!-- Buscar / Lupa -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openSearchEventsModal()" aria-label="Buscar eventos">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </button>
-
-      <!-- Home Indicator Bar Inferior -->
-      <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-[134px] h-[5px] rounded-full bg-white/40 pointer-events-none"></div>
+        <!-- Buscar / Lupa -->
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openSearchEventsModal()" aria-label="Buscar eventos">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </div>
     </nav>
 
     <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
-    <div id="doorModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
+    <div id="doorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
       <div class="relative w-full max-w-xs bg-[#181A1E] border-[1.5px] border-[#E87A72] rounded-2xl p-5 shadow-2xl">
         <div class="flex items-center space-x-2.5 mb-3">
           <div class="w-8 h-8 rounded-lg bg-[#E87A72]/20 border border-[#E87A72] flex items-center justify-center text-base">
@@ -401,7 +392,7 @@
     </div>
 
     <!-- MODAL DE DETALLE DEL EVENTO PÚBLICO (TARJETA CENTRADA CON ZOOM-IN SUAVE) -->
-    <div id="eventDetailModal" class="hidden fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
+    <div id="eventDetailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
       <!-- Fondo con oscurecimiento y desenfoque intenso (Backdrop Blur) -->
       <div onclick="closeEventDetail()" class="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity"></div>
 
@@ -465,7 +456,7 @@
     </div>
 
     <!-- MODAL DE BÚSQUEDA Y DESCUBRIMIENTO DE EVENTOS (SearchEventsModal) -->
-    <div id="searchEventsModal" class="hidden fixed md:absolute inset-0 z-50 flex flex-col justify-start backdrop-blur-md bg-black/85 select-none overflow-hidden">
+    <div id="searchEventsModal" class="hidden fixed inset-0 z-50 flex flex-col justify-start backdrop-blur-md bg-black/85 select-none overflow-hidden">
       <div id="searchModalContainer" class="anim-modal-slide w-full max-w-md mx-auto h-full flex flex-col pt-3 px-4 pb-6">
         <!-- 1. CABECERA CON MARCA Y BOTÓN CANCELAR -->
         <div class="flex items-center justify-between pb-3 pt-1">
@@ -563,7 +554,7 @@
     </div>
 
     <!-- MODAL DE NOTIFICACIONES DESLIZABLE (NotificationsModal) -->
-    <div id="notificationsModal" class="hidden fixed md:absolute inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none overflow-hidden">
+    <div id="notificationsModal" class="hidden fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none overflow-hidden">
       <!-- Backdrop -->
       <div onclick="closeNotificationsModal()" class="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity"></div>
 
@@ -714,7 +705,7 @@
     </div>
 
     <!-- PANTALLA DE BILLETERA DE TICKETS: /tickets /passes (TicketsScreen) -->
-    <div id="passScreenView" class="hidden absolute inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden h-full no-scrollbar select-none pb-24">
+    <div id="passScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden h-full no-scrollbar select-none pb-24">
       
       <!-- Fondo abstracto con textura sutil fondo_iniciob.webp -->
       <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
@@ -723,7 +714,7 @@
       <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
       <!-- Contenedor interior estructurado -->
-      <div class="relative z-20 flex-1 flex flex-col justify-between h-full px-4 pt-5 md:pt-11 pb-2">
+      <div class="relative z-20 flex-1 flex flex-col justify-between h-full px-4 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-2 w-full max-w-md mx-auto">
         
         <!-- 1. TOP NAVIGATION BAR -->
         <header class="flex items-center justify-between pb-1 w-full relative z-30">
@@ -1132,40 +1123,42 @@
         </div>
 
         <!-- 5. BOTTOM NAVIGATION BAR FIJA (Pases Activo) -->
-        <nav class="fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-          <!-- Home -->
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen()" aria-label="Inicio">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </button>
+        <nav class="fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+          <div class="w-full max-w-md mx-auto flex items-center justify-between">
+            <!-- Home -->
+            <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen()" aria-label="Inicio">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </button>
 
-          <!-- Pases / Ticket (Activo) -->
-          <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" aria-label="Billetera de pases">
-            <svg class="w-5 h-5 rotate-45 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-            </svg>
-          </button>
+            <!-- Pases / Ticket (Activo) -->
+            <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" aria-label="Billetera de pases">
+              <svg class="w-5 h-5 rotate-45 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+              </svg>
+            </button>
 
-          <!-- Buscar / Lupa -->
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
+            <!-- Buscar / Lupa -->
+            <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
         </nav>
 
       </div>
     </div>
 
     <!-- PANTALLA DE CREACIÓN DE EVENTOS: /create-event (CreateEventScreen) -->
-    <div id="createEventScreenView" class="hidden absolute inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_c.webp'); background-size: 100% auto; background-repeat: repeat-y; background-position: top center; background-attachment: local;">
+    <div id="createEventScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_c.webp'); background-size: 100% auto; background-repeat: repeat-y; background-position: top center; background-attachment: local;">
       
       <!-- Sombra degradada superior -->
       <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
       <!-- Contenedor interior estructurado -->
-      <div class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-5 md:pt-11 pb-6">
+      <div class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-6">
         
         <!-- 1. TOP NAVIGATION BAR -->
         <header class="flex items-center justify-between pb-3 w-full relative z-30">
@@ -1396,13 +1389,13 @@
     </div>
 
     <!-- PANTALLA DE PERFIL: /profile (ProfileScreen) -->
-    <div id="profileScreenView" class="hidden absolute inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_b.webp'); background-size: cover; background-position: center;">
+    <div id="profileScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_b.webp'); background-size: cover; background-position: center;">
       
       <!-- Degradado superior -->
       <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
       <!-- Contenedor interior estructurado -->
-      <div class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-5 md:pt-11 pb-6">
+      <div class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-6">
         
         <!-- 1. TOP BAR -->
         <header class="flex items-center justify-between pb-2 w-full relative z-30">
@@ -1534,24 +1527,26 @@
       </div>
 
       <!-- BOTTOM NAVIGATION BAR FIJA -->
-      <nav class="fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen()">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </button>
+      <nav class="fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+        <div class="w-full max-w-md mx-auto flex items-center justify-between">
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen()">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
 
-        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openPassScreen();" aria-label="Ver pases">
-          <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-          </svg>
-        </button>
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openPassScreen();" aria-label="Ver pases">
+            <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+            </svg>
+          </button>
 
-        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
       </nav>
     </div>
 
