@@ -177,175 +177,12 @@
       <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1">
         <div class="relative w-full h-[485px] sm:h-[500px] flex items-center justify-center py-2" style="perspective: 1100px;">
           <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
-            
-            <!-- TARJETA COMPLETA 0: CLUB DUBAI -->
-            <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(0)">
-              <!-- Miniatura Superior: Casi Cuadrada (~1:1) -->
-              <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4 flex-shrink-0">
-                <div class="px-3 py-1 bg-[#101026] border border-[#00f3ff] rounded-sm mb-2">
-                  <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
-                    CLUB DUBÁI
-                  </span>
-                </div>
-                <span class="font-display text-white text-lg font-bold tracking-wider uppercase">
-                  VIP NIGHT
-                </span>
-              </div>
-              <!-- Bloque Descriptivo y Metadatos: Posicionado más abajo con espacio negativo -->
-              <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
-                <div class="space-y-1">
-                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
-                    FLYER VIP: CLUB DUBÁI
-                  </h4>
-                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
-                  <div>
-                    <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                      SÁB. 14 DE SEPTIEMBRE
-                    </p>
-                    <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
-                      22:00 — 04:30
-                    </p>
-                  </div>
-                  <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
-                    Club Dubái · Sopocachi
-                  </p>
-                  <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
-                    ÚLTIMOS 18 CUPOS ·
-                  </p>
-                </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-                  SOLICITAR VIP
-                </button>
-              </div>
-            </div>
-
-            <!-- TARJETA COMPLETA 1: INDIE NIGHT (ACTIVA INICIALMENTE) -->
-            <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(1)">
-              <!-- Miniatura Superior: Casi Cuadrada (~1:1) -->
-              <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-4 flex-shrink-0">
-                <div class="flex items-center space-x-2 text-3xl mb-2">
-                  <span>🎸</span><span>🎤</span><span>⚡</span>
-                </div>
-                <span class="font-display text-cyan-400 text-lg font-black tracking-widest uppercase">
-                  INDIE LIVE
-                </span>
-              </div>
-              <!-- Bloque Descriptivo y Metadatos: Posicionado más abajo con espacio negativo -->
-              <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
-                <div class="space-y-1">
-                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
-                    FLYER CONCIERTO: INDIE NIGHT
-                  </h4>
-                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
-                  <div>
-                    <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                      VIE. 20 DE SEPTIEMBRE
-                    </p>
-                    <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
-                      21:00 — 03:00
-                    </p>
-                  </div>
-                  <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
-                    Teatro Equinoccio · San Miguel
-                  </p>
-                  <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
-                    ÚLTIMOS 5 CUPOS ·
-                  </p>
-                </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-                  SOLICITAR VIP
-                </button>
-              </div>
-            </div>
-
-            <!-- TARJETA COMPLETA 2: MAMACITA REGGAETON -->
-            <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(2)">
-              <!-- Miniatura Superior: Casi Cuadrada (~1:1) -->
-              <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-4 text-center flex-shrink-0">
-                <div class="flex items-center space-x-1.5 mb-2">
-                  <span class="text-3xl filter drop-shadow">🔥</span>
-                  <span class="text-3xl filter drop-shadow">💃</span>
-                </div>
-                <span class="font-display text-[#fab205] text-xl font-black tracking-widest uppercase leading-tight">
-                  LATIN PERREO
-                </span>
-              </div>
-              <!-- Bloque Descriptivo y Metadatos: Posicionado más abajo con espacio negativo -->
-              <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
-                <div class="space-y-1">
-                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
-                    FLYER: MAMACITA REGGAETON
-                  </h4>
-                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
-                  <div>
-                    <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                      SÁB. 21 DE SEPTIEMBRE
-                    </p>
-                    <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
-                      22:30 — 05:00
-                    </p>
-                  </div>
-                  <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
-                    Foro Club · Calacoto
-                  </p>
-                  <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
-                    ÚLTIMOS 25 CUPOS ·
-                  </p>
-                </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-                  SOLICITAR VIP
-                </button>
-              </div>
-            </div>
-
-            <!-- TARJETA COMPLETA 3: BASEMENT AFTER -->
-            <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" onclick="handleCardTap(3)">
-              <!-- Miniatura Superior: Casi Cuadrada (~1:1) -->
-              <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-4 flex-shrink-0">
-                <div class="w-11 h-11 border border-[#12c061] rounded-full flex items-center justify-center mb-2">
-                  <span class="font-display text-[#12c061] text-xs font-mono font-bold">135</span>
-                </div>
-                <span class="font-display text-white text-lg font-bold tracking-wider uppercase">
-                  TECHNO AFTER
-                </span>
-              </div>
-              <!-- Bloque Descriptivo y Metadatos: Posicionado más abajo con espacio negativo -->
-              <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
-                <div class="space-y-1">
-                  <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
-                    FLYER: BASEMENT AFTER
-                  </h4>
-                  <!-- Fecha y Horario (la hora debajo de la fecha) -->
-                  <div>
-                    <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                      DOM. 22 DE SEPTIEMBRE
-                    </p>
-                    <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
-                      03:00 — 09:00
-                    </p>
-                  </div>
-                  <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
-                    The Basement Club · Centro
-                  </p>
-                  <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
-                    ÚLTIMOS 10 CUPOS ·
-                  </p>
-                </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-                  SOLICITAR VIP
-                </button>
-              </div>
-            </div>
-
+            <!-- Empty state o tarjetas generadas dinámicamente vía renderCoverFlow() -->
           </div>
         </div>
 
         <!-- Paginador Dots Centrados -->
-        <div class="flex items-center justify-center space-x-2 mt-3">
-          <button onclick="setFullCard(0)" id="dot0" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setFullCard(1)" id="dot1" class="w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setFullCard(2)" id="dot2" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
-          <button onclick="setFullCard(3)" id="dot3" class="w-1.5 h-1.5 bg-neutral-600 rounded-full transition-all duration-300 focus:outline-none"></button>
+        <div id="coverFlowDotsContainer" class="flex items-center justify-center space-x-2 mt-3">
         </div>
       </main>
 
@@ -1059,373 +896,11 @@
             class="relative w-full h-[450px] flex items-center justify-center py-2"
             style="perspective: 1200px; transform-style: preserve-3d;"
           >
-            <!-- TICKET 1: MAMACITA REGGAETON (Accent #E87A72) -->
-            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(0)">
-              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                      fill="#121316" stroke="#E87A72" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-              </svg>
-              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-                <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#E87A72] border-[#E87A72]/40 bg-[#E87A72]/15">
-                      VIP ACCESS (+1)
-                    </span>
-                    <span class="text-xs">🔥</span>
-                  </div>
-                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                    MAMACITA REGGAETON
-                  </h3>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                    <span class="font-bold text-white">SÁB. 19 SEP</span>
-                    <span>·</span>
-                    <span class="text-neutral-400">23:00</span>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
-                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#E87A72] rounded-tl-sm pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#E87A72] rounded-tr-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#E87A72] rounded-bl-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#E87A72] rounded-br-sm pointer-events-none"></div>
-                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                        <rect width="100" height="100" fill="#FFFFFF" />
-                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="40" y="8" width="8" height="8" fill="#000000" />
-                        <rect x="52" y="8" width="6" height="14" fill="#000000" />
-                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                        <rect x="68" y="40" width="12" height="6" fill="#000000" />
-                        <rect x="40" y="68" width="6" height="18" fill="#000000" />
-                        <rect x="52" y="68" width="14" height="8" fill="#000000" />
-                        <rect x="68" y="80" width="12" height="12" fill="#000000" />
-                      </svg>
-                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#E87A72] flex items-center justify-center shadow">
-                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                    <span class="text-[11px]">📍</span>
-                    <span class="truncate max-w-[210px]">Club Dubái · Sopocachi</span>
-                  </div>
-                </div>
-                <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                    CHRIS G. · +1 INCLUIDO
-                  </span>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                    <span class="font-mono font-bold text-neutral-300">#4092</span>
-                    <span>·</span>
-                    <span class="uppercase tracking-wider">VERIFICADO CON GOOGLE</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TICKET 2: INDIE NIGHT SESSION (Accent #12C061) -->
-            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(1)">
-              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                      fill="#121316" stroke="#12C061" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-              </svg>
-              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-                <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#12C061] border-[#12C061]/40 bg-[#12C061]/15">
-                      PREVENTA GENERAL
-                    </span>
-                    <span class="text-xs">🎸</span>
-                  </div>
-                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                    INDIE NIGHT SESSION
-                  </h3>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                    <span class="font-bold text-white">VIE. 25 SEP</span>
-                    <span>·</span>
-                    <span class="text-neutral-400">21:30</span>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
-                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#12C061] rounded-tl-sm pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#12C061] rounded-tr-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#12C061] rounded-bl-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#12C061] rounded-br-sm pointer-events-none"></div>
-                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                        <rect width="100" height="100" fill="#FFFFFF" />
-                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="40" y="8" width="8" height="8" fill="#000000" />
-                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                        <rect x="68" y="40" width="12" height="6" fill="#000000" />
-                        <rect x="40" y="68" width="6" height="18" fill="#000000" />
-                      </svg>
-                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#12C061] flex items-center justify-center shadow">
-                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                    <span class="text-[11px]">📍</span>
-                    <span class="truncate max-w-[210px]">Teatro Equinoccio</span>
-                  </div>
-                </div>
-                <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                    CHRIS G. · ADMISIÓN INDIVIDUAL
-                  </span>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                    <span class="font-mono font-bold text-neutral-300">#8120</span>
-                    <span>·</span>
-                    <span class="uppercase tracking-wider">VERIFICADO</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TICKET 3: CUMPLE DE PEPE (Accent #F17D02) -->
-            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(2)">
-              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                      fill="#121316" stroke="#F17D02" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-              </svg>
-              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-                <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#F17D02] border-[#F17D02]/40 bg-[#F17D02]/15">
-                      INVITADO ESPECIAL (+1)
-                    </span>
-                    <span class="text-xs">🎂</span>
-                  </div>
-                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                    CUMPLE DE PEPE 🎂
-                  </h3>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                    <span class="font-bold text-white">SÁB. 03 OCT</span>
-                    <span>·</span>
-                    <span class="text-neutral-400">22:00</span>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
-                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F17D02] rounded-tl-sm pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F17D02] rounded-tr-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F17D02] rounded-bl-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F17D02] rounded-br-sm pointer-events-none"></div>
-                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                        <rect width="100" height="100" fill="#FFFFFF" />
-                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                      </svg>
-                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#F17D02] flex items-center justify-center shadow">
-                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                    <span class="text-[11px]">📍</span>
-                    <span class="truncate max-w-[210px]">Casa Achumani (Privado)</span>
-                  </div>
-                </div>
-                <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                    CHRIS G. · +1 INCLUIDO
-                  </span>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                    <span class="font-mono font-bold text-neutral-300">#1044</span>
-                    <span>·</span>
-                    <span class="uppercase tracking-wider">LISTA PUERTA</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TICKET 4: BASEMENT AFTER HOURS (Accent #3344FF) -->
-            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(3)">
-              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                      fill="#121316" stroke="#3344FF" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-              </svg>
-              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-                <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#5566FF] border-[#3344FF]/40 bg-[#3344FF]/15">
-                      BACKSTAGE PASS
-                    </span>
-                    <span class="text-xs">⚡</span>
-                  </div>
-                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                    BASEMENT AFTER HOURS
-                  </h3>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                    <span class="font-bold text-white">DOM. 11 OCT</span>
-                    <span>·</span>
-                    <span class="text-neutral-400">03:00</span>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
-                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#3344FF] rounded-tl-sm pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#3344FF] rounded-tr-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#3344FF] rounded-bl-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#3344FF] rounded-br-sm pointer-events-none"></div>
-                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                        <rect width="100" height="100" fill="#FFFFFF" />
-                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                      </svg>
-                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#3344FF] flex items-center justify-center shadow">
-                        <span class="font-display text-white text-[11px] font-black leading-none">+1</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                    <span class="text-[11px]">📍</span>
-                    <span class="truncate max-w-[210px]">The Vault Club</span>
-                  </div>
-                </div>
-                <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                    CHRIS G. · ACCESO TOTAL
-                  </span>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                    <span class="font-mono font-bold text-neutral-300">#9931</span>
-                    <span>·</span>
-                    <span class="uppercase tracking-wider">VERIFICADO</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TICKET 5: SPRING FESTIVAL (Accent #FAB205) -->
-            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(4)">
-              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                      fill="#121316" stroke="#FAB205" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-              </svg>
-              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-                <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#FAB205] border-[#FAB205]/40 bg-[#FAB205]/15">
-                      EARLY BIRD TIER 1
-                    </span>
-                    <span class="text-xs">🌴</span>
-                  </div>
-                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                    SPRING FESTIVAL ⚡
-                  </h3>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                    <span class="font-bold text-white">SÁB. 24 OCT</span>
-                    <span>·</span>
-                    <span class="text-neutral-400">16:00</span>
-                  </div>
-                </div>
-                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
-                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
-                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#FAB205] rounded-tl-sm pointer-events-none"></div>
-                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#FAB205] rounded-tr-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#FAB205] rounded-bl-sm pointer-events-none"></div>
-                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#FAB205] rounded-br-sm pointer-events-none"></div>
-                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                        <rect width="100" height="100" fill="#FFFFFF" />
-                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                      </svg>
-                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#FAB205] flex items-center justify-center shadow">
-                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                    <span class="text-[11px]">📍</span>
-                    <span class="truncate max-w-[210px]">Parque Urbano Central</span>
-                  </div>
-                </div>
-                <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                    CHRIS G. · ENTRADA GENERAL
-                  </span>
-                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                    <span class="font-mono font-bold text-neutral-300">#5512</span>
-                    <span>·</span>
-                    <span class="uppercase tracking-wider">VERIFICADO</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <!-- Renderizado dinámicamente vía renderTicketCoverFlow() -->
           </div>
 
           <!-- 3. PAGINADOR DE PUNTOS (DOTS) -->
-          <div class="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
-            <button id="dot_t_0" onclick="setTicketCoverFlow(0)" class="w-6 h-1.5 bg-[#E87A72] rounded-full transition-all duration-300 focus:outline-none"></button>
-            <button id="dot_t_1" onclick="setTicketCoverFlow(1)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
-            <button id="dot_t_2" onclick="setTicketCoverFlow(2)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
-            <button id="dot_t_3" onclick="setTicketCoverFlow(3)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
-            <button id="dot_t_4" onclick="setTicketCoverFlow(4)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
+          <div id="ticketDotsContainer" class="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
           </div>
         </main>
 
@@ -1644,8 +1119,8 @@
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 INICIO
               </label>
-              <input type="date" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
-              <input type="time" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="date" id="createEventDateInput" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="time" id="createEventStartTimeInput" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
             </div>
 
             <!-- Columna Fin -->
@@ -1653,8 +1128,8 @@
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 TÉRMINO
               </label>
-              <input type="date" value="2026-09-21" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
-              <input type="time" value="04:30" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="date" id="createEventEndDateInput" value="2026-09-21" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="time" id="createEventEndTimeInput" value="04:30" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
             </div>
           </div>
 
@@ -1991,51 +1466,8 @@
           [ + ] CREAR NUEVO EVENTO
         </button>
 
-        <div class="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
-          <div class="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
-            <div class="flex items-start justify-between">
-              <div>
-                <h4 class="font-display text-white text-sm font-black uppercase leading-tight">
-                  ROOFTOP TECHNO SESSION
-                </h4>
-                <span class="font-sans text-neutral-400 text-xs mt-0.5 block">
-                  SÁB. 28 DE SEPTIEMBRE · 22:00
-                </span>
-              </div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40">
-                Activo
-              </span>
-            </div>
-            <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
-              <span class="font-sans text-neutral-400">118 / 150 invitados</span>
-              <div class="flex space-x-2">
-                <button onclick="showToast('Editando Rooftop Techno')" class="font-display text-neutral-300 hover:text-white font-bold uppercase">Editar</button>
-                <button onclick="openDoorModal()" class="font-display text-[#12C061] hover:underline font-bold uppercase">Puerta</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
-            <div class="flex items-start justify-between">
-              <div>
-                <h4 class="font-display text-white text-sm font-black uppercase leading-tight">
-                  INDIE NIGHT LIVE SOUNDS
-                </h4>
-                <span class="font-sans text-neutral-400 text-xs mt-0.5 block">
-                  VIE. 20 DE SEPTIEMBRE · 21:00
-                </span>
-              </div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-neutral-800 text-neutral-400">
-                Finalizado
-              </span>
-            </div>
-            <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
-              <span class="font-sans text-neutral-400">150 / 150 invitados</span>
-              <div class="flex space-x-2">
-                <button onclick="showToast('Evento finalizado')" class="font-display text-neutral-400 font-bold uppercase">Reporte</button>
-              </div>
-            </div>
-          </div>
+        <div id="myEventsListContainer" class="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
+          <!-- Renderizado dinámicamente vía renderMyEventsModal() -->
         </div>
       </div>
     </div>
@@ -2223,152 +1655,165 @@
           console.warn('[+1 Firestore] Nota escucha invites:', err);
         });
 
+        // Sincronización en tiempo real de eventos públicos para Cover Flow
+        fbDb.collection('events').where('type', '==', 'public').onSnapshot((querySnapshot) => {
+          const liveEvents = [];
+          if (querySnapshot) {
+            querySnapshot.forEach((doc) => {
+              const d = doc.data();
+              liveEvents.push({
+                id: doc.id,
+                title: d.title || 'SIN TÍTULO',
+                subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
+                dateDisplay: d.date || 'PRÓXIMAMENTE',
+                timeRange: d.startTime && d.endTime ? `${d.startTime} — ${d.endTime}` : (d.startTime || '22:00'),
+                location: d.location || 'Por confirmar',
+                availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
+                theme: d.theme || 'dubai',
+                imageUrl: d.imageUrl || '',
+                exactAddress: d.location || '',
+                description: d.description || `Evento exclusivo creado por ${d.hostName || 'Anfitrión +1'}. Acceso validado con pase digital.`,
+                promotions: [
+                  d.allowsPlusOne ? 'Acceso con acompañante +1 incluido' : 'Acceso individual nominal',
+                  'Validación rápida por escaneo QR en puerta',
+                  'Drop digital para asistentes confirmados'
+                ],
+                isTonight: false,
+                isWeekend: true,
+                isVipOrFree: true,
+                categoryTag: 'club',
+                route: '/passes'
+              });
+            });
+          }
+          eventsData = liveEvents;
+          renderCoverFlow();
+          console.log('[+1 Firestore] Eventos públicos actualizados:', eventsData.length);
+        }, (err) => {
+          console.warn('[+1 Firestore] Error al sincronizar eventos públicos:', err);
+        });
+
+        // Sincronización de eventos creados por el usuario para "Mis Eventos"
+        fbDb.collection('events').onSnapshot((querySnapshot) => {
+          const myEvts = [];
+          if (querySnapshot) {
+            querySnapshot.forEach((doc) => {
+              const d = doc.data();
+              const isMine = fbCurrentUser ? (d.hostUserId === fbCurrentUser.uid) : true;
+              if (isMine) {
+                myEvts.push({
+                  id: doc.id,
+                  title: d.title || 'Evento sin título',
+                  dateStr: d.date ? `${d.date} · ${d.startTime || ''}` : 'Próximamente',
+                  status: 'Activo',
+                  guestsCount: d.confirmedCount || 0,
+                  maxCapacity: d.maxCapacity || 150
+                });
+              }
+            });
+          }
+          userCreatedEvents = myEvts;
+          const countBadge = document.getElementById('profileEventsCount');
+          if (countBadge) countBadge.innerText = myEvts.length;
+          renderMyEventsModal();
+        }, (err) => {
+          console.warn('[+1 Firestore] Error al sincronizar mis eventos:', err);
+        });
+
         console.log('[+1 Firebase] Sincronización en vivo activa (Proyecto: plus1vip)');
       } catch (e) {
         console.warn('[+1 Firebase] Inicialización fallback:', e);
       }
     }
 
-    const eventsData = [
-      {
-        id: 'vip_dubai_01',
-        title: 'FLYER VIP: CLUB DUBÁI',
-        subtitle: 'Ingreso VIP Free hasta las 00:30',
-        dateDisplay: 'SÁB. 14 DE SEPTIEMBRE',
-        timeRange: '22:00 — 04:30',
-        location: 'Club Dubái · Sopocachi',
-        availabilityText: 'ÚLTIMOS 18 CUPOS ·',
-        theme: 'dubai',
-        exactAddress: 'Av. 20 de Octubre #2450, Sopocachi, La Paz',
-        description: 'Noche de glamour y fiesta electrónica en el club insignia de la ciudad. Contaremos con warm-up de DJ Mateo y cierre exclusivo con ritmos tech-house hasta el amanecer.',
-        promotions: [
-          'Ingreso VIP Free exclusivo hasta las 00:30',
-          '2x1 en gin tonic y cócteles de autor toda la noche',
-          'Acceso directo sin fila por puerta VIP',
-          'Mesa en terraza lounge sujeta a llegada temprana'
-        ],
-        isTonight: true,
-        isWeekend: true,
-        isVipOrFree: true,
-        categoryTag: 'club',
-        route: '/vip/dubai'
-      },
-      {
-        id: 'vip_indie_02',
-        title: 'FLYER CONCIERTO: INDIE NIGHT',
-        subtitle: 'Lista de Invitados Especiales',
-        dateDisplay: 'VIE. 20 DE SEPTIEMBRE',
-        timeRange: '21:00 — 03:00',
-        location: 'Teatro Equinoccio · San Miguel',
-        availabilityText: 'ÚLTIMOS 5 CUPOS ·',
-        theme: 'indie',
-        exactAddress: 'Calle Sánchez Lima #2191, San Miguel',
-        description: 'Encuentro imperdible de bandas indie emergentes en vivo, sesiones acústicas y vinyl set experimental para los amantes de la música independiente.',
-        promotions: [
-          'Acceso preferencial a soundcheck y backstage',
-          'Bebida de cortesía de bienvenida (Cerveza artesanal)',
-          'Descuento del 20% en merch oficial de las bandas'
-        ],
-        isTonight: false,
-        isWeekend: true,
-        isVipOrFree: true,
-        categoryTag: 'concierto',
-        route: '/vip/indie'
-      },
-      {
-        id: 'vip_mamacita_03',
-        title: 'FLYER: MAMACITA REGGAETON',
-        subtitle: 'Open Bar Mujeres hasta las 01:00',
-        dateDisplay: 'SÁB. 21 DE SEPTIEMBRE',
-        timeRange: '22:30 — 05:00',
-        location: 'Foro Club · Calacoto',
-        availabilityText: 'ÚLTIMOS 25 CUPOS ·',
-        theme: 'reggaeton',
-        exactAddress: 'Calle 15 de Calacoto, Esq. Julio Patiño #802',
-        description: 'La sesión urbana más encendida de la temporada. Perreo clásico y new wave de la mano de los DJs más top de la escena, animación en vivo y shows de baile.',
-        promotions: [
-          'Open Bar mujeres hasta la 01:00 en tragos seleccionados',
-          '2x1 en shots de tequila hasta la medianoche',
-          'Acceso exclusivo a zona de palcos VIP y guardarropa free',
-          'Drop digital sorpresa con beneficios para la próxima edición'
-        ],
-        isTonight: false,
-        isWeekend: true,
-        isVipOrFree: true,
-        categoryTag: 'reggaeton',
-        route: '/vip/mamacita'
-      },
-      {
-        id: 'vip_basement_04',
-        title: 'FLYER: BASEMENT AFTER',
-        subtitle: 'Acceso exclusivo lista de puerta',
-        dateDisplay: 'DOM. 22 DE SEPTIEMBRE',
-        timeRange: '03:00 — 09:00',
-        location: 'The Basement Club · Centro',
-        availabilityText: 'ÚLTIMOS 10 CUPOS ·',
-        theme: 'techno',
-        exactAddress: 'Calle Murillo #1024, Subsuelo 2, Centro Histórico',
-        description: 'Sesión non-stop de techno industrial, visuales inmersivos y atmósfera underground para los que nunca quieren que termine la fiesta.',
-        promotions: [
-          'Entrada prioritaria por lista digital',
-          'Shots energizantes de bienvenida cortesía del club',
-          'Acceso libre a chill out zone con hidratación libre'
-        ],
-        isTonight: false,
-        isWeekend: true,
-        isVipOrFree: false,
-        categoryTag: 'club',
-        route: '/vip/basement'
-      },
-      {
-        id: 'vip_sunset_05',
-        title: 'FLYER TERRAZA: ROOFTOP SUNSET TECHNO',
-        subtitle: 'Melodic Beats & Golden Hour',
-        dateDisplay: 'VIE. 27 DE SEPTIEMBRE',
-        timeRange: '18:00 — 01:00',
-        location: 'Skybar Hotel Plaza · Centro',
-        availabilityText: 'ÚLTIMOS 12 CUPOS ·',
-        theme: 'techno',
-        exactAddress: 'Av. 16 de Julio #1789, El Prado, La Paz',
-        description: 'Sunset exclusivo en la terraza más alta de la ciudad con beats melódicos y vista panorámica al Illimani.',
-        promotions: [
-          'Ingreso VIP Free antes de las 20:00',
-          'Welcome drink de autor cortesía',
-          'Acceso a terraza lounge y guardarropa'
-        ],
-        isTonight: true,
-        isWeekend: true,
-        isVipOrFree: true,
-        categoryTag: 'club',
-        route: '/vip/sunset'
-      },
-      {
-        id: 'vip_perreo_06',
-        title: 'FLYER FIESTA: PERREO & CUMBIA 2000',
-        subtitle: 'Noche Clásica de San Miguel',
-        dateDisplay: 'SÁB. 28 DE SEPTIEMBRE',
-        timeRange: '22:00 — 04:30',
-        location: 'Babylon Club · San Miguel',
-        availabilityText: 'LISTA VIP ACTIVA ·',
-        theme: 'reggaeton',
-        exactAddress: 'Calle Belisario Salinas #480, Sopocachi',
-        description: 'Hits nostálgicos de los 2000s, reggaeton clásico y cumbia villera en vivo con los DJs residentes de La Paz.',
-        promotions: [
-          '2x1 en cerveza artesanal hasta las 23:30',
-          'Ingreso tú + 1 gratis en lista VIP'
-        ],
-        isTonight: false,
-        isWeekend: true,
-        isVipOrFree: true,
-        categoryTag: 'reggaeton',
-        route: '/vip/perreo'
-      }
-    ];
+    let eventsData = [];
+    let currentCardIndex = 0;
+    let totalCards = 0;
 
-    let currentCardIndex = 1; // Inicia en Indie Night coincidiendo con la referencia visual
-    const totalCards = 4;
+    function renderCoverFlow() {
+      const track = document.getElementById('coverFlowTrack');
+      const dotsContainer = document.getElementById('coverFlowDotsContainer');
+      if (!track) return;
+
+      totalCards = eventsData.length;
+
+      if (totalCards === 0) {
+        track.innerHTML = `
+          <div class="w-[300px] sm:w-[320px] p-6 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-2xl">
+            <span class="text-3xl filter drop-shadow">✨</span>
+            <p class="font-sans text-xs sm:text-sm font-semibold text-neutral-300 tracking-wider uppercase leading-relaxed">
+              NO HAY EVENTOS PÚBLICOS ACTIVOS · SÉ EL PRIMERO EN CREAR UNO
+            </p>
+            <button onclick="handleNavigation('/create-event')" class="py-2.5 px-5 rounded-full bg-[#12C061] text-black font-display text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-lg active:scale-95 transition-all">
+              <span>[ + ]</span>
+              <span>CREAR EVENTO</span>
+            </button>
+          </div>
+        `;
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
+      }
+
+      // Generar tarjetas Cover Flow con soporte 3D
+      track.innerHTML = eventsData.map((event, idx) => {
+        const borderCol = event.accentColor || '#E87A72';
+        return `
+          <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
+            <!-- Miniatura Superior -->
+            <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4 flex-shrink-0">
+              ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${event.title}" class="absolute inset-0 w-full h-full object-cover" />` : `
+                <div class="px-3 py-1 bg-[#101026] border border-[#00f3ff] rounded-sm mb-2 z-10">
+                  <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
+                    ${event.typeBadge || 'EVENTO'}
+                  </span>
+                </div>
+                <span class="font-display text-white text-lg font-bold tracking-wider uppercase z-10 text-center line-clamp-2">
+                  ${event.title}
+                </span>
+              `}
+            </div>
+
+            <!-- Bloque Descriptivo y Metadatos -->
+            <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
+              <div class="space-y-1">
+                <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
+                  ${event.title}
+                </h4>
+                <div>
+                  <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
+                    ${event.dateDisplay}
+                  </p>
+                  <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
+                    ${event.timeRange}
+                  </p>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
+                  ${event.location}
+                </p>
+                <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
+                  ${event.availabilityText || 'CUPO LIMITADO ·'}
+                </p>
+              </div>
+              <button onclick="event.stopPropagation(); openEventDetail(${idx})" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                SOLICITAR VIP
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Generar dots
+      if (dotsContainer) {
+        dotsContainer.innerHTML = eventsData.map((_, i) => `
+          <button onclick="setFullCard(${i})" id="dot${i}" class="${i === currentCardIndex ? 'w-2 h-2 bg-white' : 'w-1.5 h-1.5 bg-neutral-600'} rounded-full transition-all duration-300 focus:outline-none"></button>
+        `).join('');
+      }
+
+      setFullCard(currentCardIndex);
+    }
 
     function setFullCard(targetIndex) {
+      if (totalCards === 0) return;
       currentCardIndex = Math.max(0, Math.min(totalCards - 1, targetIndex));
       const cards = document.querySelectorAll('.cf-fullcard');
       
@@ -2526,7 +1971,8 @@
 
     // Inicializar Cover Flow y eventos táctiles / swipe
     window.addEventListener('DOMContentLoaded', () => {
-      setFullCard(1);
+      renderCoverFlow();
+      renderTicketCoverFlow();
 
       const track = document.getElementById('coverFlowTrack');
       if (track) {
@@ -2692,10 +2138,110 @@
     }
 
     // Lógica para Carrusel 3D Cover Flow de Tickets
+    let userTickets = [];
     let currentTicketIndex = 0;
-    const totalTickets = 5;
+    let totalTickets = 0;
+
+    function renderTicketCoverFlow() {
+      const track = document.getElementById('ticketCoverFlowTrack');
+      const dotsContainer = document.getElementById('ticketDotsContainer');
+      if (!track) return;
+
+      totalTickets = userTickets.length;
+
+      if (totalTickets === 0) {
+        track.innerHTML = `
+          <div class="w-[300px] sm:w-[320px] p-6 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-2xl">
+            <span class="text-3xl filter drop-shadow">🎟️</span>
+            <p class="font-sans text-xs sm:text-sm font-semibold text-neutral-300 tracking-wider uppercase leading-relaxed">
+              AÚN NO TIENES PASES ACTIVOS · EXPLORA EVENTOS O SOLICITA TU ACCESO CON UN ENLACE DIRECTO
+            </p>
+            <button onclick="closePassScreen(); handleNavigation('/home');" class="py-2.5 px-5 rounded-full bg-white text-black font-display text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-lg active:scale-95 transition-all">
+              <span>EXPLORAR EVENTOS</span>
+            </button>
+          </div>
+        `;
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
+      }
+
+      track.innerHTML = userTickets.map((t, idx) => {
+        const strokeColor = t.accentBorderColor || '#E87A72';
+        return `
+          <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
+            <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+              <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                    fill="#121316" stroke="${strokeColor}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+              <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+              <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+            </svg>
+            <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+              <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[${strokeColor}] border-[${strokeColor}]/40 bg-[${strokeColor}]/15">
+                    ${t.listType || 'PASE ACCESO'}
+                  </span>
+                  <span class="text-xs">${t.emoji || '🔥'}</span>
+                </div>
+                <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                  ${t.title}
+                </h3>
+                <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                  <span class="font-bold text-white">${t.dateStr}</span>
+                  <span>·</span>
+                  <span class="text-neutral-400">${t.timeStr}</span>
+                </div>
+              </div>
+              <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                  <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                    <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                      <rect width="100" height="100" fill="#FFFFFF" />
+                      <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                      <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                      <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                      <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                      <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                      <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                      <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                      <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                    </svg>
+                    <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[${strokeColor}] flex items-center justify-center shadow">
+                      <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                  <span class="text-[11px]">📍</span>
+                  <span class="truncate max-w-[210px]">${t.location || t.venue}</span>
+                </div>
+              </div>
+              <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                  ${t.holderName || 'INVITADO'}
+                </span>
+                <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                  <span class="font-mono font-bold text-neutral-300">${t.ticketId || '#0000'}</span>
+                  <span>·</span>
+                  <span class="uppercase tracking-wider">${t.verifiedProvider || 'VERIFICADO'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (dotsContainer) {
+        dotsContainer.innerHTML = userTickets.map((_, i) => `
+          <button id="dot_t_${i}" onclick="setTicketCoverFlow(${i})" class="${i === currentTicketIndex ? 'w-6 h-1.5 bg-[#E87A72]' : 'w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500'} rounded-full transition-all duration-300 focus:outline-none"></button>
+        `).join('');
+      }
+
+      setTicketCoverFlow(currentTicketIndex);
+    }
 
     function setTicketCoverFlow(targetIndex) {
+      if (totalTickets === 0) return;
       currentTicketIndex = Math.max(0, Math.min(totalTickets - 1, targetIndex));
       const tickets = document.querySelectorAll('.cf-ticket');
 
@@ -2754,7 +2300,7 @@
       const passScreen = document.getElementById('passScreenView');
       if (passScreen) {
         passScreen.classList.remove('hidden');
-        setTicketCoverFlow(currentTicketIndex);
+        renderTicketCoverFlow();
       }
     }
 
@@ -2852,36 +2398,102 @@
       }
     }
 
-    function publishEvent() {
+    async function publishEvent() {
       if (isEventPublished) {
         showToast('El evento ya fue publicado');
         return;
       }
 
-      // Microinteracción festiva con confeti
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 75,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF']
-        });
+      const title = document.getElementById('createEventNameInput')?.value.trim();
+      const date = document.getElementById('createEventDateInput')?.value || '';
+      const startTime = document.getElementById('createEventStartTimeInput')?.value || '';
+      const endTime = document.getElementById('createEventEndTimeInput')?.value || '';
+      const location = document.getElementById('createEventLocationInput')?.value.trim() || '';
+
+      if (!title) {
+        showToast('Ingresa el nombre del evento');
+        return;
       }
 
-      isEventPublished = true;
       const btn = document.getElementById('publishEventBtn');
       if (btn) {
-        btn.innerText = "¡EVENTO PUBLICADO! ✓";
-        btn.className = "w-full py-4 px-5 rounded-2xl bg-neutral-900 text-[#12C061] border border-[#12C061] font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none";
+        btn.innerText = "PUBLICANDO...";
+        btn.setAttribute('disabled', 'true');
       }
 
-      const shareBtn = document.getElementById('shareEventTopBtn');
-      if (shareBtn) {
-        shareBtn.removeAttribute('disabled');
-        shareBtn.className = "w-10 h-10 rounded-full border border-neutral-700 bg-neutral-900 text-white flex items-center justify-center transition-all focus:outline-none hover:scale-105 active:scale-95 cursor-pointer";
-      }
+      const eventPayload = {
+        title: title,
+        type: createPrivacyMode || 'public',
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+        location: location,
+        allowsPlusOne: Boolean(createPlusOneEnabled),
+        maxCapacity: createCapacity || 150,
+        hostUserId: fbCurrentUser ? fbCurrentUser.uid : 'usr_001',
+        hostName: fbCurrentUser ? (fbCurrentUser.displayName || 'Host +1') : 'Host +1',
+        createdAt: new Date().toISOString()
+      };
 
-      showToast('¡Evento publicado con éxito!');
+      try {
+        if (fbDb) {
+          await fbDb.collection('events').add(eventPayload);
+        } else {
+          // Fallback local si no hay conexión
+          eventsData.unshift({
+            id: 'evt_' + Date.now(),
+            title: eventPayload.title,
+            subtitle: eventPayload.type === 'public' ? 'Evento Público' : 'Lista Exclusiva',
+            dateDisplay: eventPayload.date,
+            timeRange: `${eventPayload.startTime} — ${eventPayload.endTime}`,
+            location: eventPayload.location,
+            availabilityText: 'ÚLTIMOS CUPOS ·',
+            theme: 'dubai',
+            isTonight: true,
+            isWeekend: true,
+            isVipOrFree: true,
+            route: '/passes'
+          });
+          renderCoverFlow();
+        }
+
+        // Microinteracción festiva con confeti
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 75,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF']
+          });
+        }
+
+        isEventPublished = true;
+        if (btn) {
+          btn.innerText = "¡EVENTO PUBLICADO! ✓";
+          btn.className = "w-full py-4 px-5 rounded-2xl bg-neutral-900 text-[#12C061] border border-[#12C061] font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none";
+        }
+
+        const shareBtn = document.getElementById('shareEventTopBtn');
+        if (shareBtn) {
+          shareBtn.removeAttribute('disabled');
+          shareBtn.className = "w-10 h-10 rounded-full border border-neutral-700 bg-neutral-900 text-white flex items-center justify-center transition-all focus:outline-none hover:scale-105 active:scale-95 cursor-pointer";
+        }
+
+        showToast('¡Evento publicado con éxito en Firestore!');
+
+        // Redirigir a Home después de publicar
+        setTimeout(() => {
+          closeCreateEventScreen();
+        }, 1200);
+
+      } catch (err) {
+        console.error('[+1 Firestore] Error al publicar evento:', err);
+        showToast('Error al publicar evento: ' + (err.message || 'Error'));
+        if (btn) {
+          btn.innerText = "PUBLICAR EVENTO";
+          btn.removeAttribute('disabled');
+        }
+      }
     }
 
     function handleShareEvent() {
@@ -3142,9 +2754,56 @@
       if (screen) screen.classList.add('hidden');
     }
 
+    let userCreatedEvents = [];
+
+    function renderMyEventsModal() {
+      const container = document.getElementById('myEventsListContainer');
+      if (!container) return;
+
+      if (userCreatedEvents.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 px-4 text-center rounded-xl bg-neutral-900/60 border border-neutral-800 space-y-2">
+            <span class="text-2xl filter drop-shadow">⚡</span>
+            <p class="font-sans text-xs font-semibold text-neutral-400 tracking-wider uppercase">
+              NO HAS CREADO NINGÚN EVENTO TODAVÍA
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = userCreatedEvents.map(evt => `
+        <div class="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+          <div class="flex items-start justify-between">
+            <div>
+              <h4 class="font-display text-white text-sm font-black uppercase leading-tight">
+                ${evt.title}
+              </h4>
+              <span class="font-sans text-neutral-400 text-xs mt-0.5 block">
+                ${evt.dateStr || evt.date || ''}
+              </span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40">
+              ${evt.status || 'Activo'}
+            </span>
+          </div>
+          <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
+            <span class="font-sans text-neutral-400">${evt.guestsCount || 0} / ${evt.maxCapacity || 150} invitados</span>
+            <div class="flex space-x-2">
+              <button onclick="showToast('Editando ${evt.title}')" class="font-display text-neutral-300 hover:text-white font-bold uppercase">Editar</button>
+              <button onclick="openDoorModal()" class="font-display text-[#12C061] hover:underline font-bold uppercase">Puerta</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function openMyEventsModal() {
       const modal = document.getElementById('myEventsModal');
-      if (modal) modal.classList.remove('hidden');
+      if (modal) {
+        renderMyEventsModal();
+        modal.classList.remove('hidden');
+      }
     }
 
     function closeMyEventsModal() {

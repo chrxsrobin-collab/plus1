@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { db, auth } from '../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { CreateEventFormData } from '../types/home';
 import '../styles/fonts.css';
 
@@ -70,26 +72,67 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     });
   };
 
-  const handlePublish = () => {
-    if (isPublished) {
-      showToast('El evento ya fue publicado');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handlePublish = async () => {
+    if (isPublished || isSaving) {
       return;
     }
 
-    // Microinteracción con confeti de partículas brillantes
-    try {
-      confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.8 },
-        colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF'],
-      });
-    } catch {
-      // Fallback silencioso si confetti no está disponible
+    const eventTitle = formData.name.trim();
+    if (!eventTitle) {
+      showToast('Por favor, ingresa el nombre del evento');
+      return;
     }
 
-    setIsPublished(true);
-    showToast('¡Evento publicado con éxito!');
+    setIsSaving(true);
+
+    try {
+      // Microinteracción con confeti de partículas brillantes
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 60,
+          origin: { y: 0.8 },
+          colors: ['#12C061', '#E87A72', '#FAB205', '#FFFFFF'],
+        });
+      } catch {
+        // Fallback silencioso
+      }
+
+      // Inserción directa en Firestore
+      await addDoc(collection(db, 'events'), {
+        title: eventTitle,
+        type: formData.privacy,
+        date: formData.startDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        location: formData.location || 'Por definir',
+        allowsPlusOne: formData.allowPlusOne,
+        maxCapacity: formData.maxCapacity,
+        artImage: formData.artImage || null,
+        hostUserId: auth.currentUser?.uid || 'anon_' + Date.now(),
+        hostName: auth.currentUser?.displayName || 'Anfitrión',
+        createdAt: Date.now(),
+      });
+
+      setIsPublished(true);
+      showToast('¡Evento publicado en vivo con éxito!');
+
+      // Redirigir al Home tras guardar exitosamente
+      setTimeout(() => {
+        if (onNavigate) {
+          onNavigate('/');
+        } else if (onBack) {
+          onBack();
+        }
+      }, 1200);
+    } catch (err) {
+      console.error('Error al guardar evento en Firestore:', err);
+      showToast('Error al conectar con Firestore');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleShare = () => {
@@ -400,13 +443,16 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handlePublish}
+              disabled={isSaving || isPublished}
               className={`w-full py-4 px-5 rounded-2xl font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none ${
                 isPublished
                   ? 'bg-neutral-900 text-[#12C061] border border-[#12C061]'
+                  : isSaving
+                  ? 'bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-wait'
                   : 'bg-[#12C061] hover:bg-[#0fa854] text-black active:scale-98'
               }`}
             >
-              {isPublished ? '¡EVENTO PUBLICADO! ✓' : 'PUBLICAR EVENTO'}
+              {isPublished ? '¡EVENTO PUBLICADO! ✓' : isSaving ? 'PUBLICANDO...' : 'PUBLICAR EVENTO'}
             </motion.button>
           </div>
 

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserProfile } from '../types/home';
-import { mockUserProfile, mockUserCreatedEvents, mockSouvenirs } from '../data/mockData';
+import { UserProfile, CreatedEventItem } from '../types/home';
+import { mockUserProfile, mockSouvenirs } from '../data/mockData';
+import { db, auth } from '../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import BottomNav from '../components/BottomNav';
 import '../styles/fonts.css';
 
@@ -20,6 +22,40 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     'events' | 'streak' | 'store' | 'subscription' | null
   >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [userEvents, setUserEvents] = useState<CreatedEventItem[]>([]);
+
+  // Escucha reactiva en tiempo real de eventos creados
+  React.useEffect(() => {
+    const currentUid = auth.currentUser?.uid;
+    const eventsRef = collection(db, 'events');
+    const q = currentUid
+      ? query(eventsRef, where('hostUserId', '==', currentUid))
+      : eventsRef;
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: CreatedEventItem[] = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.title || 'Evento sin título',
+            dateStr: `${data.date || 'Próximamente'} · ${data.startTime || '22:00'}`,
+            status: data.type === 'private' ? 'Privado' : 'Activo',
+            guestsCount: 0,
+            maxCapacity: data.maxCapacity || 150,
+          };
+        });
+        setUserEvents(list);
+      },
+      (err) => {
+        console.warn('Error escuchando eventos en ProfileScreen:', err);
+        setUserEvents([]);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -155,7 +191,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <div className="text-xl mb-1">📅</div>
             <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
-              {user.eventsCount ?? 14}
+              {userEvents.length}
             </span>
             <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
               EVENTOS
@@ -309,54 +345,66 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </button>
 
               <div className="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
-                {mockUserCreatedEvents.map((evt) => (
-                  <div
-                    key={evt.id}
-                    className="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-display text-white text-sm font-black uppercase leading-tight">
-                          {evt.title}
-                        </h4>
-                        <span className="font-sans text-neutral-400 text-xs mt-0.5 block">
-                          {evt.dateStr}
+                {userEvents.length === 0 ? (
+                  <div className="py-8 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2">
+                    <span className="text-3xl block mb-2">🎪</span>
+                    <p className="font-sans text-neutral-300 text-xs sm:text-sm font-semibold uppercase tracking-wider leading-relaxed">
+                      NO HAS CREADO NINGÚN EVENTO TODAVÍA
+                    </p>
+                    <p className="font-sans text-neutral-500 text-[11px] mt-1">
+                      Crea un evento público o privado para emitir listas y pases QR
+                    </p>
+                  </div>
+                ) : (
+                  userEvents.map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-display text-white text-sm font-black uppercase leading-tight">
+                            {evt.title}
+                          </h4>
+                          <span className="font-sans text-neutral-400 text-xs mt-0.5 block">
+                            {evt.dateStr}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                            evt.status === 'Activo'
+                              ? 'bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40'
+                              : evt.status === 'Finalizado'
+                              ? 'bg-neutral-800 text-neutral-400'
+                              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                          }`}
+                        >
+                          {evt.status}
                         </span>
                       </div>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                          evt.status === 'Activo'
-                            ? 'bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40'
-                            : evt.status === 'Finalizado'
-                            ? 'bg-neutral-800 text-neutral-400'
-                            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
-                        }`}
-                      >
-                        {evt.status}
-                      </span>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
-                      <span className="font-sans text-neutral-400">
-                        {evt.guestsCount} / {evt.maxCapacity} invitados
-                      </span>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => showToast(`Editando: ${evt.title}`)}
-                          className="font-display text-neutral-300 hover:text-white font-bold uppercase"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => showToast(`Control de puerta: ${evt.title}`)}
-                          className="font-display text-[#12C061] hover:underline font-bold uppercase"
-                        >
-                          Puerta
-                        </button>
+                      <div className="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
+                        <span className="font-sans text-neutral-400">
+                          {evt.guestsCount} / {evt.maxCapacity} invitados
+                        </span>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => showToast(`Editando: ${evt.title}`)}
+                            className="font-display text-neutral-300 hover:text-white font-bold uppercase cursor-pointer"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => showToast(`Control de puerta: ${evt.title}`)}
+                            className="font-display text-[#12C061] hover:underline font-bold uppercase cursor-pointer"
+                          >
+                            Puerta
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           </div>

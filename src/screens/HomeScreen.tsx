@@ -8,12 +8,28 @@ import { NoEventsModal } from '../components/NoEventsModal';
 import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
 import { NotificationsModal } from '../components/NotificationsModal';
-import {
-  mockUserProfile,
-  mockVipFlyers,
-} from '../data/mockData';
+import { db } from '../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { mockUserProfile } from '../data/mockData';
 import { TabType, VipFlyerItem } from '../types/home';
 import '../styles/fonts.css';
+
+// Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
+const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
+  id,
+  typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
+  title: data.title || 'SIN TÍTULO',
+  subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
+  dateDisplay: data.date ? data.date.toString().toUpperCase() : 'PRÓXIMAMENTE',
+  timeRange: `${data.startTime || '22:00'} — ${data.endTime || '04:00'}`,
+  location: data.location || 'Por definir',
+  availabilityText: `CUPO MÁX. ${data.maxCapacity || 150} ·`,
+  theme: data.theme || 'custom',
+  exactAddress: data.location || '',
+  imageUrl: data.artImage || './assets/images/fondo_a.webp',
+  description: `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+  isVipOrFree: true,
+});
 
 export interface HomeScreenProps {
   onNavigate?: (route: string) => void;
@@ -29,6 +45,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(mockUserProfile.unreadNotifications);
   
+  // Estado reactivo de eventos públicos desde Firestore (arranca vacío [])
+  const [events, setEvents] = useState<VipFlyerItem[]>([]);
+  const [isEventsLoading, setIsEventsLoading] = useState<boolean>(true);
+
+  // Escucha reactiva en tiempo real de eventos públicos
+  useEffect(() => {
+    const q = query(collection(db, 'events'), where('type', '==', 'public'));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const liveEvents = snapshot.docs.map((d) => mapDocToVipFlyer(d.id, d.data()));
+        setEvents(liveEvents);
+        setIsEventsLoading(false);
+      },
+      (error) => {
+        console.warn('Error escuchando eventos públicos de Firestore:', error);
+        setEvents([]);
+        setIsEventsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
   // Estado para la barra flotante dinámica (inicialmente oculta)
   const [isNavVisible, setIsNavVisible] = useState<boolean>(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -208,21 +248,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           </h2>
         </motion.div>
 
-        {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (CENTRADO CON ZOOM-IN SUAVE) */}
+        {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS O ESTADO VACÍO */}
         <motion.main
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
           className="flex-1 flex flex-col items-center justify-center my-auto py-1"
         >
-          <FullCardCoverFlow
-            flyers={mockVipFlyers}
-            onApplyVipClick={handleApplyVip}
-            onSelectEvent={(event) => {
-              setSelectedEvent(event);
-              setIsDetailModalOpen(true);
-            }}
-          />
+          {events.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-[340px] sm:max-w-[360px] h-[460px] sm:h-[480px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto"
+            >
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl mb-4">
+                🎪
+              </div>
+              <p className="font-sans text-neutral-300 text-sm sm:text-base font-medium tracking-wide uppercase leading-relaxed max-w-[260px]">
+                NO HAY EVENTOS PÚBLICOS ACTIVOS · SÉ EL PRIMERO EN CREAR UNO
+              </p>
+              <button
+                onClick={handleCreateEvent}
+                className="mt-6 py-3 px-6 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#12C061]/25 cursor-pointer"
+              >
+                [ + ] CREAR EVENTO
+              </button>
+            </motion.div>
+          ) : (
+            <FullCardCoverFlow
+              flyers={events}
+              onApplyVipClick={handleApplyVip}
+              onSelectEvent={(event) => {
+                setSelectedEvent(event);
+                setIsDetailModalOpen(true);
+              }}
+            />
+          )}
         </motion.main>
 
         {/* 5. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] (INMEDIATAMENTE DEBAJO DEL CARRUSEL) */}
@@ -265,7 +326,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           setIsSearchOpen(false);
           setActiveTab('home');
         }}
-        events={mockVipFlyers}
+        events={events}
         onSelectEvent={(event) => {
           setSelectedEvent(event);
           setIsDetailModalOpen(true);

@@ -6,9 +6,11 @@ import ProfileScreen from './screens/ProfileScreen';
 import TicketsScreen from './screens/TicketsScreen';
 import ScannerScreen from './screens/ScannerScreen';
 import EventInviteModal from './components/EventInviteModal';
-import { mockMamacitaPass, mockWalletTickets, mockEventInvites } from './data/mockData';
+import { PassItem } from './types/home';
+import { mockMamacitaPass, mockEventInvites } from './data/mockData';
 
 export const App: React.FC = () => {
+  const [userTickets, setUserTickets] = useState<PassItem[]>([]);
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     // Si la URL actual del navegador contiene /e/ o hash con ruta, podemos iniciar en ella
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/e/')) {
@@ -53,7 +55,7 @@ export const App: React.FC = () => {
     if (currentRoute === '/tickets' || currentRoute === '/passes') {
       return (
         <TicketsScreen
-          tickets={mockWalletTickets}
+          tickets={userTickets}
           onBack={() => setCurrentRoute('/')}
           onNavigate={handleNavigate}
         />

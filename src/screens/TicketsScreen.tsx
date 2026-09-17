@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PassItem } from '../types/home';
-import { mockWalletTickets } from '../data/mockData';
 import { TicketsCoverFlow } from '../components/TicketsCoverFlow';
 import { BottomNav } from '../components/BottomNav';
 import '../styles/fonts.css';
@@ -14,7 +13,7 @@ export interface TicketsScreenProps {
 }
 
 export const TicketsScreen: React.FC<TicketsScreenProps> = ({
-  tickets = mockWalletTickets,
+  tickets = [],
   initialIndex = 0,
   onBack,
   onNavigate,
@@ -22,7 +21,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const activeTicket = tickets[currentIndex] || tickets[0];
+  const activeTicket = tickets[currentIndex] || tickets[0] || null;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -96,45 +95,68 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
           <div className="w-10 h-10" />
         </header>
 
-        {/* 2. CARRUSEL 3D COVER FLOW */}
-        <main className="flex-1 flex flex-col items-center justify-center my-auto py-1">
-          <TicketsCoverFlow
-            tickets={tickets}
-            currentIndex={currentIndex}
-            onIndexChange={setCurrentIndex}
-            onSelectTicket={(ticket) => {
-              showToast(`Ticket seleccionado: ${ticket.title}`);
-            }}
-          />
-
-          {/* 3. PAGINADOR DE PUNTOS (DOTS) */}
-          <div className="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
-            {tickets.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                aria-label={`Ver ticket ${i + 1}`}
-                className={`transition-all duration-300 rounded-full focus:outline-none ${
-                  i === currentIndex
-                    ? 'w-6 h-1.5 bg-[#E87A72]'
-                    : 'w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500'
-                }`}
-              />
-            ))}
-          </div>
-        </main>
-
-        {/* 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS */}
-        <div className="w-full pt-2 pb-2">
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={handleDownloadCopy}
-            className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none"
+        {/* 2. CARRUSEL 3D COVER FLOW O ESTADO VACÍO */}
+        {tickets.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-[340px] sm:max-w-[360px] h-[440px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto"
           >
-            <span className="text-lg leading-none">⬇</span>
-            <span>GUARDAR COPIA EN FOTOS</span>
-          </motion.button>
-        </div>
+            <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl mb-4">
+              🎟️
+            </div>
+            <p className="font-sans text-neutral-300 text-sm font-medium tracking-wide uppercase leading-relaxed max-w-[270px]">
+              AÚN NO TIENES PASES ACTIVOS · EXPLORA EVENTOS O SOLICITA TU ACCESO CON UN ENLACE DIRECTO
+            </p>
+            <button
+              onClick={() => (onNavigate ? onNavigate('/') : onBack?.())}
+              className="mt-6 py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer"
+            >
+              EXPLORAR EVENTOS
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <main className="flex-1 flex flex-col items-center justify-center my-auto py-1">
+              <TicketsCoverFlow
+                tickets={tickets}
+                currentIndex={currentIndex}
+                onIndexChange={setCurrentIndex}
+                onSelectTicket={(ticket) => {
+                  showToast(`Ticket seleccionado: ${ticket.title}`);
+                }}
+              />
+
+              {/* 3. PAGINADOR DE PUNTOS (DOTS) */}
+              <div className="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
+                {tickets.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    aria-label={`Ver ticket ${i + 1}`}
+                    className={`transition-all duration-300 rounded-full focus:outline-none ${
+                      i === currentIndex
+                        ? 'w-6 h-1.5 bg-[#E87A72]'
+                        : 'w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500'
+                    }`}
+                  />
+                ))}
+              </div>
+            </main>
+
+            {/* 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS */}
+            <div className="w-full pt-2 pb-2">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDownloadCopy}
+                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none"
+              >
+                <span className="text-lg leading-none">⬇</span>
+                <span>GUARDAR COPIA EN FOTOS</span>
+              </motion.button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 5. BOTTOM NAVIGATION BAR FIJA (CON TAB TICKETS ACTIVO) */}
