@@ -81,6 +81,29 @@
     .anim-scanner-laser {
       animation: scannerLaserScan 2.4s ease-in-out infinite;
     }
+    /* Reset estricto para inputs de fecha y hora nativos para evitar desbordes en iOS WebKit */
+    input[type="date"],
+    input[type="time"] {
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    input[type="date"]::-webkit-date-and-time-value,
+    input[type="time"]::-webkit-date-and-time-value {
+      text-align: center;
+      line-height: 1.25;
+      margin: 0;
+      padding: 0;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      display: none;
+      -webkit-appearance: none;
+    }
   </style>
 </head>
 <body class="bg-black text-white min-h-[100dvh] w-full m-0 p-0 overflow-x-hidden font-sans select-none">
@@ -1327,24 +1350,24 @@
             <input type="text" id="createEventNameInput" placeholder="Ej. FIESTA DE PEPE ⚡" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
           </div>
 
-          <!-- CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS) -->
-          <div class="grid grid-cols-2 gap-3">
+          <!-- CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS ALINEADAS CON LOS OTROS CAMPOS) -->
+          <div class="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
             <!-- Columna Inicio -->
-            <div class="space-y-1.5">
-              <label class="font-display text-neutral-300 text-xs font-bold tracking-wider uppercase block">
+            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 INICIO
               </label>
-              <input type="date" value="2026-09-20" class="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none" />
-              <input type="time" value="21:00" class="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none" />
+              <input type="date" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="time" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
             </div>
 
             <!-- Columna Fin -->
-            <div class="space-y-1.5">
-              <label class="font-display text-neutral-300 text-xs font-bold tracking-wider uppercase block">
+            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
                 TÉRMINO
               </label>
-              <input type="date" value="2026-09-21" class="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none" />
-              <input type="time" value="04:30" class="w-full h-11 px-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs outline-none" />
+              <input type="date" value="2026-09-21" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <input type="time" value="04:30" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
             </div>
           </div>
 
