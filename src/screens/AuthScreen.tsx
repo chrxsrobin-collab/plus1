@@ -55,16 +55,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
 
   return (
     <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-hidden font-sans select-none px-6 py-10">
-      {/* Fondo texturizado sutil */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-35 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
-        }}
-      />
+      {/* VIDEO DE FONDO EN LOOP (BACKGROUND VIDEO) */}
+      <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden -z-10 bg-black">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src="./assets/video/fondo_login.mp4" type="video/mp4" />
+          <source src="/assets/video/fondo_login.mp4" type="video/mp4" />
+        </video>
+        {/* Capa de oscurecimiento para garantizar el contraste de lectura */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] pointer-events-none" />
+      </div>
 
       {/* Degradados ambientales de iluminación nocturna */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#E87A72]/10 rounded-full blur-3xl pointer-events-none z-0" />
