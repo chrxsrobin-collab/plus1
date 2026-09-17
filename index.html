@@ -73,6 +73,14 @@
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
+    @keyframes scannerLaserScan {
+      0% { top: 12px; }
+      50% { top: calc(100% - 14px); }
+      100% { top: 12px; }
+    }
+    .anim-scanner-laser {
+      animation: scannerLaserScan 2.4s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-black text-white min-h-[100dvh] w-full m-0 p-0 overflow-x-hidden font-sans select-none">
@@ -80,16 +88,16 @@
   <!-- Contenedor Raíz Nativo (100% Pantalla) -->
   <div class="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden">
     
-    <!-- Fondo de Pantalla: fondo_iniciob.webp con textura abstracta oscura muy sutil -->
+    <!-- Fondo de Pantalla: fondo_a.webp con textura abstracta oscura -->
     <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none"
-         style="background-image: url('./assets/images/fondo_iniciob.webp');">
+         style="background-image: url('./assets/images/fondo_a.webp');">
     </div>
     
     <!-- Sombra sutil degradada superior para HUD -->
     <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
     <!-- Contenedor Interior Nativo (overflow-y-auto h-full con pb-28) -->
-    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-28 w-full max-w-md mx-auto">
+    <div id="mainHomeScrollContainer" class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-28 w-full max-w-md mx-auto">
       
       <!-- 1. TOP BAR / HUD -->
       <header class="anim-hud flex items-center justify-between px-6 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-1 w-full">
@@ -126,11 +134,10 @@
         </h1>
       </div>
 
-      <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
-      <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
+      <!-- 3. ENCABEZADO INDEPENDIENTE: EVENTOS PARA TI -->
       <div class="anim-greeting px-6 pt-1 pb-1 mt-2">
-        <h2 class="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
-          PROXIMOS EVENTOS
+        <h2 class="font-sans text-[#9CA3AF] text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
+          EVENTOS PARA TI
         </h2>
       </div>
 
@@ -174,7 +181,7 @@
                     ÚLTIMOS 18 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
@@ -213,7 +220,7 @@
                     ÚLTIMOS 5 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
@@ -253,7 +260,7 @@
                     ÚLTIMOS 25 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
@@ -292,7 +299,7 @@
                     ÚLTIMOS 10 CUPOS ·
                   </p>
                 </div>
-                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
+                <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
                   SOLICITAR VIP
                 </button>
               </div>
@@ -315,14 +322,14 @@
         <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
           <!-- CREAR EVENTO CON [ + ] -->
           <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
-            <span class="font-display text-black text-[24px] sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+            <span class="font-display text-black text-[26px] sm:text-[28px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
               <span class="text-xl font-bold">[ + ]</span>
               <span>CREAR EVENTO</span>
             </span>
           </button>
 
           <!-- ESCANEAR QR -->
-          <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
+          <button onclick="openScannerScreen()" class="anim-qr-btn h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all">
             <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
               <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
             </svg>
@@ -335,30 +342,28 @@
 
     </div>
 
-    <!-- 5. BOTTOM NAVIGATION BAR FIJA AL FONDO -->
-    <nav class="anim-bottom-nav fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-      <div class="w-full max-w-md mx-auto flex items-center justify-between">
-        <!-- Home -->
-        <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        </button>
+    <!-- 5. BOTTOM NAVIGATION BAR FLOTANTE DINÁMICA (Auto-Hiding Floating Capsule) -->
+    <nav id="floatingBottomNav" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[260px] w-[90%] mx-auto py-2.5 px-6 rounded-full bg-[#121316]/85 backdrop-blur-lg border border-[#26282E] shadow-2xl flex items-center justify-around select-none transition-all duration-300 ease-out translate-y-[150%] opacity-0 pointer-events-none">
+      <!-- Home -->
+      <button class="p-1 text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); showToast('Ruta: /')">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </button>
 
-        <!-- Pases / Ticket -->
-        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openPassScreen()" aria-label="Ver pases">
-          <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-          </svg>
-        </button>
+      <!-- Pases / Ticket -->
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); openPassScreen()" aria-label="Ver pases">
+        <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+        </svg>
+      </button>
 
-        <!-- Buscar / Lupa -->
-        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openSearchEventsModal()" aria-label="Buscar eventos">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
-      </div>
+      <!-- Buscar / Lupa -->
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); openSearchEventsModal()" aria-label="Buscar eventos">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
     </nav>
 
     <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
@@ -1148,6 +1153,117 @@
           </div>
         </nav>
 
+      </div>
+    </div>
+
+    <!-- PANTALLA DE ESCÁNER QR: /scanner (ScannerScreen) -->
+    <div id="scannerScreenView" class="hidden fixed inset-0 z-50 w-full h-full bg-black text-white flex flex-col justify-between overflow-hidden select-none font-sans">
+      
+      <!-- 1. VISTA DE CÁMARA / VIDEO O MOCKUP DE RESPALDO -->
+      <div class="absolute inset-0 z-0 bg-[#0E0F12] flex items-center justify-center overflow-hidden">
+        <!-- Stream de video nativo de la cámara trasera -->
+        <video id="scannerVideoFeed" autoplay playsinline muted class="w-full h-full object-cover transition-opacity duration-500 opacity-0"></video>
+
+        <!-- Mockup de respaldo cuando la cámara está en entorno simulado o sin permisos -->
+        <div id="scannerMockupFallback" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#0B0C0E] via-[#101216] to-[#08090B] p-6 text-center">
+          <!-- Patrón reticular táctico sutil -->
+          <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#26282E 1px, transparent 1px); background-size: 24px 24px;"></div>
+
+          <!-- Icono de Lente / Sensor -->
+          <div class="relative w-20 h-20 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center mb-4 shadow-xl">
+            <div class="w-12 h-12 rounded-full border border-neutral-700/80 bg-neutral-950 flex items-center justify-center">
+              <div class="w-5 h-5 rounded-full bg-[#12C061]/20 border border-[#12C061]/60 animate-pulse"></div>
+            </div>
+          </div>
+
+          <!-- Badge sutil de estado -->
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-neutral-900/90 border border-neutral-800 text-neutral-400 font-sans text-xs font-semibold tracking-wider uppercase mb-2">
+            <span class="w-2 h-2 rounded-full bg-[#12C061] animate-ping"></span>
+            <span>Vista previa de cámara activa</span>
+          </div>
+
+          <p class="text-neutral-500 text-[11px] max-w-xs leading-relaxed font-sans">
+            Modo simulador listo para escanear pases QR de invitados y entradas VIP.
+          </p>
+        </div>
+
+        <!-- Viñeta oscura periférica -->
+        <div class="absolute inset-0 pointer-events-none bg-radial-gradient from-transparent via-black/40 to-black/80"></div>
+      </div>
+
+      <!-- 2. TOP BAR FLOTANTE -->
+      <header class="relative z-30 flex items-center justify-between px-5 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-3 w-full max-w-md mx-auto">
+        <!-- Botón Retroceso / Cerrar (←) -->
+        <button onclick="closeScannerScreen()" aria-label="Cerrar escáner" class="w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 backdrop-blur-md border border-white/15 flex items-center justify-center text-white transition-all active:scale-90 focus:outline-none cursor-pointer">
+          <span class="text-xl font-bold leading-none">←</span>
+        </button>
+
+        <!-- Título Central Display -->
+        <div class="flex flex-col items-center justify-center text-center">
+          <h1 class="font-display text-white text-lg sm:text-xl font-black tracking-wider uppercase leading-none">
+            ESCANEAR PASE QR
+          </h1>
+          <span class="font-sans text-[10px] text-[#8E8E93] tracking-widest uppercase font-semibold mt-0.5">
+            PUERTA +1 · CONTROL
+          </span>
+        </div>
+
+        <!-- Botón Linterna / Flash interactivo -->
+        <button id="scannerTorchBtn" onclick="toggleScannerTorch()" aria-label="Alternar linterna" class="w-10 h-10 rounded-full backdrop-blur-md border border-white/15 bg-black/60 hover:bg-black/90 text-white/80 hover:text-white flex items-center justify-center transition-all active:scale-90 focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M7 2v11h3v9l7-12h-4l4-8H7zm2 2h5.75l-3.25 6.5h3.69L11.5 17.5V11H9V4z" />
+          </svg>
+        </button>
+      </header>
+
+      <!-- 3. VISOR CENTRAL CON RETÍCULA DE ESCANEO -->
+      <main class="relative z-20 flex-1 flex flex-col items-center justify-center px-6 my-auto">
+        <div id="scannerViewfinder" class="relative w-[260px] h-[260px] sm:w-[280px] sm:h-[280px] rounded-3xl transition-transform duration-300 scale-100">
+          <!-- Sombra sutil de recorte -->
+          <div class="absolute inset-0 rounded-3xl border border-white/10 pointer-events-none"></div>
+
+          <!-- Esquinas en ángulo recto (Corners) en verde esmeralda #12C061 -->
+          <!-- Superior Izquierda -->
+          <div class="absolute top-0 left-0 w-8 h-8 border-t-[3.5px] border-l-[3.5px] border-[#12C061] rounded-tl-xl pointer-events-none"></div>
+          <!-- Superior Derecha -->
+          <div class="absolute top-0 right-0 w-8 h-8 border-t-[3.5px] border-r-[3.5px] border-[#12C061] rounded-tr-xl pointer-events-none"></div>
+          <!-- Inferior Izquierda -->
+          <div class="absolute bottom-0 left-0 w-8 h-8 border-b-[3.5px] border-l-[3.5px] border-[#12C061] rounded-bl-xl pointer-events-none"></div>
+          <!-- Inferior Derecha -->
+          <div class="absolute bottom-0 right-0 w-8 h-8 border-b-[3.5px] border-r-[3.5px] border-[#12C061] rounded-br-xl pointer-events-none"></div>
+
+          <!-- Línea láser horizontal animada -->
+          <div class="anim-scanner-laser absolute left-2 right-2 h-[2.5px] rounded-full bg-gradient-to-r from-transparent via-[#12C061] to-transparent shadow-[0_0_12px_#12C061] pointer-events-none"></div>
+
+          <!-- Marca de agua central suave en visor -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+            <svg class="w-16 h-16 text-white stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v16m8-8H4" />
+            </svg>
+          </div>
+        </div>
+      </main>
+
+      <!-- 4. INDICADOR INFERIOR Y BOTÓN DE PRUEBA (MOCKUP CHECK-IN) -->
+      <footer class="relative z-30 flex flex-col items-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] w-full max-w-md mx-auto space-y-4">
+        
+        <!-- Pastilla oscura de instrucción -->
+        <div class="px-4 py-2 rounded-full bg-black/75 backdrop-blur-md border border-neutral-800 text-center shadow-lg">
+          <p class="font-sans text-xs text-neutral-300 font-medium tracking-wide">
+            Apunta al código QR del invitado para validar el pase
+          </p>
+        </div>
+
+        <!-- Botón de simulación para validar entrada (Mockup Check-in) -->
+        <button onclick="triggerScannerSimulation()" class="w-full py-3.5 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse"></span>
+          <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
+        </button>
+      </footer>
+
+      <!-- 5. TOAST DE CONFIRMACIÓN FLOTANTE -->
+      <div id="scannerToast" class="hidden fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-[#121316] border-2 border-[#12C061] text-white font-display font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-2xl tracking-wider uppercase flex items-center space-x-2 whitespace-nowrap transition-all">
+        <span>🟢 ACCESO AUTORIZADO · PASE VERIFICADO</span>
       </div>
     </div>
 
@@ -2104,7 +2220,91 @@
           tIsDragging = false;
         });
       }
+
+      // Controladores para Auto-Hiding / Collapsible Floating Tab Bar (#floatingBottomNav)
+      window.addEventListener('click', (e) => {
+        if (e.target.closest('#floatingBottomNav') || e.target.closest('#eventDetailModal') || e.target.closest('#searchEventsModal') || e.target.closest('#notificationsModal') || e.target.closest('#doorModal')) {
+          if (isFloatingNavVisible) resetFloatingNavTimer();
+          return;
+        }
+        showFloatingNav();
+      });
+
+      const scrollContainer = document.getElementById('mainHomeScrollContainer');
+      if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', () => {
+          const currentY = scrollContainer.scrollTop;
+          const diff = currentY - navLastScrollY;
+
+          if (diff > 4) {
+            // Scroll hacia abajo (recorrido de contenido) -> emerge barra
+            showFloatingNav();
+          } else if (diff < -15) {
+            // Scroll prolongado en dirección opuesta -> se oculta
+            hideFloatingNav();
+          } else if (isFloatingNavVisible) {
+            resetFloatingNavTimer();
+          }
+          navLastScrollY = currentY;
+        }, { passive: true });
+
+        let tStartY = 0;
+        scrollContainer.addEventListener('touchstart', (e) => {
+          tStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        scrollContainer.addEventListener('touchmove', (e) => {
+          const diff = tStartY - e.touches[0].clientY; // positivo = arrastre hacia arriba
+          if (diff > 8) {
+            showFloatingNav();
+          } else if (diff < -18) {
+            hideFloatingNav();
+          } else if (isFloatingNavVisible) {
+            resetFloatingNavTimer();
+          }
+        }, { passive: true });
+      }
+
+      window.addEventListener('wheel', (e) => {
+        if (e.deltaY > 4) {
+          showFloatingNav();
+        } else if (e.deltaY < -15) {
+          hideFloatingNav();
+        } else if (isFloatingNavVisible) {
+          resetFloatingNavTimer();
+        }
+      }, { passive: true });
     });
+
+    // Lógica para Auto-Hiding / Collapsible Tab Bar Flotante
+    let navHideTimer = null;
+    let navLastScrollY = 0;
+    let isFloatingNavVisible = false;
+
+    function resetFloatingNavTimer() {
+      if (navHideTimer) clearTimeout(navHideTimer);
+      navHideTimer = setTimeout(() => {
+        hideFloatingNav();
+      }, 4000);
+    }
+
+    function showFloatingNav() {
+      const nav = document.getElementById('floatingBottomNav');
+      if (!nav) return;
+      isFloatingNavVisible = true;
+      nav.classList.remove('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
+      nav.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+      resetFloatingNavTimer();
+    }
+
+    function hideFloatingNav() {
+      const nav = document.getElementById('floatingBottomNav');
+      if (!nav) return;
+      isFloatingNavVisible = false;
+      nav.classList.add('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
+      nav.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+      if (navHideTimer) clearTimeout(navHideTimer);
+    }
 
     function showToast(msg) {
       const toast = document.createElement("div");
@@ -2332,6 +2532,10 @@
       }
       if (route === '/create-event') {
         openCreateEventScreen();
+        return;
+      }
+      if (route === '/scanner' || route === '/scan') {
+        openScannerScreen();
         return;
       }
       if (route === '/passes' || route.startsWith('/pass')) {
@@ -2623,6 +2827,117 @@
 
     function closeDoorModal() {
       document.getElementById("doorModal").classList.add("hidden");
+    }
+
+    // Funciones para Pantalla Escáner QR (ScannerScreen / /scanner)
+    let scannerStream = null;
+    let scannerTorchOn = false;
+
+    function openScannerScreen() {
+      const screen = document.getElementById('scannerScreenView');
+      if (screen) screen.classList.remove('hidden');
+
+      const video = document.getElementById('scannerVideoFeed');
+      const fallback = document.getElementById('scannerMockupFallback');
+
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .catch(() => navigator.mediaDevices.getUserMedia({ video: true }))
+          .then((mediaStream) => {
+          scannerStream = mediaStream;
+          if (video) {
+            video.srcObject = mediaStream;
+            video.play().then(() => {
+              video.classList.remove('opacity-0');
+              video.classList.add('opacity-100');
+              if (fallback) fallback.classList.add('hidden');
+            }).catch(() => {
+              video.classList.remove('opacity-0');
+              video.classList.add('opacity-100');
+              if (fallback) fallback.classList.add('hidden');
+            });
+          }
+        }).catch((err) => {
+          console.warn('[ScannerScreen] Cámara no disponible o permiso denegado:', err);
+          if (video) video.classList.add('opacity-0');
+          if (fallback) fallback.classList.remove('hidden');
+        });
+      } else {
+        if (video) video.classList.add('opacity-0');
+        if (fallback) fallback.classList.remove('hidden');
+      }
+    }
+
+    function closeScannerScreen() {
+      const screen = document.getElementById('scannerScreenView');
+      if (screen) screen.classList.add('hidden');
+
+      if (scannerStream) {
+        scannerStream.getTracks().forEach((track) => track.stop());
+        scannerStream = null;
+      }
+      const video = document.getElementById('scannerVideoFeed');
+      if (video) {
+        video.srcObject = null;
+        video.classList.add('opacity-0');
+      }
+      scannerTorchOn = false;
+      const torchBtn = document.getElementById('scannerTorchBtn');
+      if (torchBtn) {
+        torchBtn.className = "w-10 h-10 rounded-full backdrop-blur-md border border-white/15 bg-black/60 hover:bg-black/90 text-white/80 hover:text-white flex items-center justify-center transition-all active:scale-90 focus:outline-none cursor-pointer";
+      }
+    }
+
+    async function toggleScannerTorch() {
+      scannerTorchOn = !scannerTorchOn;
+      const torchBtn = document.getElementById('scannerTorchBtn');
+      if (torchBtn) {
+        if (scannerTorchOn) {
+          torchBtn.className = "w-10 h-10 rounded-full backdrop-blur-md border border-[#FAB205] bg-[#FAB205] text-black shadow-lg shadow-[#FAB205]/30 flex items-center justify-center transition-all active:scale-90 focus:outline-none cursor-pointer";
+        } else {
+          torchBtn.className = "w-10 h-10 rounded-full backdrop-blur-md border border-white/15 bg-black/60 hover:bg-black/90 text-white/80 hover:text-white flex items-center justify-center transition-all active:scale-90 focus:outline-none cursor-pointer";
+        }
+      }
+
+      try {
+        if (scannerStream) {
+          const track = scannerStream.getVideoTracks()[0];
+          if (track && 'applyConstraints' in track) {
+            await track.applyConstraints({
+              advanced: [{ torch: scannerTorchOn }]
+            });
+          }
+        }
+      } catch (e) {
+        console.log('[ScannerTorch] Linterna no soportada directamente por este hardware');
+      }
+    }
+
+    function triggerScannerSimulation() {
+      const viewfinder = document.getElementById('scannerViewfinder');
+      const toast = document.getElementById('scannerToast');
+      if (viewfinder) {
+        viewfinder.classList.remove('scale-100');
+        viewfinder.classList.add('scale-105');
+      }
+      if (toast) {
+        toast.classList.remove('hidden');
+        toast.classList.add('flex');
+      }
+
+      setTimeout(() => {
+        if (viewfinder) {
+          viewfinder.classList.remove('scale-105');
+          viewfinder.classList.add('scale-100');
+        }
+      }, 2000);
+
+      setTimeout(() => {
+        if (toast) {
+          toast.classList.remove('flex');
+          toast.classList.add('hidden');
+        }
+      }, 3200);
     }
 
     // Funciones para Modal de Notificaciones (NotificationsModal)
