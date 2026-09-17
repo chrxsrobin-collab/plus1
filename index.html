@@ -127,14 +127,14 @@
       </div>
 
       <!-- 3. ENCABEZADO INDEPENDIENTE: PROXIMOS EVENTOS (FUERA DE LA TARJETA) -->
-      <div class="anim-greeting px-6 pt-1 pb-2">
+      <div class="anim-greeting px-6 pt-1 pb-2 mt-[25px]">
         <h2 class="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
           PROXIMOS EVENTOS
         </h2>
       </div>
 
       <!-- 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (DESPLAZAMIENTO EN BLOQUE) -->
-      <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1">
+      <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1 relative -top-[10px]">
         <div class="relative w-full h-[425px] sm:h-[440px] flex items-center justify-center py-2" style="perspective: 1100px;">
           <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
             
@@ -310,7 +310,7 @@
       </main>
 
       <!-- 4. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] -->
-      <div class="anim-footer px-4 mt-auto pt-2 mb-2 z-20">
+      <div class="anim-footer px-4 mt-auto pt-2 mb-2 z-20 relative -top-[20px]">
         <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
           <!-- CREAR EVENTO CON [ + ] -->
           <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
