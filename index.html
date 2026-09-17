@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>+1 (Más Uno) - Mobile App</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @font-face {
+      font-family: 'Antonio';
+      src: url('./assets/fonts/Antonio-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Cabinet Grotesk';
+      src: url('./assets/fonts/CabinetGrotesk-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    .font-display {
+      font-family: 'Antonio', -apple-system, sans-serif;
+      letter-spacing: 0.04em;
+    }
+    .font-sans {
+      font-family: 'Cabinet Grotesk', -apple-system, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    /* Coreografía de Animación de Entrada Brutalista */
+    @keyframes hudDown {
+      0% { opacity: 0; transform: translateY(-12px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes expandLeft {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+    @keyframes expandRight {
+      0% { transform: scaleX(0); }
+      100% { transform: scaleX(1); }
+    }
+    @keyframes slideUpFade {
+      0% { opacity: 0; transform: translateY(22px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes zoomIn {
+      0% { opacity: 0; transform: scale(0.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes marqueeScroll {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .anim-hud { animation: hudDown 0.35s ease-out forwards; }
+    .anim-bar-left {
+      transform-origin: left;
+      animation: expandLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+    .anim-bar-right {
+      transform-origin: right;
+      animation: expandRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+    }
+    .anim-carousel-1 { animation: slideUpFade 0.4s ease-out 0.2s both; }
+    .anim-carousel-2 { animation: slideUpFade 0.4s ease-out 0.35s both; }
+    .anim-footer { animation: slideUpFade 0.4s ease-out 0.45s both; }
+    .anim-qr-btn { animation: zoomIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.55s both; }
+    .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.5s both; }
+    
+    .anim-marquee {
+      display: flex;
+      width: max-content;
+      animation: marqueeScroll 40s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#080808] text-white flex justify-center items-center min-h-screen p-0 sm:p-4 overflow-x-hidden font-sans select-none">
+
+  <!-- Marco de Dispositivo Móvil (Proporciones iPhone 14 Pro / 100vh móvil) -->
+  <div class="relative w-full sm:max-w-[390px] h-screen sm:h-[844px] bg-black sm:rounded-[42px] overflow-hidden flex flex-col justify-between shadow-[0_0_60px_rgba(0,0,0,0.95)] border-0 sm:border-[8px] sm:border-[#1c1d22]">
+    
+    <!-- Dynamic Island Mockup para escritorio -->
+    <div class="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-40 hidden sm:block"></div>
+
+    <!-- Fondo Memphis con textura de gradiente verde a negro -->
+    <div class="absolute inset-0 z-0 bg-cover bg-bottom opacity-85 pointer-events-none"
+         style="background-image: url('./assets/images/fondo_inicio.webp');">
+    </div>
+    
+    <!-- Sombra / Degradado Superior para HUD -->
+    <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-black via-black/85 to-transparent pointer-events-none z-10"></div>
+
+    <!-- Contenedor Interior -->
+    <div class="relative z-20 flex-1 flex flex-col justify-between overflow-hidden">
+      
+      <!-- 1. TOP BAR / HUD -->
+      <header class="anim-hud flex items-center justify-between px-5 pt-7 pb-2 w-full">
+        <!-- Logo +1 -->
+        <div class="flex items-center cursor-pointer">
+          <span class="font-display text-white text-[34px] font-black tracking-tight leading-none">
+            +1
+          </span>
+        </div>
+
+        <!-- Acciones Derecha -->
+        <div class="flex items-center space-x-3.5">
+          <!-- Campana con Badge Rojo -->
+          <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+            </svg>
+            <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
+              2
+            </span>
+          </button>
+
+          <!-- Avatar Retro Pixel Art -->
+          <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
+            <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
+          </div>
+        </div>
+      </header>
+
+      <!-- SECCIONES DE CONTENIDO CON SCROLL INTERNO -->
+      <div class="flex-1 overflow-y-auto no-scrollbar pb-2">
+        
+        <!-- 2. BARRA "PRÓXIMOS PASES" -->
+        <div class="w-full mt-1 mb-2.5">
+          <div class="anim-bar-left w-full bg-[#12c061] py-1 px-4 flex items-center">
+            <h2 class="font-display text-black text-[22px] font-black tracking-wider uppercase m-0 leading-none">
+              PROXIMOS PASES
+            </h2>
+          </div>
+
+          <!-- 3. CARRUSEL TU PRÓXIMO PASE (Borde a Borde / Edge-to-Edge) -->
+          <div class="anim-carousel-1 w-full mt-2.5">
+            <div class="flex space-x-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-3 py-2">
+              
+              <!-- CARD 1: CUMPLE DE PEPE -->
+              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-4 bg-[#101114] border-[2px] border-[#fe97de] shadow-[0_6px_0px_0px_#fe97de] flex flex-col items-center">
+                <div class="flex items-center justify-center space-x-1.5 mb-1.5">
+                  <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#1f232b] text-white text-[11px] font-bold font-mono border border-neutral-700">
+                    📅 24
+                  </span>
+                  <h3 class="font-display text-white text-[22px] font-black tracking-tight uppercase">
+                    CUMPLE DE PEPE
+                  </h3>
+                  <span class="text-lg">🎂</span>
+                </div>
+                
+                <p class="font-sans text-white/95 text-[13px] text-center font-medium tracking-wide mb-1">
+                  Vie, 24 Oct • 22:00 | Sopocachi
+                </p>
+                <p class="font-sans text-center text-[13px] font-semibold text-[#fe97de] mb-3.5">
+                  Estado: Confirmado (Tú + 1)
+                </p>
+
+                <button onclick="handleNavigation('/pass/pepe_101')" class="w-full py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[15px] font-black tracking-wider uppercase flex items-center justify-center space-x-2 active:scale-95 transition-all shadow-md">
+                  <span>VER MI ENTRADA QR</span>
+                  <span class="text-base">🎟️</span>
+                </button>
+              </div>
+
+              <!-- CARD 2: FIESTA PRIVADA NACHO -->
+              <div class="snap-center flex-shrink-0 w-full rounded-2xl p-4 bg-[#101114] border-[2px] border-[#fab205] shadow-[0_6px_0px_0px_#fe97de] flex flex-col items-center">
+                <div class="flex items-center justify-center space-x-1.5 mb-1.5">
+                  <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#1f232b] text-white text-[11px] font-bold font-mono border border-neutral-700">
+                    📅 25
+                  </span>
+                  <h3 class="font-display text-white text-[22px] font-black tracking-tight uppercase">
+                    FIESTA PRIVADA NACHO
+                  </h3>
+                  <span class="text-lg">⚡</span>
+                </div>
+                
+                <p class="font-sans text-white/95 text-[13px] text-center font-medium tracking-wide mb-1">
+                  Sáb, 25 Oct • 23:30 | Calacoto
+                </p>
+                <p class="font-sans text-center text-[13px] font-semibold text-[#fab205] mb-3.5">
+                  Estado: Pendiente
+                </p>
+
+                <button onclick="handleNavigation('/pass/nacho_102')" class="w-full py-2.5 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[15px] font-black tracking-wider uppercase flex items-center justify-center space-x-2 active:scale-95 transition-all shadow-md">
+                  <span>VER DETALLES</span>
+                  <span class="text-base">🕒</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. BARRA TICKER MARQUEE EN LOOP (VIP & EVENTOS ·) -->
+        <div class="w-full mt-3 mb-2">
+          <div class="anim-bar-right w-full bg-black/95 py-1.5 overflow-hidden flex border-y border-neutral-900">
+            <div class="anim-marquee will-change-transform">
+              <span class="font-display text-[#12c061] text-[22px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
+                VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS ·&nbsp;
+              </span>
+              <span class="font-display text-[#12c061] text-[22px] font-black tracking-wider uppercase pr-0 whitespace-nowrap">
+                VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS · VIP &amp; EVENTOS ·&nbsp;
+              </span>
+            </div>
+          </div>
+
+          <!-- 5. CARRUSEL 3D COVER FLOW (4 EVENTOS - PERSPECTIVA ITUNES) -->
+          <div class="anim-carousel-2 w-full mt-1 overflow-hidden">
+            <div class="relative w-full h-[320px] flex items-center justify-center overflow-visible bg-transparent" style="perspective: 1000px; transform-style: preserve-3d;">
+              <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y overflow-visible bg-transparent">
+                
+                <!-- CARD 0: CLUB DUBAI -->
+                <div class="cf-card absolute w-[215px] h-[295px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(0)">
+                  <div>
+                    <!-- Arte Pixel Club Dubái -->
+                    <div class="relative w-full h-[125px] rounded-xl overflow-hidden bg-[#0c0919] mb-2 flex flex-col items-center justify-center border border-purple-900/50 p-2">
+                      <div class="w-full h-full border border-purple-500/40 rounded flex flex-col items-center justify-between p-1.5 bg-gradient-to-b from-[#190d35] via-[#090b1c] to-[#04040a]">
+                        <div class="px-2 py-0.5 bg-[#101026] border border-[#00f3ff] rounded-sm mt-1">
+                          <span class="text-[#00f3ff] font-display text-[11px] tracking-widest font-black uppercase">
+                            CLUB DUBÁI
+                          </span>
+                        </div>
+                        <div class="w-10 h-10 border-t-2 border-l-2 border-r-2 border-[#fe97de] bg-[#ff2a85]/20 flex items-center justify-center">
+                          <div class="w-2 h-2 bg-[#fe97de] rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <h4 class="font-display text-white text-[15px] font-black tracking-tight uppercase line-clamp-1 leading-tight">
+                      FLYER VIP: CLUB DUBÁI
+                    </h4>
+                    <p class="font-sans text-[#fe97de] text-[11px] font-medium leading-tight mt-0.5">
+                      Ingreso VIP Free hasta las 00:30
+                    </p>
+                    <p class="font-sans text-neutral-400 text-[10px] mt-1">
+                      Quedan 18 cupos •
+                    </p>
+                  </div>
+                  <button onclick="event.stopPropagation(); handleNavigation('/vip/dubai')" class="w-full py-1.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[12px] font-black tracking-wider uppercase active:scale-95 transition-all">
+                    SOLICITAR VIP
+                  </button>
+                </div>
+
+                <!-- CARD 1: INDIE NIGHT -->
+                <div class="cf-card absolute w-[215px] h-[295px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(1)">
+                  <div>
+                    <!-- Arte Concierto Indie -->
+                    <div class="relative w-full h-[125px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0c1626] to-[#04070e] mb-2 flex flex-col items-center justify-end border border-neutral-800 p-2">
+                      <div class="absolute inset-0 flex justify-around opacity-40 pointer-events-none">
+                        <div class="w-6 h-full bg-gradient-to-b from-cyan-400 to-transparent -rotate-12 transform origin-top"></div>
+                        <div class="w-6 h-full bg-gradient-to-b from-pink-500 to-transparent rotate-6 transform origin-top"></div>
+                        <div class="w-6 h-full bg-gradient-to-b from-yellow-400 to-transparent rotate-20 transform origin-top"></div>
+                      </div>
+                      <div class="relative z-10 flex items-end justify-center space-x-2 text-xl mb-1">
+                        <span>🎸</span><span>🎤</span><span>⚡</span>
+                      </div>
+                      <div class="w-full h-1.5 bg-neutral-900 rounded-sm"></div>
+                    </div>
+                    <h4 class="font-display text-white text-[15px] font-black tracking-tight uppercase line-clamp-1 leading-tight">
+                      FLYER CONCIERTO: INDIE NIGHT
+                    </h4>
+                    <p class="font-sans text-[#fe97de] text-[11px] font-medium leading-tight mt-0.5">
+                      Lista de Invitados Especiales
+                    </p>
+                    <p class="font-sans text-neutral-400 text-[10px] mt-1">
+                      Últimos 5 cupos •
+                    </p>
+                  </div>
+                  <button onclick="event.stopPropagation(); handleNavigation('/vip/indie')" class="w-full py-1.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[12px] font-black tracking-wider uppercase active:scale-95 transition-all">
+                    SOLICITAR VIP
+                  </button>
+                </div>
+
+                <!-- CARD 2: MAMACITA REGGAETON -->
+                <div class="cf-card absolute w-[215px] h-[295px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(2)">
+                  <div>
+                    <!-- Arte Mamacita Reggaeton -->
+                    <div class="relative w-full h-[125px] rounded-xl overflow-hidden bg-gradient-to-br from-[#ff0055] via-[#4a0024] to-[#14000b] mb-2 flex flex-col items-center justify-center border border-[#ff0055]/40 p-2">
+                      <span class="text-3xl filter drop-shadow">🔥💃</span>
+                      <p class="font-display text-[#fab205] text-[11px] font-black tracking-widest uppercase mt-1">
+                        LATIN PERREO
+                      </p>
+                    </div>
+                    <h4 class="font-display text-white text-[15px] font-black tracking-tight uppercase line-clamp-1 leading-tight">
+                      FLYER: MAMACITA REGGAETON
+                    </h4>
+                    <p class="font-sans text-[#fe97de] text-[11px] font-medium leading-tight mt-0.5">
+                      Open Bar Mujeres hasta las 01:00
+                    </p>
+                    <p class="font-sans text-neutral-400 text-[10px] mt-1">
+                      Quedan 25 cupos •
+                    </p>
+                  </div>
+                  <button onclick="event.stopPropagation(); handleNavigation('/vip/mamacita')" class="w-full py-1.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[12px] font-black tracking-wider uppercase active:scale-95 transition-all">
+                    SOLICITAR VIP
+                  </button>
+                </div>
+
+                <!-- CARD 3: BASEMENT AFTER -->
+                <div class="cf-card absolute w-[215px] h-[295px] rounded-2xl p-3 bg-[#101114] border-[1.5px] border-[#fe97de] flex flex-col justify-between transition-all duration-300 ease-out select-none cursor-pointer" onclick="setCoverFlow(3)">
+                  <div>
+                    <!-- Arte Techno Basement -->
+                    <div class="relative w-full h-[125px] rounded-xl overflow-hidden bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] mb-2 flex flex-col items-center justify-center border border-neutral-700/60 p-2">
+                      <div class="w-12 h-12 border border-[#12c061] rounded-full flex items-center justify-center">
+                        <span class="font-display text-[#12c061] text-[11px] font-mono font-bold tracking-widest">
+                          135 BPM
+                        </span>
+                      </div>
+                      <span class="text-base mt-1">🔊</span>
+                    </div>
+                    <h4 class="font-display text-white text-[15px] font-black tracking-tight uppercase line-clamp-1 leading-tight">
+                      FLYER: BASEMENT AFTER
+                    </h4>
+                    <p class="font-sans text-[#fe97de] text-[11px] font-medium leading-tight mt-0.5">
+                      Acceso exclusivo lista de puerta
+                    </p>
+                    <p class="font-sans text-neutral-400 text-[10px] mt-1">
+                      Quedan 10 cupos •
+                    </p>
+                  </div>
+                  <button onclick="event.stopPropagation(); handleNavigation('/vip/basement')" class="w-full py-1.5 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[12px] font-black tracking-wider uppercase active:scale-95 transition-all">
+                    SOLICITAR VIP
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Indicadores Cover Flow Dots -->
+            <div class="flex items-center justify-center space-x-2 -mt-1 mb-1">
+              <button onclick="setCoverFlow(0)" id="cfDot0" class="h-1.5 w-5 bg-[#fe97de] rounded-full transition-all duration-300 focus:outline-none"></button>
+              <button onclick="setCoverFlow(1)" id="cfDot1" class="h-1.5 w-1.5 bg-neutral-700 rounded-full transition-all duration-300 focus:outline-none"></button>
+              <button onclick="setCoverFlow(2)" id="cfDot2" class="h-1.5 w-1.5 bg-neutral-700 rounded-full transition-all duration-300 focus:outline-none"></button>
+              <button onclick="setCoverFlow(3)" id="cfDot3" class="h-1.5 w-1.5 bg-neutral-700 rounded-full transition-all duration-300 focus:outline-none"></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 6. ACCIONES INFERIORES (CREAR EVENTO + ESCANEAR QR) -->
+      <div class="anim-footer px-4 mb-2 z-20">
+        <div class="relative w-full h-12 rounded-xl bg-[#fe97de] p-1 flex items-center justify-between shadow-lg">
+          
+          <!-- CREAR EVENTO -->
+          <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none">
+            <span class="font-display text-black text-[22px] font-black tracking-tight uppercase">
+              CREAR EVENTO
+            </span>
+          </button>
+
+          <!-- ESCANEAR QR -->
+          <button onclick="openDoorModal()" class="anim-qr-btn h-full px-3 bg-black hover:bg-neutral-900 rounded-lg flex items-center space-x-1.5 border border-black focus:outline-none active:scale-95 transition-all">
+            <svg class="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24">
+              <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
+            </svg>
+            <span class="font-display text-white text-[12px] font-bold tracking-wider uppercase whitespace-nowrap">
+              ESCANEAR QR
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. BOTTOM NAVIGATION BAR FIJA -->
+      <nav class="anim-bottom-nav w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/80 px-8 py-2.5 flex items-center justify-between z-30">
+        <!-- Home -->
+        <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" onclick="showToast('Ruta: /')">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </button>
+
+        <!-- Pases / Ticket -->
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/passes')">
+          <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+          </svg>
+        </button>
+
+        <!-- Buscar / Lupa -->
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </nav>
+
+    </div>
+
+    <!-- MODAL BRUTALISTA DE CONSOLA DE PUERTA -->
+    <div id="doorModal" class="hidden absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-all">
+      <div class="relative w-full max-w-xs bg-[#101114] border-2 border-[#fe97de] rounded-2xl p-5 shadow-2xl">
+        <div class="flex items-center space-x-2.5 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-[#fe97de]/20 border border-[#fe97de] flex items-center justify-center text-base">
+            ⚠️
+          </div>
+          <h3 class="font-display text-white text-lg font-black uppercase tracking-tight">
+            CONSOLA DE PUERTA
+          </h3>
+        </div>
+
+        <p class="font-sans text-neutral-300 text-xs leading-relaxed mb-4">
+          <strong class="text-[#fe97de] font-bold block mb-1 font-display tracking-wide text-sm">
+            NO TIENES EVENTOS ACTIVOS.
+          </strong>
+          Crea tu primer evento para poder escanear pases en la puerta.
+        </p>
+
+        <div class="flex flex-col space-y-2">
+          <button onclick="handleNavigation('/create-event'); closeDoorModal();" class="w-full py-2 px-3 rounded-xl bg-[#fe97de] text-black font-display text-sm font-black tracking-wider uppercase active:scale-95 transition-all">
+            CREAR EVENTO
+          </button>
+          <button onclick="closeDoorModal()" class="w-full py-2 px-3 rounded-xl bg-[#1c1f26] text-neutral-300 font-display text-xs font-bold tracking-wider uppercase border border-neutral-700 active:scale-95 transition-all">
+            CERRAR
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentCfIndex = 0;
+    const totalCfCards = 4;
+
+    function setCoverFlow(targetIndex) {
+      currentCfIndex = Math.max(0, Math.min(totalCfCards - 1, targetIndex));
+      const cards = document.querySelectorAll('.cf-card');
+      
+      cards.forEach((card, idx) => {
+        const offset = idx - currentCfIndex;
+        let rotateY = 0;
+        let scale = 1;
+        let opacity = 1;
+        let zIndex = 20;
+        let translateX = 0;
+        let translateZ = 0;
+
+        if (offset < 0) {
+          // Cascada a la izquierda: ángulo cerrado 62deg y translateZ(-80px)
+          rotateY = 62;
+          scale = 0.85;
+          opacity = Math.max(0.4, 0.75 + offset * 0.15);
+          zIndex = 10 + offset;
+          translateX = -120 + (offset + 1) * 35;
+          translateZ = -80;
+        } else if (offset > 0) {
+          // Cascada a la derecha: ángulo cerrado -62deg y translateZ(-80px)
+          rotateY = -62;
+          scale = 0.85;
+          opacity = Math.max(0.4, 0.75 - offset * 0.15);
+          zIndex = 10 - offset;
+          translateX = 120 + (offset - 1) * 35;
+          translateZ = -80;
+        }
+
+        card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        card.style.opacity = opacity;
+        card.style.zIndex = zIndex;
+      });
+
+      // Actualizar dots
+      for (let i = 0; i < totalCfCards; i++) {
+        const dot = document.getElementById(`cfDot${i}`);
+        if (dot) {
+          if (i === currentCfIndex) {
+            dot.className = "h-1.5 w-5 bg-[#fe97de] rounded-full transition-all duration-300 focus:outline-none";
+          } else {
+            dot.className = "h-1.5 w-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none";
+          }
+        }
+      }
+    }
+
+    // Inicializar Cover Flow y eventos táctiles / swipe
+    window.addEventListener('DOMContentLoaded', () => {
+      setCoverFlow(0);
+
+      const track = document.getElementById('coverFlowTrack');
+      if (track) {
+        let startX = 0;
+        let isDragging = false;
+
+        track.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          isDragging = true;
+        }, { passive: true });
+
+        track.addEventListener('touchend', (e) => {
+          if (!isDragging) return;
+          const endX = e.changedTouches[0].clientX;
+          const diffX = endX - startX;
+          if (diffX < -35) setCoverFlow(currentCfIndex + 1);
+          else if (diffX > 35) setCoverFlow(currentCfIndex - 1);
+          isDragging = false;
+        });
+
+        track.addEventListener('mousedown', (e) => {
+          startX = e.clientX;
+          isDragging = true;
+        });
+
+        window.addEventListener('mouseup', (e) => {
+          if (!isDragging) return;
+          const diffX = e.clientX - startX;
+          if (diffX < -40) setCoverFlow(currentCfIndex + 1);
+          else if (diffX > 40) setCoverFlow(currentCfIndex - 1);
+          isDragging = false;
+        });
+      }
+    });
+
+    function showToast(msg) {
+      const toast = document.createElement("div");
+      toast.className = "fixed top-5 bg-[#12c061] text-black font-display font-black text-xs px-4 py-2 rounded-lg shadow-2xl z-50 tracking-wider uppercase transition-all transform -translate-y-2";
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("translate-y-0");
+      }, 10);
+      setTimeout(() => toast.remove(), 2200);
+    }
+
+    function handleNavigation(route) {
+      console.log("Navegando a:", route);
+      showToast("Ruta: " + route);
+    }
+
+    function openDoorModal() {
+      document.getElementById("doorModal").classList.remove("hidden");
+    }
+
+    function closeDoorModal() {
+      document.getElementById("doorModal").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>

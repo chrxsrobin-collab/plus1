@@ -1,0 +1,26 @@
+/* Fuentes del Sistema +1 (Más Uno) con rutas relativas */
+@font-face {
+  font-family: 'Antonio';
+  src: url('../../assets/fonts/Antonio-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('../../assets/fonts/CabinetGrotesk-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-display {
+  font-family: 'Antonio', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.font-sans {
+  font-family: 'Cabinet Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
