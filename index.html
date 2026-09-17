@@ -1670,7 +1670,7 @@
                 location: d.location || 'Por confirmar',
                 availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
                 theme: d.theme || 'dubai',
-                imageUrl: d.imageUrl || '',
+                imageUrl: d.imageUrl || d.artImage || '',
                 exactAddress: d.location || '',
                 description: d.description || `Evento exclusivo creado por ${d.hostName || 'Anfitrión +1'}. Acceso validado con pase digital.`,
                 promotions: [
@@ -1760,16 +1760,11 @@
         return `
           <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
             <!-- Miniatura Superior -->
-            <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4 flex-shrink-0">
-              ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${event.title}" class="absolute inset-0 w-full h-full object-cover" />` : `
-                <div class="px-3 py-1 bg-[#101026] border border-[#00f3ff] rounded-sm mb-2 z-10">
-                  <span class="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
-                    ${event.typeBadge || 'EVENTO'}
-                  </span>
+            <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] flex-shrink-0">
+              ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${event.title}" class="w-full h-full object-cover rounded-xl" />` : `
+                <div class="w-full h-full bg-gradient-to-b from-[#1E2025] to-[#121316] rounded-xl flex items-center justify-center">
+                  <span class="text-zinc-500 font-sans text-xs">SIN FLYER</span>
                 </div>
-                <span class="font-display text-white text-lg font-bold tracking-wider uppercase z-10 text-center line-clamp-2">
-                  ${event.title}
-                </span>
               `}
             </div>
 
@@ -2349,17 +2344,44 @@
       }
     }
 
+    let currentEventArtBase64 = null;
+
     function handleArtFileSelected(event) {
       const file = event.target.files && event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = document.getElementById('createArtPreviewImg');
-          if (img) img.src = e.target.result;
-          showToast('Arte de evento cargado');
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxWidth = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            let compressedDataUrl = canvas.toDataURL('image/webp', 0.7);
+            if (!compressedDataUrl.startsWith('data:image/webp')) {
+              compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            }
+            currentEventArtBase64 = compressedDataUrl;
+            const previewImg = document.getElementById('createArtPreviewImg');
+            if (previewImg) previewImg.src = compressedDataUrl;
+            showToast('Flyer optimizado y cargado');
+          }
         };
-        reader.readAsDataURL(file);
-      }
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function toggleCreatePlusOne() {
@@ -2432,6 +2454,8 @@
         maxCapacity: createCapacity || 150,
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : 'usr_001',
         hostName: fbCurrentUser ? (fbCurrentUser.displayName || 'Host +1') : 'Host +1',
+        imageUrl: currentEventArtBase64 || null,
+        artImage: currentEventArtBase64 || null,
         createdAt: new Date().toISOString()
       };
 
@@ -2448,6 +2472,7 @@
             timeRange: `${eventPayload.startTime} — ${eventPayload.endTime}`,
             location: eventPayload.location,
             availabilityText: 'ÚLTIMOS CUPOS ·',
+            imageUrl: eventPayload.imageUrl,
             theme: 'dubai',
             isTonight: true,
             isWeekend: true,

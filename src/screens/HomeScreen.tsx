@@ -26,7 +26,7 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   availabilityText: `CUPO MÁX. ${data.maxCapacity || 150} ·`,
   theme: data.theme || 'custom',
   exactAddress: data.location || '',
-  imageUrl: data.artImage || './assets/images/fondo_a.webp',
+  imageUrl: data.imageUrl || data.artImage || undefined,
   description: `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
   isVipOrFree: true,
 });

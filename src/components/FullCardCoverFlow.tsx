@@ -108,50 +108,15 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                   
                   {/* 1. Miniatura Superior del Flyer: CASI CUADRADA (~1:1) */}
                   <div className="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden shadow-inner border border-neutral-800/80 flex-shrink-0">
-                    {flyer.theme === 'reggaeton' && (
-                      <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-4 text-center">
-                        <div className="flex items-center space-x-1.5 mb-2">
-                          <span className="text-3xl filter drop-shadow">🔥</span>
-                          <span className="text-3xl filter drop-shadow">💃</span>
-                        </div>
-                        <span className="font-display text-[#fab205] text-xl font-black tracking-widest uppercase leading-tight">
-                          LATIN PERREO
-                        </span>
-                      </div>
-                    )}
-
-                    {flyer.theme === 'dubai' && (
-                      <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4">
-                        <div className="px-3 py-1 bg-[#101026] border border-[#00f3ff] rounded-sm mb-2">
-                          <span className="text-[#00f3ff] font-display text-xs tracking-widest font-black uppercase">
-                            CLUB DUBÁI
-                          </span>
-                        </div>
-                        <span className="font-display text-white text-lg font-bold tracking-wider uppercase">
-                          VIP NIGHT
-                        </span>
-                      </div>
-                    )}
-
-                    {flyer.theme === 'indie' && (
-                      <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-4">
-                        <div className="flex items-center space-x-2 text-3xl mb-2">
-                          <span>🎸</span><span>🎤</span><span>⚡</span>
-                        </div>
-                        <span className="font-display text-cyan-400 text-lg font-black tracking-widest uppercase">
-                          INDIE LIVE
-                        </span>
-                      </div>
-                    )}
-
-                    {flyer.theme === 'techno' && (
-                      <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-4">
-                        <div className="w-11 h-11 border border-[#12c061] rounded-full flex items-center justify-center mb-2">
-                          <span className="font-display text-[#12c061] text-xs font-mono font-bold">135</span>
-                        </div>
-                        <span className="font-display text-white text-lg font-bold tracking-wider uppercase">
-                          TECHNO AFTER
-                        </span>
+                    {flyer.imageUrl ? (
+                      <img
+                        src={flyer.imageUrl}
+                        alt={flyer.title}
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-b from-[#1E2025] to-[#121316] rounded-xl flex items-center justify-center">
+                        <span className="text-zinc-500 font-sans text-xs">SIN FLYER</span>
                       </div>
                     )}
                   </div>

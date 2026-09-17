@@ -56,9 +56,41 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const imageUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, artImage: imageUrl }));
-      showToast('Arte de evento cargado');
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Redimensionar con max width 800px manteniendo relación de aspecto
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Comprimir a formato WebP/JPEG con calidad 0.7
+            let base64String = canvas.toDataURL('image/webp', 0.7);
+            if (!base64String.startsWith('data:image/webp')) {
+              base64String = canvas.toDataURL('image/jpeg', 0.7);
+            }
+            setFormData((prev) => ({ ...prev, artImage: base64String }));
+            showToast('Arte de flyer optimizado y cargado');
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+
+      reader.readAsDataURL(file);
     }
   };
 
@@ -110,6 +142,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         location: formData.location || 'Por definir',
         allowsPlusOne: formData.allowPlusOne,
         maxCapacity: formData.maxCapacity,
+        imageUrl: formData.artImage || null,
         artImage: formData.artImage || null,
         hostUserId: auth.currentUser?.uid || 'anon_' + Date.now(),
         hostName: auth.currentUser?.displayName || 'Anfitrión',
