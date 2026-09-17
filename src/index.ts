@@ -1,5 +1,7 @@
 export * from './screens/HomeScreen';
 export * from './screens/PassScreen';
+export * from './screens/CreateEventScreen';
+export * from './screens/ProfileScreen';
 export * from './components/TopHud';
 export * from './components/MainEventCard';
 export * from './components/ActionFooter';
@@ -11,6 +13,11 @@ export * from './components/EventDetailModal';
 export * from './components/TicketShape';
 export * from './components/PassCard';
 export * from './components/VipFlyerCard';
+export * from './components/SearchEventsModal';
+export * from './components/NotificationsModal';
+export * from './screens/TicketsScreen';
+export * from './components/CoverFlowTicketCard';
+export * from './components/TicketsCoverFlow';
 export * from './types/home';
 export * from './data/mockData';
 

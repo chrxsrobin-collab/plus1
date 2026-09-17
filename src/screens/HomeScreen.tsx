@@ -6,6 +6,8 @@ import { ActionFooter } from '../components/ActionFooter';
 import { BottomNav } from '../components/BottomNav';
 import { NoEventsModal } from '../components/NoEventsModal';
 import { EventDetailModal } from '../components/EventDetailModal';
+import { SearchEventsModal } from '../components/SearchEventsModal';
+import { NotificationsModal } from '../components/NotificationsModal';
 import {
   mockUserProfile,
   mockVipFlyers,
@@ -22,6 +24,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<VipFlyerItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
+  const [unreadCount, setUnreadCount] = useState<number>(mockUserProfile.unreadNotifications);
   const user = mockUserProfile;
 
   const handleNavigate = (route: string) => {
@@ -54,15 +59,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
     if (tab === 'passes') {
       handleNavigate('/passes');
     } else if (tab === 'search') {
-      handleNavigate('/explore');
+      setIsSearchOpen(true);
     }
   };
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#0B0C0E] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none">
+    <div className="relative w-full min-h-[100dvh] bg-[#000000] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none">
       {/* Fondo con textura/patrón geométrico oscuro fondo_iniciob.webp */}
       <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-90 bg-cover bg-center"
+        className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
         style={{
           backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
           backgroundPosition: 'center',
@@ -72,15 +77,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
       />
 
       {/* Degradado superior sutil para HUD */}
-      <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-[#0B0C0E] via-[#0B0C0E]/70 to-transparent pointer-events-none z-10" />
+      <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10" />
 
       {/* Contenedor central móvil estructurado */}
-      <div className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto pb-24">
+      <div className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto pb-28">
         
         {/* 1. TOP BAR / HUD (Logo +1 en #E87A72, Notificaciones y Avatar) */}
         <TopHud
-          user={user}
-          onNotificationsClick={() => handleNavigate('/notifications')}
+          user={{ ...user, unreadNotifications: unreadCount }}
+          onNotificationsClick={() => {
+            setIsNotificationsOpen(true);
+            setUnreadCount(0);
+          }}
           onProfileClick={() => handleNavigate('/profile')}
         />
 
@@ -101,7 +109,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
-          className="px-6 pt-1 pb-2"
+          className="px-6 pt-1 pb-1 mt-2"
         >
           <h2 className="font-sans text-neutral-400 text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
             PROXIMOS EVENTOS
@@ -125,8 +133,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
           />
         </motion.main>
 
-        {/* 5. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] */}
-        <div className="mt-auto pt-2 mb-2">
+        {/* 5. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] (INMEDIATAMENTE DEBAJO DEL CARRUSEL) */}
+        <div className="pt-2 pb-2">
           <ActionFooter
             onCreateEventClick={handleCreateEvent}
             onScanQrClick={handleScanQr}
@@ -153,6 +161,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate }) => {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         onApplyVip={handleApplyVip}
+      />
+
+      {/* MODAL DE BÚSQUEDA Y DESCUBRIMIENTO DE EVENTOS */}
+      <SearchEventsModal
+        isOpen={isSearchOpen}
+        onClose={() => {
+          setIsSearchOpen(false);
+          setActiveTab('home');
+        }}
+        events={mockVipFlyers}
+        onSelectEvent={(event) => {
+          setSelectedEvent(event);
+          setIsDetailModalOpen(true);
+        }}
+      />
+
+      {/* MODAL DE NOTIFICACIONES DESLIZABLE */}
+      <NotificationsModal
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+        onViewPass={(passId) => handleNavigate(`/pass/${passId}`)}
       />
     </div>
   );

@@ -50,16 +50,16 @@ export const TopHud: React.FC<TopHudProps> = ({
           )}
         </button>
 
-        {/* Avatar Pixel Art con borde circular */}
+        {/* Avatar de Usuario interactivo (Dirige a /profile) */}
         <button
           onClick={onProfileClick}
           aria-label="Perfil de usuario"
-          className="relative rounded-full p-0.5 bg-[#101114] border border-[#333] hover:border-[#E87A72] transition-all overflow-hidden focus:outline-none"
+          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#E87A72] bg-[#16171B] overflow-hidden focus:outline-none transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-md flex items-center justify-center"
         >
           <img
             src={user.avatarUrl}
             alt={user.name}
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-full h-full rounded-full object-cover"
           />
         </button>
       </div>

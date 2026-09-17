@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import HomeScreen from './screens/HomeScreen';
 import PassScreen from './screens/PassScreen';
-import { mockMamacitaPass } from './data/mockData';
+import CreateEventScreen from './screens/CreateEventScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import TicketsScreen from './screens/TicketsScreen';
+import { mockMamacitaPass, mockWalletTickets } from './data/mockData';
 
 export const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<string>('/');
@@ -11,11 +14,39 @@ export const App: React.FC = () => {
     setCurrentRoute(route);
   };
 
-  if (currentRoute === '/passes' || currentRoute.startsWith('/pass')) {
+  if (currentRoute === '/profile') {
+    return (
+      <ProfileScreen
+        onBack={() => setCurrentRoute('/')}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
+
+  if (currentRoute === '/create-event') {
+    return (
+      <CreateEventScreen
+        onBack={() => setCurrentRoute('/')}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
+
+  if (currentRoute === '/tickets' || currentRoute === '/passes') {
+    return (
+      <TicketsScreen
+        tickets={mockWalletTickets}
+        onBack={() => setCurrentRoute('/')}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
+
+  if (currentRoute.startsWith('/pass/')) {
     return (
       <PassScreen
         pass={mockMamacitaPass}
-        onBack={() => setCurrentRoute('/')}
+        onBack={() => setCurrentRoute('/tickets')}
         onNavigate={handleNavigate}
       />
     );

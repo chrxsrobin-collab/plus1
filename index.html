@@ -60,6 +60,11 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    @keyframes modalSlideUp {
+      0% { opacity: 0; transform: translateY(22px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
     .anim-hud { animation: hudDown 0.35s ease-out forwards; }
     .anim-greeting { animation: slideUpFade 0.35s ease-out 0.1s both; }
     .anim-main-card { animation: cardEnterZoom 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
@@ -67,6 +72,7 @@
     .anim-qr-btn { animation: zoomIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.45s both; }
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
   </style>
 </head>
 <body class="bg-[#000000] text-white min-h-[100dvh] flex items-center justify-center p-0 md:p-6 overflow-x-hidden font-sans select-none">
@@ -104,20 +110,20 @@
 
         <!-- Acciones Derecha: Campana con Badge Rojo y Avatar -->
         <div class="flex items-center space-x-3.5">
-          <!-- Campana con Badge Rojo 2 -->
-          <button class="relative p-1 text-white hover:opacity-80 transition focus:outline-none" onclick="showToast('Notificaciones: Tienes 2 solicitudes de acceso')">
+          <!-- Campana con Badge Rojo -->
+          <button id="topBellBtn" class="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none" onclick="openNotificationsModal()" aria-label="Notificaciones">
             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
             </svg>
-            <span class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
-              2
+            <span id="topNotifBadge" class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
+              3
             </span>
           </button>
 
-          <!-- Avatar Retro Pixel Art -->
-          <div class="w-8 h-8 rounded-full border border-neutral-700 overflow-hidden bg-neutral-900 cursor-pointer" onclick="showToast('Perfil de Usuario')">
-            <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4" alt="Avatar" class="w-full h-full object-cover">
-          </div>
+          <!-- Avatar de Usuario interactivo (Dirige a /profile) -->
+          <button class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#E87A72] bg-[#16171B] overflow-hidden focus:outline-none transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-md flex items-center justify-center p-0" onclick="openProfileScreen()" aria-label="Perfil de usuario">
+            <img src="./assets/images/avatar_chris.png" alt="Chris G." class="w-full h-full rounded-full object-cover">
+          </button>
         </div>
       </header>
 
@@ -354,7 +360,7 @@
       </button>
 
       <!-- Buscar / Lupa -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="handleNavigation('/explore')">
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="openSearchEventsModal()" aria-label="Buscar eventos">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -458,147 +464,696 @@
       </div>
     </div>
 
-    <!-- PANTALLA DEL PASE INDIVIDUAL: /pass/:passId (PassScreen) -->
-    <div id="passScreenView" class="hidden absolute inset-0 z-50 bg-[#07080A] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-6">
+    <!-- MODAL DE BÚSQUEDA Y DESCUBRIMIENTO DE EVENTOS (SearchEventsModal) -->
+    <div id="searchEventsModal" class="hidden fixed md:absolute inset-0 z-50 flex flex-col justify-start backdrop-blur-md bg-black/85 select-none overflow-hidden">
+      <div id="searchModalContainer" class="anim-modal-slide w-full max-w-md mx-auto h-full flex flex-col pt-3 px-4 pb-6">
+        <!-- 1. CABECERA CON MARCA Y BOTÓN CANCELAR -->
+        <div class="flex items-center justify-between pb-3 pt-1">
+          <div class="flex items-center space-x-2">
+            <span class="text-[#E87A72] font-display font-black text-2xl tracking-tighter leading-none">+1</span>
+            <span class="font-display text-white text-base font-black tracking-wider uppercase">DESCUBRIR EVENTOS</span>
+          </div>
+          <button onclick="closeSearchEventsModal()" class="py-1.5 px-3 rounded-xl bg-[#16171B] border border-[#26282E] text-neutral-400 hover:text-white hover:border-[#E87A72] font-sans text-xs font-bold uppercase tracking-wider transition-all active:scale-95 focus:outline-none">
+            ✕ CANCELAR
+          </button>
+        </div>
+
+        <!-- 2. BARRA DE BÚSQUEDA PRINCIPAL (INPUT TOP) -->
+        <div class="relative mb-3">
+          <!-- Icono Search -->
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8E8E93]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+
+          <!-- Input -->
+          <input
+            id="searchInputField"
+            type="text"
+            oninput="handleSearchInputChange(event)"
+            placeholder="Buscar por evento, venue o zona..."
+            class="w-full bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] text-sm font-sans rounded-xl pl-10 pr-10 py-3 outline-none transition-colors"
+          />
+
+          <!-- Botón de Limpieza Rápida -->
+          <button
+            id="searchClearBtn"
+            onclick="clearSearchInput()"
+            aria-label="Limpiar búsqueda"
+            class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-white transition-colors focus:outline-none"
+          >
+            <span class="w-5 h-5 rounded-full bg-neutral-800 flex items-center justify-center text-[11px] font-bold">✕</span>
+          </button>
+        </div>
+
+        <!-- 3. FILTROS RÁPIDOS (CHIPS HORIZONTALES) -->
+        <div id="searchChipsContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-3 select-none">
+          <button onclick="setSearchFilter('Todos')" data-filter="Todos" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#E87A72] text-black font-bold border border-[#E87A72] shadow-sm">
+            Todos
+          </button>
+          <button onclick="setSearchFilter('Hoy / Esta Noche 🔥')" data-filter="Hoy / Esta Noche 🔥" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700">
+            Hoy / Esta Noche 🔥
+          </button>
+          <button onclick="setSearchFilter('Fin de Semana')" data-filter="Fin de Semana" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700">
+            Fin de Semana
+          </button>
+          <button onclick="setSearchFilter('Conciertos / Indie')" data-filter="Conciertos / Indie" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700">
+            Conciertos / Indie
+          </button>
+          <button onclick="setSearchFilter('Club / Reggaeton')" data-filter="Club / Reggaeton" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700">
+            Club / Reggaeton
+          </button>
+          <button onclick="setSearchFilter('Gratis / VIP')" data-filter="Gratis / VIP" class="search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700">
+            Gratis / VIP
+          </button>
+        </div>
+
+        <!-- 4. CABECERA DE CONTEO -->
+        <div class="flex items-center justify-between px-1 pb-2">
+          <span id="searchResultsCount" class="font-display text-neutral-400 text-xs font-bold tracking-wider uppercase">
+            CARTELERA (0)
+          </span>
+          <span id="searchQueryIndicator" class="hidden font-sans text-[11px] text-neutral-500 truncate max-w-[180px]"></span>
+        </div>
+
+        <!-- 5. FEED VERTICAL DE RESULTADOS -->
+        <div id="searchResultsList" class="flex-1 overflow-y-auto space-y-2.5 pb-20 pr-0.5">
+          <!-- Se inyecta dinámicamente -->
+        </div>
+
+        <!-- 6. ESTADO VACÍO (EMPTY STATE) -->
+        <div id="searchEmptyState" class="hidden flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div class="w-16 h-16 rounded-full bg-[#16171B] border border-[#26282E] flex items-center justify-center text-neutral-500 mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <h3 class="font-display text-white text-lg font-black uppercase tracking-wider max-w-xs leading-snug">
+            NO ENCONTRAMOS EVENTOS CON ESE NOMBRE
+          </h3>
+          <p class="font-sans text-neutral-400 text-xs mt-2 max-w-xs leading-relaxed">
+            Intenta buscar por club o fecha, o selecciona otro filtro rápido.
+          </p>
+          <button onclick="resetSearchFilters()" class="mt-5 px-4 py-2 rounded-xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72] text-[#E87A72] font-sans text-xs font-bold uppercase tracking-wider transition-all active:scale-95">
+            VER TODOS LOS EVENTOS
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE NOTIFICACIONES DESLIZABLE (NotificationsModal) -->
+    <div id="notificationsModal" class="hidden fixed md:absolute inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none overflow-hidden">
+      <!-- Backdrop -->
+      <div onclick="closeNotificationsModal()" class="absolute inset-0 bg-black/85 backdrop-blur-md transition-opacity"></div>
+
+      <!-- Tarjeta Modal Deslizable -->
+      <div id="notificationsModalContainer" class="anim-modal-slide relative w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-t-[28px] sm:rounded-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl z-10">
+        <!-- Tirador móvil -->
+        <div class="w-12 h-1 bg-neutral-700/80 rounded-full mx-auto mt-2.5 mb-1 sm:hidden pointer-events-none"></div>
+
+        <!-- 1. Header del Modal -->
+        <div class="flex items-center justify-between px-5 pt-3 pb-3 border-b border-[#26282E]">
+          <div class="flex items-center space-x-2.5">
+            <h3 class="font-display text-white text-xl font-black tracking-wide uppercase leading-none">
+              NOTIFICACIONES
+            </h3>
+            <span id="notifBadgeCount" class="px-2 py-0.5 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 text-[#E87A72] font-display font-bold text-[11px] uppercase tracking-wider">
+              3 NUEVAS
+            </span>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button onclick="markAllNotificationsAsRead()" class="text-[11px] font-sans text-neutral-400 hover:text-white transition-colors focus:outline-none">
+              Marcar leídas
+            </button>
+            <button onclick="closeNotificationsModal()" aria-label="Cerrar notificaciones" class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors active:scale-95 focus:outline-none">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Lista Vertical de Notificaciones -->
+        <div id="notificationsList" class="flex-1 overflow-y-auto space-y-3 p-4 pb-8 sm:pb-5">
+          <!-- 1. Invitación a Evento Privado -->
+          <div id="notifItem_1" class="rounded-2xl p-3.5 border bg-[#1A1C22] border-[#2E313A] shadow-md transition-all">
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-[#26282E] border border-[#E87A72]/40 flex items-center justify-center text-base">
+                  🎟️
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    Invitación de Nico V.
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    Hace 15 min
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  Te invitó a CUMPLE DE PEPE 🎂 (Viernes 24 Oct · Sopocachi). Tienes pase +1 incluido.
+                </p>
+                <div id="invitationActions_1" class="flex items-center space-x-2 mt-3">
+                  <button onclick="respondInvitation('1', true)" class="py-1.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow">
+                    Aceptar
+                  </button>
+                  <button onclick="respondInvitation('1', false)" class="py-1.5 px-3.5 rounded-xl bg-transparent hover:bg-neutral-800 text-[#8E8E93] hover:text-white border border-[#26282E] font-sans text-xs transition-all active:scale-95 focus:outline-none">
+                    Rechazar
+                  </button>
+                </div>
+                <div id="invitationFeedback_1" class="hidden mt-2 text-xs font-sans font-bold text-[#12C061]">
+                  ✓ ¡Aceptaste la invitación! Tu pase está listo.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Solicitud VIP Aceptada -->
+          <div id="notifItem_2" class="rounded-2xl p-3.5 border bg-[#1A1C22] border-[#2E313A] shadow-md transition-all">
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    ¡Solicitud Aprobada! 🎉
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    Hace 2 horas
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  Club Dubái aprobó tu pase VIP para INDIE NIGHT. Tu QR ya está activo en puerta.
+                </p>
+                <div class="mt-2.5">
+                  <button onclick="closeNotificationsModal(); openPassScreen();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#12C061]/15 border border-[#12C061]/40 hover:bg-[#12C061]/25 text-[#12C061] font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 focus:outline-none">
+                    <span>Ver mi QR</span>
+                    <span>🎟️</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Alerta de Racha en Peligro -->
+          <div id="notifItem_3" class="rounded-2xl p-3.5 border bg-[#1A1C22] border-[#2E313A] shadow-md transition-all">
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-[#F17D02]/15 border border-[#F17D02]/40 flex items-center justify-center text-base">
+                  🔥
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    🔥 ¡Mantén viva tu Racha de 4!
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    Ayer
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  Tienes una racha de 4 eventos consecutivos. Asiste a un evento este fin de semana para subir a Racha 5 y desbloquear nuevo drop.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Confirmación de Acompañante (+1) -->
+          <div id="notifItem_4" class="rounded-2xl p-3.5 border bg-[#121316] border-[#22242A] opacity-85 transition-all">
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center text-white text-base">
+                  👥
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    Tu +1 confirmó asistencia
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    Hace 2 días
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  Camila R. aceptó tu pase de acompañante para LATIN PERREO.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA DE BILLETERA DE TICKETS: /tickets /passes (TicketsScreen) -->
+    <div id="passScreenView" class="hidden absolute inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden h-full no-scrollbar select-none pb-24">
       
-      <!-- Fondo sutil con opacidad -->
-      <div class="absolute inset-0 z-0 bg-cover bg-center opacity-30 pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
+      <!-- Fondo abstracto con textura sutil fondo_iniciob.webp -->
+      <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
 
       <!-- Sombra degradada superior -->
-      <div class="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-[#07080A] via-[#07080A]/80 to-transparent pointer-events-none z-10"></div>
+      <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
 
       <!-- Contenedor interior estructurado -->
-      <div class="relative z-20 flex-1 flex flex-col justify-between h-full px-5 pt-5 md:pt-11 pb-3">
+      <div class="relative z-20 flex-1 flex flex-col justify-between h-full px-4 pt-5 md:pt-11 pb-2">
         
         <!-- 1. TOP NAVIGATION BAR -->
-        <header class="flex items-center justify-between pb-2 w-full relative z-30">
+        <header class="flex items-center justify-between pb-1 w-full relative z-30">
           <!-- Botón de retroceso (←) -->
           <button onclick="closePassScreen()" aria-label="Regresar a inicio" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white transition-all active:scale-90 focus:outline-none">
             <span class="text-xl font-bold leading-none">←</span>
           </button>
 
-          <!-- Título central: Pase (Puerta) -->
-          <h1 class="font-sans text-white text-base sm:text-lg font-semibold tracking-wide text-center flex-1 pr-10">
-            Pase (Puerta)
-          </h1>
+          <!-- Título central e indicador de cantidad de pases -->
+          <div class="flex flex-col items-center justify-center text-center">
+            <h1 class="font-display text-white text-xl sm:text-2xl font-black tracking-wide uppercase leading-none">
+              MIS TICKETS
+            </h1>
+            <span class="font-sans text-[11px] text-[#8E8E93] tracking-wider uppercase font-semibold mt-0.5">
+              5 PASES ACTIVOS
+            </span>
+          </div>
+
+          <!-- Espaciador simétrico -->
+          <div class="w-10 h-10"></div>
         </header>
 
-        <!-- 2. SILUETA FÍSICA DEL TICKET (VECTOR SVG CON PERFORACIONES Y BORDES VERDES) -->
-        <div class="flex-1 flex items-center justify-center my-auto py-1">
-          <div class="relative w-[320px] sm:w-[335px] h-[510px] sm:h-[530px] flex items-center justify-center mx-auto select-none filter drop-shadow-2xl">
-            
-            <!-- Silueta SVG de fondo del ticket con perforaciones festoneadas y muescas circulares -->
-            <svg viewBox="0 0 340 540" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
-              <path
-                d="M 0 0 H 10 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 9 A 21 21 0 0 0 191 0 h 9 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 14 v 7 h 18 v -7 h 10 L 340 0 L 340 123 a 12 12 0 0 0 0 24 L 340 403 a 12 12 0 0 0 0 24 L 340 540 H 330 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -9 A 21 21 0 0 0 149 540 h -9 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -18 v 7 h -14 v -7 h -10 L 0 540 L 0 427 a 12 12 0 0 0 0 -24 L 0 147 a 12 12 0 0 0 0 -24 Z"
-                fill="#0E1013"
-                stroke="#12c061"
-                stroke-width="1.75"
-                stroke-linejoin="round"
-                stroke-linecap="round"
-              />
-              <!-- Línea punteada superior -->
-              <line x1="14" y1="135" x2="326" y2="135" stroke="#272C35" stroke-width="1.5" stroke-dasharray="5 5" />
-              <!-- Línea punteada inferior -->
-              <line x1="14" y1="415" x2="326" y2="415" stroke="#272C35" stroke-width="1.5" stroke-dasharray="5 5" />
-            </svg>
-
-            <!-- Contenido Interior del Ticket -->
-            <div class="relative z-10 w-full h-full flex flex-col justify-between py-6 px-5">
-              
-              <!-- 1. Cabecera del Evento -->
-              <div class="flex flex-col items-center justify-center text-center pt-2">
-                <span class="font-sans text-white text-xl sm:text-2xl font-bold tracking-widest leading-none mb-1 opacity-90">
-                  妈妈
-                </span>
-                <h2 class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-                  MAMACITA
-                </h2>
-              </div>
-
-              <!-- 2. Visor y Código QR Central -->
-              <div class="flex-1 flex items-center justify-center my-2 relative">
-                <div class="relative w-[205px] h-[205px] sm:w-[218px] sm:h-[218px] flex items-center justify-center p-3">
-                  <!-- Esquinas tipo visor de cámara en color verde #12c061 -->
-                  <div class="absolute top-0 left-0 w-8 h-8 border-t-[3.5px] border-l-[3.5px] border-[#12c061] rounded-tl-xl pointer-events-none"></div>
-                  <div class="absolute top-0 right-0 w-8 h-8 border-t-[3.5px] border-r-[3.5px] border-[#12c061] rounded-tr-xl pointer-events-none"></div>
-                  <div class="absolute bottom-0 left-0 w-8 h-8 border-b-[3.5px] border-l-[3.5px] border-[#12c061] rounded-bl-xl pointer-events-none"></div>
-                  <div class="absolute bottom-0 right-0 w-8 h-8 border-b-[3.5px] border-r-[3.5px] border-[#12c061] rounded-br-xl pointer-events-none"></div>
-
-                  <!-- Código QR estilo idéntico a referencia -->
-                  <div class="w-[170px] h-[170px] sm:w-[185px] sm:h-[185px] flex items-center justify-center p-1 rounded-lg overflow-hidden bg-[#0A0C0E]">
-                    <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
-                      <rect x="5" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
-
-                      <rect x="67" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="71" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
-
-                      <rect x="5" y="67" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="71" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
-
-                      <rect x="38" y="6" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="6" width="12" height="6" fill="currentColor" />
-                      <rect x="38" y="16" width="6" height="12" fill="currentColor" />
-                      <rect x="54" y="16" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="26" width="12" height="6" fill="currentColor" />
-
-                      <rect x="6" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="22" y="38" width="6" height="6" fill="currentColor" />
-                      <rect x="32" y="38" width="18" height="6" fill="currentColor" />
-                      <rect x="56" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="74" y="38" width="6" height="12" fill="currentColor" />
-                      <rect x="86" y="38" width="8" height="6" fill="currentColor" />
-
-                      <rect x="16" y="48" width="12" height="6" fill="currentColor" />
-                      <rect x="34" y="48" width="6" height="18" fill="currentColor" />
-                      <rect x="46" y="48" width="14" height="6" fill="currentColor" />
-                      <rect x="66" y="48" width="8" height="6" fill="currentColor" />
-                      <rect x="80" y="48" width="14" height="6" fill="currentColor" />
-
-                      <rect x="6" y="58" width="6" height="6" fill="currentColor" />
-                      <rect x="16" y="58" width="12" height="6" fill="currentColor" />
-                      <rect x="46" y="58" width="6" height="12" fill="currentColor" />
-                      <rect x="58" y="58" width="16" height="6" fill="currentColor" />
-                      <rect x="86" y="58" width="8" height="12" fill="currentColor" />
-
-                      <rect x="38" y="70" width="8" height="6" fill="currentColor" />
-                      <rect x="52" y="70" width="12" height="6" fill="currentColor" />
-                      <rect x="70" y="70" width="6" height="12" fill="currentColor" />
-                      <rect x="82" y="70" width="12" height="6" fill="currentColor" />
-
-                      <rect x="38" y="80" width="18" height="6" fill="currentColor" />
-                      <rect x="62" y="80" width="8" height="14" fill="currentColor" />
-                      <rect x="76" y="86" width="18" height="8" fill="currentColor" />
-                      <rect x="44" y="90" width="12" height="5" fill="currentColor" />
-                    </svg>
+        <!-- 2. CARRUSEL 3D COVER FLOW DE TICKETS -->
+        <main class="flex-1 flex flex-col items-center justify-center my-auto py-1">
+          <div
+            id="ticketCoverFlowTrack"
+            class="relative w-full h-[450px] flex items-center justify-center py-2"
+            style="perspective: 1200px; transform-style: preserve-3d;"
+          >
+            <!-- TICKET 1: MAMACITA REGGAETON (Accent #E87A72) -->
+            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(0)">
+              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                      fill="#121316" stroke="#E87A72" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+              </svg>
+              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+                <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#E87A72] border-[#E87A72]/40 bg-[#E87A72]/15">
+                      VIP ACCESS (+1)
+                    </span>
+                    <span class="text-xs">🔥</span>
+                  </div>
+                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                    MAMACITA REGGAETON
+                  </h3>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                    <span class="font-bold text-white">SÁB. 19 SEP</span>
+                    <span>·</span>
+                    <span class="text-neutral-400">23:00</span>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#E87A72] rounded-tl-sm pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#E87A72] rounded-tr-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#E87A72] rounded-bl-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#E87A72] rounded-br-sm pointer-events-none"></div>
+                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="40" y="8" width="8" height="8" fill="#000000" />
+                        <rect x="52" y="8" width="6" height="14" fill="#000000" />
+                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                        <rect x="68" y="40" width="12" height="6" fill="#000000" />
+                        <rect x="40" y="68" width="6" height="18" fill="#000000" />
+                        <rect x="52" y="68" width="14" height="8" fill="#000000" />
+                        <rect x="68" y="80" width="12" height="12" fill="#000000" />
+                      </svg>
+                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#E87A72] flex items-center justify-center shadow">
+                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                    <span class="text-[11px]">📍</span>
+                    <span class="truncate max-w-[210px]">Club Dubái · Sopocachi</span>
+                  </div>
+                </div>
+                <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                    CHRIS G. · +1 INCLUIDO
+                  </span>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                    <span class="font-mono font-bold text-neutral-300">#4092</span>
+                    <span>·</span>
+                    <span class="uppercase tracking-wider">VERIFICADO CON GOOGLE</span>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <!-- 3. Pie del Ticket -->
-              <div class="flex flex-col items-center justify-center text-center pb-2">
-                <h3 class="font-display text-white text-xl sm:text-[22px] font-black tracking-wide uppercase leading-tight">
-                  CRIS PÉREZ · LISTA G.
-                </h3>
-                <p class="font-sans text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase mt-1 leading-tight">
-                  ID: #4092 · VERIFICADO CON GOOGLE
-                </p>
+            <!-- TICKET 2: INDIE NIGHT SESSION (Accent #12C061) -->
+            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(1)">
+              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                      fill="#121316" stroke="#12C061" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+              </svg>
+              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+                <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#12C061] border-[#12C061]/40 bg-[#12C061]/15">
+                      PREVENTA GENERAL
+                    </span>
+                    <span class="text-xs">🎸</span>
+                  </div>
+                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                    INDIE NIGHT SESSION
+                  </h3>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                    <span class="font-bold text-white">VIE. 25 SEP</span>
+                    <span>·</span>
+                    <span class="text-neutral-400">21:30</span>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#12C061] rounded-tl-sm pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#12C061] rounded-tr-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#12C061] rounded-bl-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#12C061] rounded-br-sm pointer-events-none"></div>
+                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="40" y="8" width="8" height="8" fill="#000000" />
+                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                        <rect x="68" y="40" width="12" height="6" fill="#000000" />
+                        <rect x="40" y="68" width="6" height="18" fill="#000000" />
+                      </svg>
+                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#12C061] flex items-center justify-center shadow">
+                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                    <span class="text-[11px]">📍</span>
+                    <span class="truncate max-w-[210px]">Teatro Equinoccio</span>
+                  </div>
+                </div>
+                <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                    CHRIS G. · ADMISIÓN INDIVIDUAL
+                  </span>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                    <span class="font-mono font-bold text-neutral-300">#8120</span>
+                    <span>·</span>
+                    <span class="uppercase tracking-wider">VERIFICADO</span>
+                  </div>
+                </div>
               </div>
+            </div>
 
+            <!-- TICKET 3: CUMPLE DE PEPE (Accent #F17D02) -->
+            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(2)">
+              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                      fill="#121316" stroke="#F17D02" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+              </svg>
+              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+                <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#F17D02] border-[#F17D02]/40 bg-[#F17D02]/15">
+                      INVITADO ESPECIAL (+1)
+                    </span>
+                    <span class="text-xs">🎂</span>
+                  </div>
+                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                    CUMPLE DE PEPE 🎂
+                  </h3>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                    <span class="font-bold text-white">SÁB. 03 OCT</span>
+                    <span>·</span>
+                    <span class="text-neutral-400">22:00</span>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#F17D02] rounded-tl-sm pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#F17D02] rounded-tr-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#F17D02] rounded-bl-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#F17D02] rounded-br-sm pointer-events-none"></div>
+                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                      </svg>
+                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#F17D02] flex items-center justify-center shadow">
+                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                    <span class="text-[11px]">📍</span>
+                    <span class="truncate max-w-[210px]">Casa Achumani (Privado)</span>
+                  </div>
+                </div>
+                <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                    CHRIS G. · +1 INCLUIDO
+                  </span>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                    <span class="font-mono font-bold text-neutral-300">#1044</span>
+                    <span>·</span>
+                    <span class="uppercase tracking-wider">LISTA PUERTA</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TICKET 4: BASEMENT AFTER HOURS (Accent #3344FF) -->
+            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(3)">
+              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                      fill="#121316" stroke="#3344FF" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+              </svg>
+              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+                <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#5566FF] border-[#3344FF]/40 bg-[#3344FF]/15">
+                      BACKSTAGE PASS
+                    </span>
+                    <span class="text-xs">⚡</span>
+                  </div>
+                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                    BASEMENT AFTER HOURS
+                  </h3>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                    <span class="font-bold text-white">DOM. 11 OCT</span>
+                    <span>·</span>
+                    <span class="text-neutral-400">03:00</span>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#3344FF] rounded-tl-sm pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#3344FF] rounded-tr-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#3344FF] rounded-bl-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#3344FF] rounded-br-sm pointer-events-none"></div>
+                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                      </svg>
+                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#3344FF] flex items-center justify-center shadow">
+                        <span class="font-display text-white text-[11px] font-black leading-none">+1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                    <span class="text-[11px]">📍</span>
+                    <span class="truncate max-w-[210px]">The Vault Club</span>
+                  </div>
+                </div>
+                <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                    CHRIS G. · ACCESO TOTAL
+                  </span>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                    <span class="font-mono font-bold text-neutral-300">#9931</span>
+                    <span>·</span>
+                    <span class="uppercase tracking-wider">VERIFICADO</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TICKET 5: SPRING FESTIVAL (Accent #FAB205) -->
+            <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(4)">
+              <svg viewBox="0 0 280 440" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
+                <path d="M 18 0 H 262 A 18 18 0 0 1 280 18 V 93 A 12 12 0 0 0 280 117 V 422 A 18 18 0 0 1 262 440 H 18 A 18 18 0 0 1 0 422 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
+                      fill="#121316" stroke="#FAB205" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
+                <line x1="14" y1="105" x2="266" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
+                <line x1="18" y1="352" x2="262" y2="352" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
+              </svg>
+              <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
+                <div class="h-[88px] flex flex-col justify-between text-center px-1">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[#FAB205] border-[#FAB205]/40 bg-[#FAB205]/15">
+                      EARLY BIRD TIER 1
+                    </span>
+                    <span class="text-xs">🌴</span>
+                  </div>
+                  <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
+                    SPRING FESTIVAL ⚡
+                  </h3>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
+                    <span class="font-bold text-white">SÁB. 24 OCT</span>
+                    <span>·</span>
+                    <span class="text-neutral-400">16:00</span>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+                  <div class="relative w-[180px] h-[180px] flex items-center justify-center">
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#FAB205] rounded-tl-sm pointer-events-none"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#FAB205] rounded-tr-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#FAB205] rounded-bl-sm pointer-events-none"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#FAB205] rounded-br-sm pointer-events-none"></div>
+                    <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                        <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                        <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                        <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                        <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                        <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                      </svg>
+                      <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[#FAB205] flex items-center justify-center shadow">
+                        <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
+                    <span class="text-[11px]">📍</span>
+                    <span class="truncate max-w-[210px]">Parque Urbano Central</span>
+                  </div>
+                </div>
+                <div class="h-[68px] flex flex-col justify-center text-center px-2">
+                  <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
+                    CHRIS G. · ENTRADA GENERAL
+                  </span>
+                  <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                    <span class="font-mono font-bold text-neutral-300">#5512</span>
+                    <span>·</span>
+                    <span class="uppercase tracking-wider">VERIFICADO</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- 4. BOTÓN INFERIOR DE RESPALDO (IN-APP) -->
-        <div class="w-full pt-3 pb-2 flex justify-center">
-          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-5 rounded-2xl bg-white hover:bg-neutral-100 active:scale-95 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-lg focus:outline-none">
-            DESCARGAR QR / GUARDAR EN FOTOS
+          <!-- 3. PAGINADOR DE PUNTOS (DOTS) -->
+          <div class="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
+            <button id="dot_t_0" onclick="setTicketCoverFlow(0)" class="w-6 h-1.5 bg-[#E87A72] rounded-full transition-all duration-300 focus:outline-none"></button>
+            <button id="dot_t_1" onclick="setTicketCoverFlow(1)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
+            <button id="dot_t_2" onclick="setTicketCoverFlow(2)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
+            <button id="dot_t_3" onclick="setTicketCoverFlow(3)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
+            <button id="dot_t_4" onclick="setTicketCoverFlow(4)" class="w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none"></button>
+          </div>
+        </main>
+
+        <!-- 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS -->
+        <div class="w-full pt-2 pb-2 flex justify-center">
+          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl active:scale-95 focus:outline-none cursor-pointer">
+            <span class="text-lg leading-none">⬇</span>
+            <span>GUARDAR COPIA EN FOTOS</span>
           </button>
         </div>
+
+        <!-- 5. BOTTOM NAVIGATION BAR FIJA (Pases Activo) -->
+        <nav class="fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+          <!-- Home -->
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen()" aria-label="Inicio">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+
+          <!-- Pases / Ticket (Activo) -->
+          <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" aria-label="Billetera de pases">
+            <svg class="w-5 h-5 rotate-45 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+            </svg>
+          </button>
+
+          <!-- Buscar / Lupa -->
+          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </nav>
 
       </div>
     </div>
@@ -839,6 +1394,353 @@
         </div>
       </div>
     </div>
+
+    <!-- PANTALLA DE PERFIL: /profile (ProfileScreen) -->
+    <div id="profileScreenView" class="hidden absolute inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_b.webp'); background-size: cover; background-position: center;">
+      
+      <!-- Degradado superior -->
+      <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
+
+      <!-- Contenedor interior estructurado -->
+      <div class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-5 md:pt-11 pb-6">
+        
+        <!-- 1. TOP BAR -->
+        <header class="flex items-center justify-between pb-2 w-full relative z-30">
+          <button onclick="closeProfileScreen()" aria-label="Regresar" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none">
+            <span class="text-xl font-bold leading-none">←</span>
+          </button>
+
+          <span class="font-display text-neutral-400 text-sm font-bold tracking-widest uppercase">
+            MI PERFIL
+          </span>
+
+          <button onclick="showToast('Ajustes de cuenta')" aria-label="Ajustes de cuenta" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none">
+            <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4" />
+              <path d="M12 16h.01" />
+            </svg>
+          </button>
+        </header>
+
+        <!-- 2. AVATAR Y DATOS DE PERFIL -->
+        <div class="flex flex-col items-center justify-center pt-3 pb-4 text-center">
+          <div class="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden">
+            <img src="./assets/images/avatar_chris.png" alt="Avatar Chris G." class="w-full h-full object-cover rounded-full" />
+          </div>
+
+          <h2 class="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none mt-3">
+            CHRIS G.
+          </h2>
+
+          <div class="mt-2">
+            <span class="inline-flex items-center px-3.5 py-1 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider shadow-md">
+              PLUS MEMBER
+            </span>
+          </div>
+        </div>
+
+        <!-- 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN -->
+        <div class="grid grid-cols-3 gap-2.5 w-full mt-2">
+          <!-- Tarjeta 1: EVENTOS -->
+          <div onclick="openMyEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
+            <div class="text-xl mb-1">📅</div>
+            <span class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
+              14
+            </span>
+            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+              EVENTOS
+            </span>
+          </div>
+
+          <!-- Tarjeta 2: RACHA -->
+          <div onclick="openStreakModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#F17D02]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
+            <div class="text-xl mb-1">⏱️</div>
+            <div class="flex items-center justify-center space-x-1 my-1">
+              <span class="text-2xl filter drop-shadow">🔥</span>
+              <span class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none">
+                4
+              </span>
+            </div>
+            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+              RACHA
+            </span>
+          </div>
+
+          <!-- Tarjeta 3: PLUS POINTS -->
+          <div onclick="openStoreModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
+            <div class="text-xl mb-1">⭐</div>
+            <span class="font-display text-[#FAB205] text-xl sm:text-2xl font-black tracking-tight leading-tight my-auto text-center">
+              380 <span class="text-xs">PTS</span>
+            </span>
+            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
+              PLUS POINTS
+            </span>
+          </div>
+        </div>
+
+        <!-- 4. SECCIÓN CUENTA -->
+        <div class="w-full mt-7">
+          <h3 class="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1">
+            CUENTA
+          </h3>
+
+          <div class="space-y-2.5">
+            <!-- Botón Suscripción -->
+            <div onclick="openSubscriptionModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                  💳
+                </div>
+                <div class="text-left">
+                  <span class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                    SUBSCRIPTION ($5/MONTH)
+                  </span>
+                  <span class="font-sans text-neutral-400 text-xs block">
+                    Cupos ilimitados, analíticas y soporte VIP
+                  </span>
+                </div>
+              </div>
+              <span class="text-neutral-500 font-bold text-lg">›</span>
+            </div>
+
+            <!-- Botón Compartir App -->
+            <div onclick="handleShareApp()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                  🔗
+                </div>
+                <div class="text-left">
+                  <span class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                    COMPARTIR APP
+                  </span>
+                  <span class="font-sans text-neutral-400 text-xs block">
+                    Invita a tus amigos y gana 50 Plus Points
+                  </span>
+                </div>
+              </div>
+              <span class="text-neutral-500 font-bold text-lg">›</span>
+            </div>
+          </div>
+
+          <!-- Botón Cerrar Sesión -->
+          <div class="mt-8 text-center pb-4">
+            <button onclick="showToast('Sesión cerrada')" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none">
+              CERRAR SESIÓN
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM NAVIGATION BAR FIJA -->
+      <nav class="fixed md:absolute bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-6 md:pb-7 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </button>
+
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openPassScreen();" aria-label="Ver pases">
+          <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
+          </svg>
+        </button>
+
+        <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- MODAL 1: GESTIÓN DE EVENTOS -->
+    <div id="myEventsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom">
+        <button onclick="closeMyEventsModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
+          ✕
+        </button>
+
+        <h3 class="font-display text-white text-xl font-black tracking-wide uppercase mb-3">
+          MIS EVENTOS
+        </h3>
+
+        <button onclick="closeMyEventsModal(); closeProfileScreen(); openCreateEventScreen();" class="w-full py-3 px-4 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase mb-3.5 flex items-center justify-center shadow active:scale-98">
+          [ + ] CREAR NUEVO EVENTO
+        </button>
+
+        <div class="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
+          <div class="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="font-display text-white text-sm font-black uppercase leading-tight">
+                  ROOFTOP TECHNO SESSION
+                </h4>
+                <span class="font-sans text-neutral-400 text-xs mt-0.5 block">
+                  SÁB. 28 DE SEPTIEMBRE · 22:00
+                </span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40">
+                Activo
+              </span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
+              <span class="font-sans text-neutral-400">118 / 150 invitados</span>
+              <div class="flex space-x-2">
+                <button onclick="showToast('Editando Rooftop Techno')" class="font-display text-neutral-300 hover:text-white font-bold uppercase">Editar</button>
+                <button onclick="openDoorModal()" class="font-display text-[#12C061] hover:underline font-bold uppercase">Puerta</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-neutral-900/90 border border-neutral-800 space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <h4 class="font-display text-white text-sm font-black uppercase leading-tight">
+                  INDIE NIGHT LIVE SOUNDS
+                </h4>
+                <span class="font-sans text-neutral-400 text-xs mt-0.5 block">
+                  VIE. 20 DE SEPTIEMBRE · 21:00
+                </span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-neutral-800 text-neutral-400">
+                Finalizado
+              </span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">
+              <span class="font-sans text-neutral-400">150 / 150 invitados</span>
+              <div class="flex space-x-2">
+                <button onclick="showToast('Evento finalizado')" class="font-display text-neutral-400 font-bold uppercase">Reporte</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: INFORMATIVO DE RACHA -->
+    <div id="streakModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-center anim-modal-zoom">
+        <button onclick="closeStreakModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
+          ✕
+        </button>
+
+        <div class="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-3xl mx-auto mb-3">
+          🔥
+        </div>
+
+        <h3 class="font-display text-white text-2xl font-black tracking-wide uppercase mb-2">
+          RACHA DE 4 EVENTOS
+        </h3>
+
+        <p class="font-sans text-neutral-300 text-sm leading-relaxed mb-5">
+          Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Plus Points!
+        </p>
+
+        <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-[#F17D02] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-orange-600 transition-colors">
+          CONTINUAR RACHA
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 3: TIENDA DE SOUVENIRS (PLUS POINTS) -->
+    <div id="storeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom">
+        <button onclick="closeStoreModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
+          ✕
+        </button>
+
+        <div class="flex items-center space-x-2 mb-1">
+          <span class="text-xl">⭐</span>
+          <h3 class="font-display text-white text-xl font-black tracking-wide uppercase">
+            TIENDA +1 STORE
+          </h3>
+        </div>
+
+        <p class="font-sans text-neutral-400 text-xs mb-3.5">
+          Saldo disponible: <strong class="text-[#FAB205]">380 Puntos</strong>
+        </p>
+
+        <div class="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
+          <div class="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">🧢</div>
+              <div>
+                <h4 class="font-display text-white text-xs font-black uppercase">Gorra Trucker +1</h4>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">450 PTS</span>
+              </div>
+            </div>
+            <button onclick="showToast('Puntos insuficientes')" class="py-1.5 px-3 rounded-lg bg-neutral-800 text-neutral-400 font-display font-black text-xs uppercase">Canjear</button>
+          </div>
+
+          <div class="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">🔑</div>
+              <div>
+                <h4 class="font-display text-white text-xs font-black uppercase">Llavero Metálico +1</h4>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">200 PTS</span>
+              </div>
+            </div>
+            <button onclick="showToast('¡Llavero Canjeado con éxito!')" class="py-1.5 px-3 rounded-lg bg-white text-black font-display font-black text-xs uppercase">Canjear</button>
+          </div>
+
+          <div class="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">☕</div>
+              <div>
+                <h4 class="font-display text-white text-xs font-black uppercase">Taza Cerámica +1</h4>
+                <span class="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">320 PTS</span>
+              </div>
+            </div>
+            <button onclick="showToast('¡Taza Canjeada con éxito!')" class="py-1.5 px-3 rounded-lg bg-white text-black font-display font-black text-xs uppercase">Canjear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: SUSCRIPCIÓN PLUS -->
+    <div id="subscriptionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom">
+        <button onclick="closeSubscriptionModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
+          ✕
+        </button>
+
+        <div class="w-12 h-12 rounded-xl bg-[#FAB205]/10 border border-[#FAB205]/30 flex items-center justify-center text-2xl mb-2.5">
+          👑
+        </div>
+
+        <h3 class="font-display text-white text-2xl font-black tracking-wide uppercase leading-tight">
+          PLAN SUSCRIPCIÓN PLUS
+        </h3>
+        <p class="font-display text-[#FAB205] text-sm font-bold uppercase mb-4">
+          $5 / MES (Bs. 35)
+        </p>
+
+        <div class="space-y-2.5 font-sans text-xs text-neutral-300 mb-5">
+          <div class="flex items-start space-x-2">
+            <span class="text-[#FAB205]">✦</span>
+            <span><strong>Cupos ilimitados:</strong> Publica eventos masivos sin tope de 150 invitados.</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <span class="text-[#FAB205]">✦</span>
+            <span><strong>Analíticas en tiempo real:</strong> Conoce la hora pico de ingreso y tasa de asistencia.</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <span class="text-[#FAB205]">✦</span>
+            <span><strong>Enlaces RRPP:</strong> Asigna comisiones y listas personalizadas a promotores.</span>
+          </div>
+          <div class="flex items-start space-x-2">
+            <span class="text-[#FAB205]">✦</span>
+            <span><strong>Soporte Prioritario:</strong> Asistencia directa en puerta y línea exclusiva 24/7.</span>
+          </div>
+        </div>
+
+        <button onclick="showToast('¡Suscripción Plus activada!'); closeSubscriptionModal();" class="w-full py-3 rounded-xl bg-[#FAB205] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-yellow-500 transition-colors shadow-lg">
+          ACTIVAR SUSCRIPCIÓN PLUS
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -860,6 +1762,10 @@
           'Acceso directo sin fila por puerta VIP',
           'Mesa en terraza lounge sujeta a llegada temprana'
         ],
+        isTonight: true,
+        isWeekend: true,
+        isVipOrFree: true,
+        categoryTag: 'club',
         route: '/vip/dubai'
       },
       {
@@ -878,6 +1784,10 @@
           'Bebida de cortesía de bienvenida (Cerveza artesanal)',
           'Descuento del 20% en merch oficial de las bandas'
         ],
+        isTonight: false,
+        isWeekend: true,
+        isVipOrFree: true,
+        categoryTag: 'concierto',
         route: '/vip/indie'
       },
       {
@@ -897,6 +1807,10 @@
           'Acceso exclusivo a zona de palcos VIP y guardarropa free',
           'Drop digital sorpresa con beneficios para la próxima edición'
         ],
+        isTonight: false,
+        isWeekend: true,
+        isVipOrFree: true,
+        categoryTag: 'reggaeton',
         route: '/vip/mamacita'
       },
       {
@@ -915,7 +1829,54 @@
           'Shots energizantes de bienvenida cortesía del club',
           'Acceso libre a chill out zone con hidratación libre'
         ],
+        isTonight: false,
+        isWeekend: true,
+        isVipOrFree: false,
+        categoryTag: 'club',
         route: '/vip/basement'
+      },
+      {
+        id: 'vip_sunset_05',
+        title: 'FLYER TERRAZA: ROOFTOP SUNSET TECHNO',
+        subtitle: 'Melodic Beats & Golden Hour',
+        dateDisplay: 'VIE. 27 DE SEPTIEMBRE',
+        timeRange: '18:00 — 01:00',
+        location: 'Skybar Hotel Plaza · Centro',
+        availabilityText: 'ÚLTIMOS 12 CUPOS ·',
+        theme: 'techno',
+        exactAddress: 'Av. 16 de Julio #1789, El Prado, La Paz',
+        description: 'Sunset exclusivo en la terraza más alta de la ciudad con beats melódicos y vista panorámica al Illimani.',
+        promotions: [
+          'Ingreso VIP Free antes de las 20:00',
+          'Welcome drink de autor cortesía',
+          'Acceso a terraza lounge y guardarropa'
+        ],
+        isTonight: true,
+        isWeekend: true,
+        isVipOrFree: true,
+        categoryTag: 'club',
+        route: '/vip/sunset'
+      },
+      {
+        id: 'vip_perreo_06',
+        title: 'FLYER FIESTA: PERREO & CUMBIA 2000',
+        subtitle: 'Noche Clásica de San Miguel',
+        dateDisplay: 'SÁB. 28 DE SEPTIEMBRE',
+        timeRange: '22:00 — 04:30',
+        location: 'Babylon Club · San Miguel',
+        availabilityText: 'LISTA VIP ACTIVA ·',
+        theme: 'reggaeton',
+        exactAddress: 'Calle Belisario Salinas #480, Sopocachi',
+        description: 'Hits nostálgicos de los 2000s, reggaeton clásico y cumbia villera en vivo con los DJs residentes de La Paz.',
+        promotions: [
+          '2x1 en cerveza artesanal hasta las 23:30',
+          'Ingreso tú + 1 gratis en lista VIP'
+        ],
+        isTonight: false,
+        isWeekend: true,
+        isVipOrFree: true,
+        categoryTag: 'reggaeton',
+        route: '/vip/perreo'
       }
     ];
 
@@ -977,8 +1938,15 @@
       }
     }
 
-    function openEventDetail(index) {
-      const event = eventsData[index];
+    function openEventDetail(target) {
+      let event;
+      if (typeof target === 'number') {
+        event = eventsData[target];
+      } else if (typeof target === 'string') {
+        event = eventsData.find(e => e.id === target);
+      } else {
+        event = target;
+      }
       if (!event) return;
 
       let bannerHtml = '';
@@ -1107,6 +2075,40 @@
           isDragging = false;
         });
       }
+
+      // Gestos táctiles y arrastre para el Cover Flow de Tickets (/tickets)
+      const ticketTrack = document.getElementById('ticketCoverFlowTrack');
+      if (ticketTrack) {
+        let tStartX = 0;
+        let tIsDragging = false;
+
+        ticketTrack.addEventListener('touchstart', (e) => {
+          tStartX = e.touches[0].clientX;
+          tIsDragging = true;
+        }, { passive: true });
+
+        ticketTrack.addEventListener('touchend', (e) => {
+          if (!tIsDragging) return;
+          const endX = e.changedTouches[0].clientX;
+          const diffX = endX - tStartX;
+          if (diffX < -30) setTicketCoverFlow(currentTicketIndex + 1);
+          else if (diffX > 30) setTicketCoverFlow(currentTicketIndex - 1);
+          tIsDragging = false;
+        });
+
+        ticketTrack.addEventListener('mousedown', (e) => {
+          tStartX = e.clientX;
+          tIsDragging = true;
+        });
+
+        window.addEventListener('mouseup', (e) => {
+          if (!tIsDragging) return;
+          const diffX = e.clientX - tStartX;
+          if (diffX < -35) setTicketCoverFlow(currentTicketIndex + 1);
+          else if (diffX > 35) setTicketCoverFlow(currentTicketIndex - 1);
+          tIsDragging = false;
+        });
+      }
     });
 
     function showToast(msg) {
@@ -1120,10 +2122,70 @@
       setTimeout(() => toast.remove(), 2200);
     }
 
+    // Lógica para Carrusel 3D Cover Flow de Tickets
+    let currentTicketIndex = 0;
+    const totalTickets = 5;
+
+    function setTicketCoverFlow(targetIndex) {
+      currentTicketIndex = Math.max(0, Math.min(totalTickets - 1, targetIndex));
+      const tickets = document.querySelectorAll('.cf-ticket');
+
+      tickets.forEach((t, idx) => {
+        const offset = idx - currentTicketIndex;
+        let rotateY = 0;
+        let scale = 1;
+        let opacity = 1;
+        let zIndex = 20;
+        let translateX = 0;
+        let translateZ = 0;
+
+        if (offset < 0) {
+          rotateY = 52;
+          scale = 0.85;
+          opacity = Math.max(0.25, 0.65 + offset * 0.15);
+          zIndex = 10 + offset;
+          translateX = -125 + (offset + 1) * 30;
+          translateZ = -90;
+        } else if (offset > 0) {
+          rotateY = -52;
+          scale = 0.85;
+          opacity = Math.max(0.25, 0.65 - offset * 0.15);
+          zIndex = 10 - offset;
+          translateX = 125 + (offset - 1) * 30;
+          translateZ = -90;
+        }
+
+        t.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        t.style.opacity = opacity;
+        t.style.zIndex = zIndex;
+      });
+
+      // Actualizar indicadores (puntos de paginación)
+      for (let i = 0; i < totalTickets; i++) {
+        const dot = document.getElementById(`dot_t_${i}`);
+        if (dot) {
+          if (i === currentTicketIndex) {
+            dot.className = "w-6 h-1.5 bg-[#E87A72] rounded-full transition-all duration-300 focus:outline-none";
+          } else {
+            dot.className = "w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none";
+          }
+        }
+      }
+    }
+
+    function handleTicketCardTap(index) {
+      if (currentTicketIndex === index) {
+        showToast("Pase listo para escanear en puerta");
+      } else {
+        setTicketCoverFlow(index);
+      }
+    }
+
     function openPassScreen() {
       const passScreen = document.getElementById('passScreenView');
       if (passScreen) {
         passScreen.classList.remove('hidden');
+        setTicketCoverFlow(currentTicketIndex);
       }
     }
 
@@ -1269,6 +2331,10 @@
 
     function handleNavigation(route) {
       console.log("Navegando a:", route);
+      if (route === '/profile') {
+        openProfileScreen();
+        return;
+      }
       if (route === '/create-event') {
         openCreateEventScreen();
         return;
@@ -1277,7 +2343,283 @@
         openPassScreen();
         return;
       }
+      if (route === '/explore' || route === '/search') {
+        openSearchEventsModal();
+        return;
+      }
       showToast("Ruta: " + route);
+    }
+
+    // Funciones para Modal de Búsqueda y Descubrimiento (SearchEventsModal)
+    let currentSearchFilter = 'Todos';
+    let currentSearchQuery = '';
+
+    function openSearchEventsModal() {
+      const modal = document.getElementById('searchEventsModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const container = document.getElementById('searchModalContainer');
+        if (container) {
+          container.classList.remove('anim-modal-slide');
+          void container.offsetWidth;
+          container.classList.add('anim-modal-slide');
+        }
+        renderSearchResults();
+        setTimeout(() => {
+          const input = document.getElementById('searchInputField');
+          if (input) input.focus();
+        }, 120);
+      }
+    }
+
+    function closeSearchEventsModal() {
+      const modal = document.getElementById('searchEventsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setSearchFilter(filterName) {
+      currentSearchFilter = filterName;
+      const chips = document.querySelectorAll('.search-chip');
+      chips.forEach(chip => {
+        if (chip.getAttribute('data-filter') === filterName) {
+          chip.className = "search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#E87A72] text-black font-bold border border-[#E87A72] shadow-sm";
+        } else {
+          chip.className = "search-chip whitespace-nowrap px-3 py-1.5 rounded-xl font-sans text-xs transition-all focus:outline-none flex-shrink-0 bg-[#16171B] text-[#8E8E93] hover:text-white border border-[#26282E] hover:border-neutral-700";
+        }
+      });
+      renderSearchResults();
+    }
+
+    function handleSearchInputChange(e) {
+      currentSearchQuery = e.target.value;
+      const clearBtn = document.getElementById('searchClearBtn');
+      if (clearBtn) {
+        if (currentSearchQuery.length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+      }
+      renderSearchResults();
+    }
+
+    function clearSearchInput() {
+      currentSearchQuery = '';
+      const input = document.getElementById('searchInputField');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      document.getElementById('searchClearBtn')?.classList.add('hidden');
+      renderSearchResults();
+    }
+
+    function resetSearchFilters() {
+      currentSearchQuery = '';
+      currentSearchFilter = 'Todos';
+      const input = document.getElementById('searchInputField');
+      if (input) input.value = '';
+      document.getElementById('searchClearBtn')?.classList.add('hidden');
+      setSearchFilter('Todos');
+    }
+
+    function renderSearchResults() {
+      const filtered = eventsData.filter(evt => {
+        // 1. Filtro por chip
+        if (currentSearchFilter === 'Hoy / Esta Noche 🔥') {
+          const match = evt.isTonight || /hoy|esta noche|sáb\. 14/i.test(evt.dateDisplay);
+          if (!match) return false;
+        } else if (currentSearchFilter === 'Fin de Semana') {
+          const match = evt.isWeekend || /vie|sáb|dom/i.test(evt.dateDisplay);
+          if (!match) return false;
+        } else if (currentSearchFilter === 'Conciertos / Indie') {
+          const match = evt.theme === 'indie' || evt.categoryTag === 'concierto' || /indie|concierto|rock|banda/i.test(`${evt.title} ${evt.subtitle} ${evt.description}`);
+          if (!match) return false;
+        } else if (currentSearchFilter === 'Club / Reggaeton') {
+          const match = evt.theme === 'reggaeton' || evt.theme === 'dubai' || evt.categoryTag === 'reggaeton' || /club|perreo|reggaeton|cumbia/i.test(`${evt.title} ${evt.subtitle} ${evt.description}`);
+          if (!match) return false;
+        } else if (currentSearchFilter === 'Gratis / VIP') {
+          const match = evt.isVipOrFree || /vip|free|gratis/i.test(`${evt.subtitle} ${evt.availabilityText} ${(evt.promotions || []).join(' ')}`);
+          if (!match) return false;
+        }
+
+        // 2. Filtro por texto
+        if (!currentSearchQuery.trim()) return true;
+        const q = currentSearchQuery.toLowerCase().trim();
+        const searchTarget = `
+          ${evt.title} 
+          ${evt.subtitle} 
+          ${evt.location} 
+          ${evt.exactAddress || ''} 
+          ${evt.dateDisplay} 
+          ${evt.description || ''} 
+          ${evt.availabilityText}
+        `.toLowerCase();
+        return searchTarget.includes(q);
+      });
+
+      // Actualizar contador
+      const countEl = document.getElementById('searchResultsCount');
+      if (countEl) countEl.innerText = `CARTELERA (${filtered.length})`;
+
+      const queryInd = document.getElementById('searchQueryIndicator');
+      if (queryInd) {
+        if (currentSearchQuery.trim()) {
+          queryInd.innerText = `Buscando "${currentSearchQuery}"`;
+          queryInd.classList.remove('hidden');
+        } else {
+          queryInd.classList.add('hidden');
+        }
+      }
+
+      const listEl = document.getElementById('searchResultsList');
+      const emptyEl = document.getElementById('searchEmptyState');
+
+      if (filtered.length === 0) {
+        if (listEl) {
+          listEl.innerHTML = '';
+          listEl.classList.add('hidden');
+        }
+        if (emptyEl) emptyEl.classList.remove('hidden');
+      } else {
+        if (emptyEl) emptyEl.classList.add('hidden');
+        if (listEl) {
+          listEl.classList.remove('hidden');
+          listEl.innerHTML = filtered.map(event => {
+            let thumbHtml = '';
+            if (event.theme === 'dubai') {
+              thumbHtml = `
+                <div class="w-full h-full bg-gradient-to-br from-[#1b003a] via-[#090b1c] to-[#04040a] flex flex-col items-center justify-center p-1 text-center">
+                  <span class="text-[#00f3ff] font-display text-[9px] font-black tracking-widest uppercase">DUBÁI</span>
+                  <span class="text-white text-xs font-bold font-display uppercase">VIP</span>
+                </div>`;
+            } else if (event.theme === 'indie') {
+              thumbHtml = `
+                <div class="w-full h-full bg-gradient-to-br from-[#0c1626] to-[#04070e] flex flex-col items-center justify-center p-1 text-center">
+                  <span class="text-xl">🎸</span>
+                  <span class="text-cyan-400 font-display text-[9px] font-black tracking-wider uppercase">INDIE</span>
+                </div>`;
+            } else if (event.theme === 'reggaeton') {
+              thumbHtml = `
+                <div class="w-full h-full bg-gradient-to-br from-[#2b0805] via-[#140605] to-[#0a0202] flex flex-col items-center justify-center p-1 text-center">
+                  <span class="text-xl">🔥</span>
+                  <span class="text-[#E87A72] font-display text-[9px] font-black tracking-wider uppercase">PERREO</span>
+                </div>`;
+            } else if (event.theme === 'techno') {
+              thumbHtml = `
+                <div class="w-full h-full bg-gradient-to-br from-[#0a0a0f] via-[#11131c] to-[#000000] flex flex-col items-center justify-center p-1 text-center">
+                  <div class="w-6 h-6 border border-[#12c061] rounded-full flex items-center justify-center mb-0.5">
+                    <span class="text-[#12c061] text-[8px] font-mono font-bold">135</span>
+                  </div>
+                  <span class="text-white font-display text-[9px] font-bold uppercase">TECHNO</span>
+                </div>`;
+            } else {
+              thumbHtml = `
+                <div class="w-full h-full bg-[#181A1E] flex items-center justify-center">
+                  <span class="text-2xl">🎉</span>
+                </div>`;
+            }
+
+            const badgeText = event.availabilityText ? event.availabilityText.replace('·', '').trim() : 'LISTA VIP DISPONIBLE';
+            const cleanTitle = event.title.replace(/^FLYER.*?:\s*/i, '');
+            const timeStart = event.timeRange ? event.timeRange.split('—')[0].trim() : '';
+
+            return `
+              <div onclick="openEventDetail('${event.id}'); closeSearchEventsModal();" class="bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/70 rounded-2xl p-2.5 flex items-center space-x-3 cursor-pointer transition-colors group active:scale-[0.99]">
+                <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-900 border border-[#26282E] relative flex items-center justify-center">
+                  ${thumbHtml}
+                </div>
+                <div class="flex-1 min-w-0 pr-1">
+                  <h4 class="font-display text-white text-base font-black tracking-tight uppercase leading-tight truncate group-hover:text-[#E87A72] transition-colors">
+                    ${cleanTitle}
+                  </h4>
+                  <p class="font-sans text-neutral-300 text-xs font-medium mt-0.5 truncate">
+                    ${event.dateDisplay} · ${timeStart}
+                  </p>
+                  <div class="flex items-center text-neutral-400 text-xs font-sans mt-0.5 truncate">
+                    <span class="mr-1 text-[11px]">📍</span>
+                    <span class="truncate">${event.location}</span>
+                  </div>
+                  <div class="mt-1.5 flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-sans font-bold uppercase tracking-wider bg-[#E87A72]/15 text-[#E87A72] border border-[#E87A72]/30">
+                      ${badgeText}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-neutral-500 group-hover:text-white transition-colors pr-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // Funciones para Pantalla Perfil (ProfileScreen)
+    function openProfileScreen() {
+      const screen = document.getElementById('profileScreenView');
+      if (screen) screen.classList.remove('hidden');
+    }
+
+    function closeProfileScreen() {
+      const screen = document.getElementById('profileScreenView');
+      if (screen) screen.classList.add('hidden');
+    }
+
+    function openMyEventsModal() {
+      const modal = document.getElementById('myEventsModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeMyEventsModal() {
+      const modal = document.getElementById('myEventsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openStreakModal() {
+      const modal = document.getElementById('streakModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeStreakModal() {
+      const modal = document.getElementById('streakModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openStoreModal() {
+      const modal = document.getElementById('storeModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeStoreModal() {
+      const modal = document.getElementById('storeModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function openSubscriptionModal() {
+      const modal = document.getElementById('subscriptionModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeSubscriptionModal() {
+      const modal = document.getElementById('subscriptionModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleShareApp() {
+      if (navigator.share) {
+        navigator.share({
+          title: '+1 (Más Uno) - App de Eventos',
+          text: '¡Descarga +1 para gestionar tus eventos y pases VIP con lista de puerta!',
+          url: window.location.origin
+        }).catch(() => showToast('Enlace copiado al portapapeles'));
+      } else {
+        navigator.clipboard?.writeText(window.location.origin);
+        showToast('Enlace copiado al portapapeles');
+      }
     }
 
     function openDoorModal() {
@@ -1286,6 +2628,63 @@
 
     function closeDoorModal() {
       document.getElementById("doorModal").classList.add("hidden");
+    }
+
+    // Funciones para Modal de Notificaciones (NotificationsModal)
+    function openNotificationsModal() {
+      const modal = document.getElementById('notificationsModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        const container = document.getElementById('notificationsModalContainer');
+        if (container) {
+          container.classList.remove('anim-modal-slide');
+          void container.offsetWidth;
+          container.classList.add('anim-modal-slide');
+        }
+        // Desvanecer el badge rojo de la campana
+        const topBadge = document.getElementById('topNotifBadge');
+        if (topBadge) {
+          topBadge.classList.add('opacity-0', 'pointer-events-none');
+        }
+      }
+    }
+
+    function closeNotificationsModal() {
+      const modal = document.getElementById('notificationsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function markAllNotificationsAsRead() {
+      const badge = document.getElementById('notifBadgeCount');
+      if (badge) {
+        badge.innerText = "Al día";
+        badge.className = "text-neutral-500 font-sans text-xs";
+      }
+      for (let i = 1; i <= 4; i++) {
+        const item = document.getElementById('notifItem_' + i);
+        if (item) {
+          item.className = "rounded-2xl p-3.5 border bg-[#121316] border-[#22242A] opacity-80 transition-all";
+        }
+      }
+      showToast('Notificaciones marcadas como leídas');
+    }
+
+    function respondInvitation(id, accept) {
+      const actions = document.getElementById('invitationActions_' + id);
+      const feedback = document.getElementById('invitationFeedback_' + id);
+      if (actions) actions.classList.add('hidden');
+      if (feedback) {
+        feedback.classList.remove('hidden');
+        if (accept) {
+          feedback.innerHTML = "✓ ¡Aceptaste la invitación! Tu pase está listo.";
+          feedback.className = "mt-2 text-xs font-sans font-bold text-[#12C061]";
+          showToast('¡Invitación aceptada!');
+        } else {
+          feedback.innerHTML = "Invitación rechazada";
+          feedback.className = "mt-2 text-xs font-sans text-neutral-500";
+          showToast('Invitación rechazada');
+        }
+      }
     }
   </script>
 </body>

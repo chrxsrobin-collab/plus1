@@ -1,12 +1,111 @@
-import { PassItem, VipFlyerItem, UserProfile } from '../types/home';
+import { PassItem, VipFlyerItem, UserProfile, CreatedEventItem, SouvenirItem, NotificationItem } from '../types/home';
 
 export const mockUserProfile: UserProfile = {
   id: 'usr_001',
-  name: 'Cristian',
-  avatarUrl: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=Cris&backgroundColor=b6e3f4',
-  unreadNotifications: 2,
-  activeEventsCount: 0,
+  name: 'CHRIS G.',
+  avatarUrl: './assets/images/avatar_chris.png',
+  unreadNotifications: 3,
+  activeEventsCount: 14,
+  isPlusMember: true,
+  eventsCount: 14,
+  streakCount: 4,
+  plusPoints: 380,
 };
+
+export const mockNotifications: NotificationItem[] = [
+  {
+    id: 'notif_01',
+    type: 'invitation',
+    title: 'Invitación de Nico V.',
+    message: 'Te invitó a CUMPLE DE PEPE 🎂 (Viernes 24 Oct · Sopocachi). Tienes pase +1 incluido.',
+    timeAgo: 'Hace 15 min',
+    isRead: false,
+    actionRequired: true,
+  },
+  {
+    id: 'notif_02',
+    type: 'vip_approved',
+    title: '¡Solicitud Aprobada! 🎉',
+    message: 'Club Dubái aprobó tu pase VIP para INDIE NIGHT. Tu QR ya está activo en puerta.',
+    timeAgo: 'Hace 2 horas',
+    isRead: false,
+    passId: '4092',
+  },
+  {
+    id: 'notif_03',
+    type: 'streak_alert',
+    title: '🔥 ¡Mantén viva tu Racha de 4!',
+    message: 'Tienes una racha de 4 eventos consecutivos. Asiste a un evento este fin de semana para subir a Racha 5 y desbloquear nuevo drop.',
+    timeAgo: 'Ayer',
+    isRead: false,
+  },
+  {
+    id: 'notif_04',
+    type: 'companion_confirmed',
+    title: 'Tu +1 confirmó asistencia',
+    message: 'Camila R. aceptó tu pase de acompañante para LATIN PERREO.',
+    timeAgo: 'Hace 2 días',
+    isRead: true,
+  },
+];
+
+export const mockUserCreatedEvents: CreatedEventItem[] = [
+  {
+    id: 'evt_cr_01',
+    title: 'ROOFTOP TECHNO SESSION',
+    dateStr: 'SÁB. 28 DE SEPTIEMBRE · 22:00',
+    status: 'Activo',
+    guestsCount: 118,
+    maxCapacity: 150,
+  },
+  {
+    id: 'evt_cr_02',
+    title: 'INDIE NIGHT LIVE SOUNDS',
+    dateStr: 'VIE. 20 DE SEPTIEMBRE · 21:00',
+    status: 'Finalizado',
+    guestsCount: 150,
+    maxCapacity: 150,
+  },
+  {
+    id: 'evt_cr_03',
+    title: 'AFTER PRIVADO CALACOTO',
+    dateStr: 'DOM. 05 DE OCTUBRE · 03:00',
+    status: 'Borrador',
+    guestsCount: 35,
+    maxCapacity: 80,
+  },
+];
+
+export const mockSouvenirs: SouvenirItem[] = [
+  {
+    id: 'souv_01',
+    name: 'Gorra Trucker +1 Black Edition',
+    pointsCost: 450,
+    imageEmoji: '🧢',
+    category: 'Accesorios',
+  },
+  {
+    id: 'souv_02',
+    name: 'Llavero Metálico Brutalista +1',
+    pointsCost: 200,
+    imageEmoji: '🔑',
+    category: 'Coleccionables',
+  },
+  {
+    id: 'souv_03',
+    name: 'Taza Cerámica Negro Mate +1',
+    pointsCost: 320,
+    imageEmoji: '☕',
+    category: 'Hogar & Bar',
+  },
+  {
+    id: 'souv_04',
+    name: 'Pase VIP Gratuito para Evento Plus',
+    pointsCost: 600,
+    imageEmoji: '🎟️',
+    category: 'Experiencias',
+  },
+];
 
 export const mockMamacitaPass: PassItem = {
   id: 'pass_mamacita_4092',
@@ -64,6 +163,114 @@ export const mockUpcomingPasses: PassItem[] = [
   },
 ];
 
+export const mockWalletTickets: PassItem[] = [
+  {
+    id: 'ticket_mamacita_4092',
+    title: 'MAMACITA REGGAETON',
+    subHeader: 'VIP FESTIVAL',
+    emoji: '🔥',
+    badgeNumber: 1,
+    dateStr: 'SÁB. 19 SEP',
+    timeStr: '23:00',
+    location: 'Club Dubái · Sopocachi',
+    venue: 'Club Dubái · Sopocachi',
+    status: 'confirmed',
+    statusText: 'Confirmado (Tú + 1)',
+    companionsCount: 1,
+    accentBorderColor: '#E87A72',
+    holderName: 'CHRIS G. · +1 INCLUIDO',
+    listType: 'VIP ACCESS (+1)',
+    accessType: 'VIP ACCESS (+1)',
+    ticketId: '#4092',
+    verifiedProvider: 'VERIFICADO CON GOOGLE',
+    qrCodeValue: 'PLUS1-TICKET-4092-MAMACITA-CRIS',
+  },
+  {
+    id: 'ticket_indie_8120',
+    title: 'INDIE NIGHT SESSION',
+    subHeader: 'CONCIERTO EN VIVO',
+    emoji: '🎸',
+    badgeNumber: 2,
+    dateStr: 'VIE. 25 SEP',
+    timeStr: '21:30',
+    location: 'Teatro Equinoccio',
+    venue: 'Teatro Equinoccio',
+    status: 'confirmed',
+    statusText: 'Confirmado',
+    companionsCount: 0,
+    accentBorderColor: '#12C061',
+    holderName: 'CHRIS G. · ADMISIÓN INDIVIDUAL',
+    listType: 'PREVENTA GENERAL',
+    accessType: 'PREVENTA GENERAL',
+    ticketId: '#8120',
+    verifiedProvider: 'VERIFICADO',
+    qrCodeValue: 'PLUS1-TICKET-8120-INDIE-NIGHT',
+  },
+  {
+    id: 'ticket_pepe_1044',
+    title: 'CUMPLE DE PEPE 🎂',
+    subHeader: 'FIESTA PRIVADA',
+    emoji: '🎂',
+    badgeNumber: 3,
+    dateStr: 'SÁB. 03 OCT',
+    timeStr: '22:00',
+    location: 'Casa Achumani (Privado)',
+    venue: 'Casa Achumani (Privado)',
+    status: 'confirmed',
+    statusText: 'Confirmado (Tú + 1)',
+    companionsCount: 1,
+    accentBorderColor: '#F17D02',
+    holderName: 'CHRIS G. · +1 INCLUIDO',
+    listType: 'INVITADO ESPECIAL (+1)',
+    accessType: 'INVITADO ESPECIAL (+1)',
+    ticketId: '#1044',
+    verifiedProvider: 'LISTA PUERTA',
+    qrCodeValue: 'PLUS1-TICKET-1044-PEPE-BDAY',
+  },
+  {
+    id: 'ticket_basement_9931',
+    title: 'BASEMENT AFTER HOURS',
+    subHeader: 'UNDERGROUND TECHNO',
+    emoji: '⚡',
+    badgeNumber: 4,
+    dateStr: 'DOM. 11 OCT',
+    timeStr: '03:00',
+    location: 'The Vault Club',
+    venue: 'The Vault Club',
+    status: 'confirmed',
+    statusText: 'Confirmado',
+    companionsCount: 0,
+    accentBorderColor: '#3344FF',
+    holderName: 'CHRIS G. · ACCESO TOTAL',
+    listType: 'BACKSTAGE PASS',
+    accessType: 'BACKSTAGE PASS',
+    ticketId: '#9931',
+    verifiedProvider: 'VERIFICADO',
+    qrCodeValue: 'PLUS1-TICKET-9931-BASEMENT-AFTER',
+  },
+  {
+    id: 'ticket_spring_5512',
+    title: 'SPRING FESTIVAL ⚡',
+    subHeader: 'OPEN AIR FEST',
+    emoji: '🌴',
+    badgeNumber: 5,
+    dateStr: 'SÁB. 24 OCT',
+    timeStr: '16:00',
+    location: 'Parque Urbano Central',
+    venue: 'Parque Urbano Central',
+    status: 'confirmed',
+    statusText: 'Confirmado',
+    companionsCount: 0,
+    accentBorderColor: '#FAB205',
+    holderName: 'CHRIS G. · ENTRADA GENERAL',
+    listType: 'EARLY BIRD TIER 1',
+    accessType: 'EARLY BIRD TIER 1',
+    ticketId: '#5512',
+    verifiedProvider: 'VERIFICADO',
+    qrCodeValue: 'PLUS1-TICKET-5512-SPRING-FEST',
+  },
+];
+
 export const mockVipFlyers: VipFlyerItem[] = [
   {
     id: 'vip_dubai_01',
@@ -82,7 +289,11 @@ export const mockVipFlyers: VipFlyerItem[] = [
       '2x1 en gin tonic y cócteles de autor toda la noche',
       'Acceso directo sin fila por puerta VIP',
       'Mesa en terraza lounge sujeta a llegada temprana'
-    ]
+    ],
+    isTonight: true,
+    isWeekend: true,
+    isVipOrFree: true,
+    categoryTag: 'club'
   },
   {
     id: 'vip_indie_02',
@@ -100,7 +311,11 @@ export const mockVipFlyers: VipFlyerItem[] = [
       'Acceso preferencial a soundcheck y backstage',
       'Bebida de cortesía de bienvenida (Cerveza artesanal)',
       'Descuento del 20% en merch oficial de las bandas'
-    ]
+    ],
+    isTonight: false,
+    isWeekend: true,
+    isVipOrFree: true,
+    categoryTag: 'concierto'
   },
   {
     id: 'vip_mamacita_03',
@@ -119,7 +334,11 @@ export const mockVipFlyers: VipFlyerItem[] = [
       '2x1 en shots de tequila hasta la medianoche',
       'Acceso exclusivo a zona de palcos VIP y guardarropa free',
       'Drop digital sorpresa con beneficios para la próxima edición'
-    ]
+    ],
+    isTonight: false,
+    isWeekend: true,
+    isVipOrFree: true,
+    categoryTag: 'reggaeton'
   },
   {
     id: 'vip_basement_04',
@@ -137,6 +356,53 @@ export const mockVipFlyers: VipFlyerItem[] = [
       'Entrada prioritaria por lista digital',
       'Shots energizantes de bienvenida cortesía del club',
       'Acceso libre a chill out zone con hidratación libre'
-    ]
+    ],
+    isTonight: false,
+    isWeekend: true,
+    isVipOrFree: false,
+    categoryTag: 'club'
   },
+  {
+    id: 'vip_sunset_05',
+    typeBadge: 'FLYER TERRAZA',
+    title: 'ROOFTOP SUNSET TECHNO',
+    subtitle: 'Melodic Beats & Golden Hour',
+    dateDisplay: 'VIE. 27 DE SEPTIEMBRE',
+    timeRange: '18:00 — 01:00',
+    location: 'Skybar Hotel Plaza · Centro',
+    availabilityText: 'ÚLTIMOS 12 CUPOS ·',
+    theme: 'techno',
+    exactAddress: 'Av. 16 de Julio #1789, Piso 18, El Prado, La Paz',
+    description: 'Sunset exclusivo en la terraza más alta de la ciudad con beats melódicos y vista panorámica al Illimani.',
+    promotions: [
+      'Ingreso VIP Free antes de las 20:00',
+      'Welcome drink de autor cortesía',
+      'Acceso a terraza lounge y guardarropa'
+    ],
+    isTonight: true,
+    isWeekend: true,
+    isVipOrFree: true,
+    categoryTag: 'club'
+  },
+  {
+    id: 'vip_perreo_06',
+    typeBadge: 'FLYER FIESTA',
+    title: 'PERREO & CUMBIA 2000',
+    subtitle: 'Noche Clásica de San Miguel',
+    dateDisplay: 'SÁB. 28 DE SEPTIEMBRE',
+    timeRange: '22:00 — 04:30',
+    location: 'Babylon Club · San Miguel',
+    availabilityText: 'LISTA VIP ACTIVA ·',
+    theme: 'reggaeton',
+    exactAddress: 'Calle Belisario Salinas #480, Sopocachi',
+    description: 'Hits nostálgicos de los 2000s, reggaeton clásico y cumbia villera en vivo con los DJs residentes de La Paz.',
+    promotions: [
+      '2x1 en cerveza artesanal hasta las 23:30',
+      'Ingreso tú + 1 gratis en lista VIP'
+    ],
+    isTonight: false,
+    isWeekend: true,
+    isVipOrFree: true,
+    categoryTag: 'reggaeton'
+  }
 ];
