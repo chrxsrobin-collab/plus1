@@ -6,7 +6,7 @@ export interface PassItem {
   dateStr: string;
   timeStr: string;
   location: string;
-  status: 'confirmed' | 'pending' | 'rejected' | 'used';
+  status: 'confirmed' | 'pending' | 'rejected' | 'capacity_reached' | 'used';
   statusText: string;
   companionsCount: number; // e.g. 1 for 'Tú + 1'
   imageUrl?: string;
@@ -19,6 +19,7 @@ export interface PassItem {
   qrCodeValue?: string;
   accessType?: string;
   venue?: string;
+  feedbackMessage?: string;
 }
 
 export interface VipFlyerItem {
@@ -39,6 +40,8 @@ export interface VipFlyerItem {
   isTonight?: boolean;
   isWeekend?: boolean;
   isVipOrFree?: boolean;
+  guestLimit?: number;
+  maxCapacity?: number;
 }
 
 export interface UserProfile {
@@ -48,6 +51,9 @@ export interface UserProfile {
   unreadNotifications: number;
   activeEventsCount: number;
   isPlusMember?: boolean;
+  isPartner?: boolean;
+  partnerTier?: string | null;
+  subscriptionExpiresAt?: number | null;
   eventsCount?: number;
   streakCount?: number;
   plusPoints?: number;
@@ -113,3 +119,19 @@ export interface EventInviteData {
   allowsPlusOne: boolean;
   description?: string;
 }
+
+export interface GuestPassItem {
+  id: string;
+  eventId: string;
+  eventTitle?: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string | null;
+  withPlusOne: boolean;
+  status: 'pending' | 'active' | 'used' | 'rejected';
+  requestedAt?: number;
+  approvedAt?: number;
+  usedAt?: number;
+  updatedAt?: number;
+}
+

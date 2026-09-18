@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, updateProfile } from 'firebase/auth';
 import { auth, db } from './lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, setDoc, query, where, collection } from 'firebase/firestore';
 import AuthScreen from './screens/AuthScreen';
 import HomeScreen from './screens/HomeScreen';
 import PassScreen from './screens/PassScreen';
@@ -9,6 +9,7 @@ import CreateEventScreen from './screens/CreateEventScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import TicketsScreen from './screens/TicketsScreen';
 import ScannerScreen from './screens/ScannerScreen';
+import EventManagerScreen from './screens/EventManagerScreen';
 import EventInviteModal from './components/EventInviteModal';
 import { PassItem, UserProfile } from './types/home';
 import { mockMamacitaPass, mockUserProfile } from './data/mockData';
@@ -25,12 +26,28 @@ export const App: React.FC = () => {
   });
   const [userTickets, setUserTickets] = useState<PassItem[]>([]);
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
-    // Si la URL actual del navegador contiene /e/ o hash con ruta, podemos iniciar en ella
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/e/')) {
-      return window.location.pathname;
+    // Si la URL actual del navegador contiene hash (#/e/...) o /e/, iniciamos en ella
+    if (typeof window !== 'undefined') {
+      if (window.location.hash.startsWith('#/e/')) {
+        return window.location.hash.replace('#', '');
+      }
+      if (window.location.pathname.startsWith('/e/')) {
+        return window.location.pathname;
+      }
     }
     return '/';
   });
+
+  // Escucha cambios en el hash del navegador para enlaces compartidos deep link (#/e/:eventId)
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash.startsWith('#/e/')) {
+        setCurrentRoute(window.location.hash.replace('#', ''));
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Escucha del estado de autenticación de Firebase en tiempo real
   useEffect(() => {
@@ -39,35 +56,79 @@ export const App: React.FC = () => {
       setIsAuthChecking(false);
 
       if (user) {
-        const savedName =
-          (typeof window !== 'undefined' ? localStorage.getItem('plus1_display_name') : null) ||
-          user.displayName ||
-          (user.isAnonymous ? 'INVITADO +1' : 'CHRIS G.');
+        const defaultGuestName = "INVITADO #" + user.uid.slice(-4).toUpperCase();
+        const initialName = user.displayName || (user.isAnonymous ? defaultGuestName : 'USUARIO VIP');
 
         setUserProfile((prev) => ({
           ...prev,
           id: user.uid,
-          name: savedName,
+          name: initialName,
           avatarUrl: user.photoURL || prev.avatarUrl,
         }));
 
-        // Sincronizar documento del usuario en Firestore si existe
+        // Sincronizar documento del usuario en Firestore
         const userDocRef = doc(db, 'users', user.uid);
+        getDoc(userDocRef).then((snap) => {
+          if (!snap.exists()) {
+            if (!user.displayName && user.isAnonymous) {
+              updateProfile(user, { displayName: defaultGuestName }).catch(console.warn);
+            }
+            setDoc(userDocRef, { name: initialName, streak: 1, points: 0 }, { merge: true }).catch(console.warn);
+          }
+        }).catch(console.warn);
+
         const unsubDoc = onSnapshot(userDocRef, (snap) => {
           if (snap.exists()) {
             const data = snap.data();
             if (data && data.name) {
               setUserProfile((prev) => ({ ...prev, name: data.name }));
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('plus1_display_name', data.name);
-              }
             }
           }
         }, (err) => {
           console.warn('[+1 App] Escucha de usuario:', err);
         });
 
-        return () => unsubDoc();
+        // Escucha en tiempo real de los pases del usuario en la colección 'passes'
+        const passesQuery = query(collection(db, 'passes'), where('userId', '==', user.uid));
+        const unsubPasses = onSnapshot(passesQuery, (snapshot) => {
+          const ticketsList: PassItem[] = snapshot.docs.map((d) => {
+            const data = d.data();
+            const isCapacityReached = data.status === 'capacity_reached' || data.status === 'rejected';
+            const isPending = data.status === 'pending';
+            const isUsed = data.status === 'used';
+            return {
+              id: d.id,
+              title: data.eventTitle || 'Evento +1',
+              emoji: isCapacityReached ? '⏳' : isPending ? '⏳' : '🎟️',
+              dateStr: data.dateStr || 'PRÓXIMAMENTE',
+              timeStr: data.timeStr || '22:00',
+              location: data.location || 'Acceso Oficial +1',
+              status: isCapacityReached ? 'capacity_reached' : (data.status as any) || 'confirmed',
+              statusText: isCapacityReached
+                ? 'AFORO COMPLETADO'
+                : isPending
+                ? 'SOLICITUD EN REVISIÓN'
+                : isUsed
+                ? 'INGRESADO'
+                : 'PASE ACTIVO',
+              companionsCount: data.withPlusOne ? 1 : 0,
+              accentBorderColor: isCapacityReached ? '#E87A72' : isPending ? '#FAB205' : '#12C061',
+              holderName: `${data.userName || user.displayName || 'INVITADO'} ${data.withPlusOne ? '· +1 INCLUIDO' : '· INDIVIDUAL'}`,
+              listType: isCapacityReached ? 'AFORO LLENO' : isPending ? 'EN REVISIÓN' : 'LISTA VIP',
+              ticketId: `#${d.id.slice(-4).toUpperCase()}`,
+              verifiedProvider: 'VERIFICADO CON GOOGLE',
+              feedbackMessage: data.feedbackMessage,
+            };
+          });
+          setUserTickets(ticketsList);
+        }, (err) => {
+          console.warn('[+1 App] Escucha de pases:', err);
+        });
+
+        return () => {
+          unsubDoc();
+          unsubPasses();
+        };
       }
     });
 
@@ -84,9 +145,17 @@ export const App: React.FC = () => {
   };
 
   const renderScreen = () => {
-    if (currentRoute === '/scanner') {
+    if (currentRoute === '/scanner' || currentRoute.startsWith('/scanner?') || currentRoute.startsWith('/scanner/') || currentRoute.startsWith('/app/door')) {
+      let eventIdParam: string | undefined;
+      if (currentRoute.includes('?')) {
+        const queryParams = new URLSearchParams(currentRoute.split('?')[1]);
+        eventIdParam = queryParams.get('eventId') || undefined;
+      } else if (currentRoute.startsWith('/scanner/')) {
+        eventIdParam = currentRoute.replace('/scanner/', '').trim();
+      }
       return (
         <ScannerScreen
+          eventId={eventIdParam}
           onBack={() => setCurrentRoute('/')}
           onNavigate={handleNavigate}
         />
@@ -99,6 +168,17 @@ export const App: React.FC = () => {
           user={userProfile}
           onUpdateName={handleUpdateName}
           onBack={() => setCurrentRoute('/')}
+          onNavigate={handleNavigate}
+        />
+      );
+    }
+
+    if (currentRoute.startsWith('/manage-event/') || currentRoute.startsWith('/event-manager/')) {
+      const eventId = currentRoute.replace('/manage-event/', '').replace('/event-manager/', '').trim();
+      return (
+        <EventManagerScreen
+          eventId={eventId}
+          onBack={() => setCurrentRoute('/profile')}
           onNavigate={handleNavigate}
         />
       );
@@ -148,7 +228,12 @@ export const App: React.FC = () => {
           <EventInviteModal
             isOpen={true}
             eventId={eventId}
-            onClose={() => setCurrentRoute('/')}
+            onClose={() => {
+              if (window.location.hash.startsWith('#/e/')) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+              }
+              setCurrentRoute('/');
+            }}
             onNavigate={handleNavigate}
           />
         </div>

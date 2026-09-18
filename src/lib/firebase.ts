@@ -19,6 +19,7 @@ import {
   signInAnonymously,
   signOut,
   onAuthStateChanged,
+  updateProfile,
   User
 } from "firebase/auth";
 
@@ -64,7 +65,24 @@ export const loginWithGoogle = async () => {
 export const loginAnonymously = async () => {
   try {
     const result = await signInAnonymously(auth);
-    return result.user;
+    const user = result.user;
+    if (user && !user.displayName) {
+      const defaultName = "INVITADO #" + user.uid.slice(-4).toUpperCase();
+      try {
+        await updateProfile(user, { displayName: defaultName });
+      } catch (e) {
+        console.warn('updateProfile error:', e);
+      }
+      await setDoc(doc(db, "users", user.uid), { 
+        name: defaultName, 
+        streak: 1, 
+        points: 0,
+        isPartner: false,
+        partnerTier: null,
+        subscriptionExpiresAt: null
+      }, { merge: true });
+    }
+    return user;
   } catch (error) {
     console.error("Error al iniciar sesión anónima:", error);
     throw error;

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth, confirmInviteInFirestore } from '../lib/firebase';
 import { EventInviteData } from '../types/home';
 import { mockEventInvites } from '../data/mockData';
 import { TicketShape } from './TicketShape';
-import { confirmInviteInFirestore } from '../lib/firebase';
 import '../styles/fonts.css';
 
 export interface EventInviteModalProps {
@@ -22,9 +23,50 @@ export const EventInviteModal: React.FC<EventInviteModalProps> = ({
   onClose,
   onNavigate,
 }) => {
-  // Obtener datos del evento por prop o por eventId del mock
+  const [firestoreInvite, setFirestoreInvite] = useState<EventInviteData | null>(null);
+
+  // Carga reactiva de datos reales desde Firestore si se recibe un eventId dinámico
+  useEffect(() => {
+    if (!eventId) return;
+    if (mockEventInvites[eventId]) return;
+
+    let isMounted = true;
+    getDoc(doc(db, 'events', eventId))
+      .then((snap) => {
+        if (snap.exists() && isMounted) {
+          const d = snap.data();
+          setFirestoreInvite({
+            id: snap.id,
+            title: d.title || 'Evento +1',
+            subtitle: d.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
+            hostName: d.hostName || 'Comunidad +1',
+            isPrivate: d.type === 'private',
+            flyerImage: d.imageUrl || d.artImage || undefined,
+            theme: d.theme || 'custom',
+            dateDisplay: d.date ? d.date.toString().toUpperCase() : 'PRÓXIMAMENTE',
+            timeRange: `${d.startTime || '22:00'} — ${d.endTime || '04:00'}`,
+            venueName: d.location || 'Por definir',
+            exactAddress: d.location || '',
+            confirmedCount: 1,
+            confirmedAvatars: [],
+            allowsPlusOne: d.allowsPlusOne !== undefined ? Boolean(d.allowsPlusOne) : true,
+            description: `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Error al cargar invitación de Firestore:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [eventId]);
+
+  // Obtener datos del evento por prop, por Firestore, o por eventId del mock
   const invite: EventInviteData =
     inviteData ||
+    firestoreInvite ||
     (eventId && mockEventInvites[eventId]) ||
     mockEventInvites['pepe-birthday'];
 
@@ -58,26 +100,65 @@ export const EventInviteModal: React.FC<EventInviteModalProps> = ({
   };
 
   // Confirmación de evento privado
-  const handleConfirmPrivate = () => {
+  const handleConfirmPrivate = async () => {
     triggerConfetti();
     setHasConfirmed(true);
     setCurrentView('ticket');
     showToast('¡Asistencia confirmada! Pase QR generado');
 
+    const currentUserId = auth.currentUser?.uid || 'guest_' + Date.now();
+    const currentUserName = auth.currentUser?.displayName || 'Invitado #' + currentUserId.slice(-4).toUpperCase();
+
     // Sincronización en tiempo real con Firestore
     confirmInviteInFirestore(invite.id, {
-      userName: 'CRIS G.',
+      userId: currentUserId,
+      userName: currentUserName,
       withPlusOne: plusOneSelected,
     }).catch((err) => {
       console.warn('[+1 Firestore] Sync invite error:', err);
     });
+
+    try {
+      await addDoc(collection(db, 'passes'), {
+        eventId: invite.id,
+        eventTitle: invite.title,
+        userId: currentUserId,
+        userName: currentUserName,
+        userAvatar: auth.currentUser?.photoURL || null,
+        withPlusOne: plusOneSelected,
+        status: 'active',
+        requestedAt: Date.now(),
+        approvedAt: Date.now(),
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Error guardando pase activo en passes:', err);
+    }
   };
 
   // Solicitud VIP para evento público
-  const handleRequestVip = () => {
+  const handleRequestVip = async () => {
     triggerConfetti();
     setHasRequestedVip(true);
     showToast('Solicitud enviada al anfitrión');
+
+    try {
+      const currentUserId = auth.currentUser?.uid || 'guest_' + Date.now();
+      const currentUserName = auth.currentUser?.displayName || 'Invitado #' + currentUserId.slice(-4).toUpperCase();
+      await addDoc(collection(db, 'passes'), {
+        eventId: invite.id,
+        eventTitle: invite.title,
+        userId: currentUserId,
+        userName: currentUserName,
+        userAvatar: auth.currentUser?.photoURL || null,
+        withPlusOne: plusOneSelected,
+        status: 'pending',
+        requestedAt: Date.now(),
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.warn('Error enviando solicitud VIP a passes:', err);
+    }
   };
 
   // Descargar/Guardar en fotos

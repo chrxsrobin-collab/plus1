@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import '../styles/fonts.css';
 
 export interface ScannerScreenProps {
+  eventId?: string;
   onBack?: () => void;
   onNavigate?: (route: string) => void;
   onScanSuccess?: (data: string) => void;
 }
 
 export const ScannerScreen: React.FC<ScannerScreenProps> = ({
+  eventId,
   onBack,
   onNavigate,
   onScanSuccess,
@@ -19,6 +23,26 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
   const [torchOn, setTorchOn] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [eventTitle, setEventTitle] = useState<string>('');
+
+  // Consulta los detalles del evento configurado si se pasa eventId
+  useEffect(() => {
+    if (!eventId) return;
+    const fetchEventData = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'events', eventId));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data && data.title) {
+            setEventTitle(data.title);
+          }
+        }
+      } catch (err) {
+        console.warn('[ScannerScreen] Error cargando evento:', err);
+      }
+    };
+    fetchEventData();
+  }, [eventId]);
 
   // Solicitar acceso a la cámara trasera al montar
   useEffect(() => {
@@ -166,12 +190,12 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
         </button>
 
         {/* Título Central Display */}
-        <div className="flex flex-col items-center justify-center text-center">
-          <h1 className="font-display text-white text-lg sm:text-xl font-black tracking-wider uppercase leading-none">
-            ESCANEAR PASE QR
+        <div className="flex flex-col items-center justify-center text-center max-w-[210px]">
+          <h1 className="font-display text-white text-lg sm:text-xl font-black tracking-wider uppercase leading-none truncate w-full">
+            {eventTitle || 'ESCANEAR PASE QR'}
           </h1>
-          <span className="font-sans text-[10px] text-[#8E8E93] tracking-widest uppercase font-semibold mt-0.5">
-            PUERTA +1 · CONTROL
+          <span className="font-sans text-[10px] text-[#8E8E93] tracking-widest uppercase font-semibold mt-0.5 truncate w-full">
+            {eventTitle ? 'CONTROL DE PUERTA EN VIVO' : 'PUERTA +1 · CONTROL'}
           </span>
         </div>
 

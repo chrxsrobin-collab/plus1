@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { signInWithPopup, signInAnonymously } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { signInWithPopup, signInAnonymously, updateProfile } from 'firebase/auth';
+import { auth, googleProvider, db } from '../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import '../styles/fonts.css';
 
 export interface AuthScreenProps {
@@ -17,7 +18,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
     setLoadingMode('google');
     setErrorMsg(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const user = cred.user;
+      if (user) {
+        const userName = user.displayName || "USUARIO VIP";
+        await setDoc(doc(db, "users", user.uid), { name: userName, streak: 1, points: 0 }, { merge: true });
+      }
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('Error al autenticar con Google:', err);
@@ -34,7 +40,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
     setLoadingMode('guest');
     setErrorMsg(null);
     try {
-      await signInAnonymously(auth);
+      const cred = await signInAnonymously(auth);
+      const user = cred.user;
+      if (user) {
+        const defaultName = "INVITADO #" + user.uid.slice(-4).toUpperCase();
+        try {
+          await updateProfile(user, { displayName: defaultName });
+        } catch (e) {
+          console.warn('updateProfile error:', e);
+        }
+        await setDoc(doc(db, "users", user.uid), { name: defaultName, streak: 1, points: 0 }, { merge: true });
+      }
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error('Error al autenticar como invitado:', err);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile, CreatedEventItem } from '../types/home';
 import { mockUserProfile, mockSouvenirs } from '../data/mockData';
@@ -22,17 +22,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onUpdateName,
 }) => {
   const [activeModal, setActiveModal] = useState<
-    'events' | 'streak' | 'store' | 'subscription' | null
+    'events' | 'created_events' | 'streak' | 'store' | 'subscription' | null
   >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [userEvents, setUserEvents] = useState<CreatedEventItem[]>([]);
+  const [attendedPasses, setAttendedPasses] = useState<{
+    id: string;
+    title: string;
+    checkedInAt?: number | string;
+    location?: string;
+    hostName?: string;
+  }[]>([]);
 
-  // Estado del nombre de usuario y modo edición inline
+  // Estado reactivo del perfil de usuario y modo edición inline
+  const [userProfileData, setUserProfileData] = useState<any>(null);
   const [displayName, setDisplayName] = useState<string>(() => {
     return (
       auth.currentUser?.displayName ||
+      (auth.currentUser?.isAnonymous ? "INVITADO #" + auth.currentUser.uid.slice(-4).toUpperCase() : null) ||
       user.name ||
-      (typeof window !== 'undefined' ? localStorage.getItem('plus1_display_name') : null) ||
       'CHRIS G.'
     );
   });
@@ -40,11 +48,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [editNameValue, setEditNameValue] = useState(displayName);
   const [isSavingName, setIsSavingName] = useState(false);
 
-  React.useEffect(() => {
-    if (user.name) {
-      setDisplayName(user.name);
-    }
-  }, [user.name]);
+  // Escucha en tiempo real del documento propio del usuario conectado
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setUserProfileData(data);
+        if (data.name) {
+          setDisplayName(data.name);
+          setEditNameValue(data.name);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, [auth.currentUser]);
 
   const handleSaveName = async () => {
     const trimmed = editNameValue.trim();
@@ -59,9 +78,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         await updateProfile(auth.currentUser, { displayName: trimmed });
         await setDoc(doc(db, 'users', auth.currentUser.uid), { name: trimmed }, { merge: true });
       }
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('plus1_display_name', trimmed);
-      }
       setDisplayName(trimmed);
       if (onUpdateName) {
         onUpdateName(trimmed);
@@ -73,6 +89,52 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       showToast('Error al actualizar el nombre');
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  const isPartner = Boolean(userProfileData?.isPartner);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const handleSubscribePartner = async () => {
+    if (!auth.currentUser) {
+      showToast('Debes iniciar sesión para suscribirte');
+      return;
+    }
+
+    setIsSubscribing(true);
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await setDoc(userRef, {
+        isPartner: true,
+        partnerTier: 'SOCIO_PLUS',
+        subscriptionExpiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      }, { merge: true });
+      showToast('⭐ ¡MEMBRESÍA SOCIO + ACTIVADA!');
+      setActiveModal(null);
+    } catch (err) {
+      console.error('Error al activar suscripción:', err);
+      showToast('Error al activar suscripción');
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  const handleCancelPartner = async () => {
+    if (!auth.currentUser) return;
+    setIsSubscribing(true);
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await setDoc(userRef, {
+        isPartner: false,
+        partnerTier: null,
+        subscriptionExpiresAt: null,
+      }, { merge: true });
+      showToast('Membresía pausada');
+      setActiveModal(null);
+    } catch (err) {
+      console.error('Error al pausar membresía:', err);
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
@@ -91,29 +153,34 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  // Escucha reactiva en tiempo real de eventos creados
-  React.useEffect(() => {
-    const currentUid = auth.currentUser?.uid;
-    const eventsRef = collection(db, 'events');
-    const q = currentUid
-      ? query(eventsRef, where('hostUserId', '==', currentUid))
-      : eventsRef;
+  // Escucha reactiva en tiempo real de eventos creados por el usuario activo
+  useEffect(() => {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      setUserEvents([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'events'),
+      where('hostUserId', '==', currentUserId)
+    );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const list: CreatedEventItem[] = snapshot.docs.map((d) => {
-          const data = d.data();
+        const myEvents: CreatedEventItem[] = snapshot.docs.map((doc) => {
+          const d = doc.data();
           return {
-            id: d.id,
-            title: data.title || 'Evento sin título',
-            dateStr: `${data.date || 'Próximamente'} · ${data.startTime || '22:00'}`,
-            status: data.type === 'private' ? 'Privado' : 'Activo',
-            guestsCount: 0,
-            maxCapacity: data.maxCapacity || 150,
+            id: doc.id,
+            title: d.title || 'Evento sin título',
+            dateStr: `${d.date || 'Próximamente'} · ${d.startTime || '22:00'}`,
+            status: d.type === 'private' ? 'Privado' : 'Activo',
+            guestsCount: d.confirmedCount || d.guestsCount || 0,
+            maxCapacity: d.maxCapacity || d.guestLimit || 150,
           };
         });
-        setUserEvents(list);
+        setUserEvents(myEvents);
       },
       (err) => {
         console.warn('Error escuchando eventos en ProfileScreen:', err);
@@ -122,7 +189,58 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [auth.currentUser]);
+
+  // Escucha reactiva en tiempo real de pases usados (eventos asistidos)
+  useEffect(() => {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      setAttendedPasses([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'passes'),
+      where('userId', '==', currentUserId),
+      where('status', '==', 'used')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.eventTitle || data.title || 'EVENTO +1',
+            checkedInAt: data.checkedInAt || data.usedAt || data.updatedAt,
+            location: data.location || data.venue || 'Club / Recinto Oficial',
+            hostName: data.hostName || 'Anfitrión +1',
+          };
+        });
+        setAttendedPasses(list);
+      },
+      (err) => {
+        console.warn('Error escuchando eventos asistidos en ProfileScreen:', err);
+        setAttendedPasses([]);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [auth.currentUser]);
+
+  const formatCheckedInTime = (timestamp?: number | string) => {
+    if (!timestamp) return 'Ingreso validado en puerta';
+    const num = typeof timestamp === 'number' ? timestamp : parseInt(timestamp, 10);
+    if (isNaN(num)) return String(timestamp);
+    const date = new Date(num);
+    const day = date.getDate();
+    const monthNames = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const month = monthNames[date.getMonth()] || '';
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day} ${month} · ${hours}:${minutes} HS`;
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -282,24 +400,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </div>
           )}
 
-          {/* Badge de Membresía: PLUS MEMBER (oro) / REGULAR */}
-          <div className="mt-2">
-            {user.isPlusMember ? (
-              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider shadow-md">
-                PLUS MEMBER
+          {/* Badge de Membresía: solo si el usuario ya es Socio + activo */}
+          {isPartner && (
+            <div className="mt-2 flex items-center justify-center">
+              <span className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider shadow-sm">
+                <span>👑</span>
+                <span>SOCIO +</span>
               </span>
-            ) : (
-              <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#26282E] text-neutral-300 font-display font-bold text-xs uppercase tracking-wider">
-                USUARIO REGULAR
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN */}
         <div className="grid grid-cols-3 gap-2.5 w-full mt-2">
           
-          {/* Tarjeta 1: EVENTOS */}
+          {/* Tarjeta 1: EVENTOS ASISTIDOS */}
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
@@ -308,14 +423,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <div className="text-xl mb-1">📅</div>
             <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
-              {userEvents.length}
+              {attendedPasses.length}
             </span>
             <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
               EVENTOS
             </span>
           </motion.div>
 
-          {/* Tarjeta 2: RACHA (Sustituye a STREAK) */}
+          {/* Tarjeta 2: RACHA DE ASISTENCIA */}
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.96 }}
@@ -326,7 +441,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <div className="flex items-center justify-center space-x-1 my-1">
               <span className="text-2xl filter drop-shadow">🔥</span>
               <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none">
-                {user.streakCount ?? 4}
+                {userProfileData?.streak ?? user.streakCount ?? 3}
               </span>
             </div>
             <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
@@ -343,7 +458,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <div className="text-xl mb-1">⭐</div>
             <span className="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
-              {user.plusPoints ?? 380}
+              {userProfileData?.points ?? user.plusPoints ?? 380}
             </span>
             <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
               PLUSCOINS
@@ -372,10 +487,33 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </div>
                 <div className="text-left">
                   <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                    SUBSCRIPTION ($5/MONTH)
+                    {isPartner ? 'MEMBRESÍA SOCIO + (ACTIVA)' : 'HAZTE SOCIO + POR $US 4.99/MES'}
                   </span>
                   <span className="font-sans text-neutral-400 text-xs block">
-                    Cupos ilimitados, analíticas y soporte VIP
+                    Diseñado para promotores, clubes y organizadores
+                  </span>
+                </div>
+              </div>
+              <span className="text-neutral-500 font-bold text-lg">›</span>
+            </motion.div>
+
+            {/* Botón Mis Eventos Creados (Anfitrión) */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveModal('created_events')}
+              className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md"
+            >
+              <div className="flex items-center space-x-3.5">
+                <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                  🎪
+                </div>
+                <div className="text-left">
+                  <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                    MIS EVENTOS CREADOS
+                  </span>
+                  <span className="font-sans text-neutral-400 text-xs block">
+                    Gestiona listas y capacidad de tus eventos
                   </span>
                 </div>
               </div>
@@ -429,6 +567,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       </div>
 
       {/* MODAL 1: GESTIÓN DE EVENTOS */}
+      {/* MODAL 1: HISTORIAL DE EVENTOS ASISTIDOS */}
       <AnimatePresence>
         {activeModal === 'events' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -437,17 +576,92 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left"
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col max-h-[82vh]"
             >
               <button
                 onClick={() => setActiveModal(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center space-x-2.5 mb-1">
+                <span className="text-xl">📅</span>
+                <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
+                  EVENTOS ASISTIDOS
+                </h3>
+              </div>
+              <p className="font-sans text-neutral-400 text-xs mb-3">
+                Historial de eventos validados con tu código QR en puerta:
+              </p>
+
+              <div className="space-y-2.5 overflow-y-auto pr-1 flex-1">
+                {attendedPasses.length === 0 ? (
+                  <div className="py-10 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2 flex flex-col items-center">
+                    <span className="text-3xl block mb-2">🎟️</span>
+                    <p className="font-sans text-neutral-400 text-xs sm:text-sm font-bold uppercase tracking-wider leading-relaxed px-3">
+                      AÚN NO HAS ASISTIDO A NINGÚN EVENTO CON TU PASE QR
+                    </p>
+                  </div>
+                ) : (
+                  attendedPasses.map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800/90 space-y-1.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-display text-white text-base font-black uppercase leading-tight truncate">
+                          {evt.title}
+                        </h4>
+                        <span className="text-[10px] font-display font-black px-2 py-0.5 rounded-md uppercase tracking-wider bg-[#12C061]/15 text-[#12C061] border border-[#12C061]/40 flex-shrink-0">
+                          🟢 ASISTIDO
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1.5 text-xs text-neutral-300 font-sans">
+                        <span className="text-[#FAB205]">⏱️</span>
+                        <span>{formatCheckedInTime(evt.checkedInAt)}</span>
+                      </div>
+                      <p className="text-[11px] text-neutral-500 font-sans truncate">
+                        📍 {evt.location || evt.hostName}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-4 pt-2 border-t border-neutral-800">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-full py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-neutral-400 hover:text-white font-display text-xs font-bold tracking-wider uppercase border border-neutral-800 transition-colors cursor-pointer"
+                >
+                  CERRAR
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL 1.B: GESTIÓN DE EVENTOS CREADOS (ANFITRIÓN) */}
+      <AnimatePresence>
+        {activeModal === 'created_events' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col max-h-[82vh]"
+            >
+              <button
+                onClick={() => setActiveModal(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 ✕
               </button>
 
               <h3 className="font-display text-white text-xl font-black tracking-wide uppercase mb-3">
-                MIS EVENTOS
+                MIS EVENTOS CREADOS
               </h3>
 
               {/* Botón Crear Nuevo Evento */}
@@ -456,21 +670,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   setActiveModal(null);
                   if (onNavigate) onNavigate('/create-event');
                 }}
-                className="w-full py-3 px-4 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase mb-3.5 flex items-center justify-center shadow active:scale-98"
+                className="w-full py-3 px-4 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase mb-3.5 flex items-center justify-center shadow active:scale-98 cursor-pointer"
               >
                 [ + ] CREAR NUEVO EVENTO
               </button>
 
-              <div className="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
+              <div className="space-y-2 overflow-y-auto pr-1 flex-1">
                 {userEvents.length === 0 ? (
-                  <div className="py-8 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2">
+                  <div className="py-8 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2 flex flex-col items-center">
                     <span className="text-3xl block mb-2">🎪</span>
-                    <p className="font-sans text-neutral-300 text-xs sm:text-sm font-semibold uppercase tracking-wider leading-relaxed">
-                      NO HAS CREADO NINGÚN EVENTO TODAVÍA
+                    <p className="font-sans text-neutral-300 text-xs sm:text-sm font-semibold uppercase tracking-wider leading-relaxed px-2">
+                      AÚN NO HAS CREADO NINGÚN EVENTO · CREA TU PRIMER EVENTO PARA GESTIONARLO AQUÍ
                     </p>
-                    <p className="font-sans text-neutral-500 text-[11px] mt-1">
-                      Crea un evento público o privado para emitir listas y pases QR
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveModal(null);
+                        if (onNavigate) onNavigate('/create-event');
+                      }}
+                      className="mt-4 px-5 py-2.5 rounded-xl bg-[#12C061] text-black font-display font-black text-xs tracking-wider uppercase shadow-lg active:scale-95 cursor-pointer hover:bg-[#0fa854] transition-colors"
+                    >
+                      CREAR EVENTO
+                    </button>
                   </div>
                 ) : (
                   userEvents.map((evt) => (
@@ -504,7 +725,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         <span className="font-sans text-neutral-400">
                           {evt.guestsCount} / {evt.maxCapacity} invitados
                         </span>
-                        <div className="flex space-x-2">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => {
                               setActiveModal(null);
@@ -512,15 +733,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 onNavigate(`/create-event?edit=${evt.id}`);
                               }
                             }}
-                            className="font-display text-neutral-300 hover:text-white font-bold uppercase cursor-pointer"
+                            className="font-display text-neutral-400 hover:text-white text-xs font-bold uppercase cursor-pointer"
                           >
                             Editar
                           </button>
                           <button
-                            onClick={() => showToast(`Control de puerta: ${evt.title}`)}
-                            className="font-display text-[#12C061] hover:underline font-bold uppercase cursor-pointer"
+                            onClick={() => {
+                              setActiveModal(null);
+                              if (onNavigate) {
+                                onNavigate(`/manage-event/${evt.id}`);
+                              }
+                            }}
+                            className="font-display text-[#12C061] hover:text-[#0fa854] text-xs font-black uppercase cursor-pointer flex items-center gap-1 bg-[#12C061]/10 border border-[#12C061]/30 px-2 py-1 rounded-lg active:scale-95"
                           >
-                            Puerta
+                            👥 VER ASISTENTES
                           </button>
                         </div>
                       </div>
@@ -533,7 +759,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         )}
       </AnimatePresence>
 
-      {/* MODAL 2: INFORMATIVO DE RACHA */}
+      {/* MODAL 2: INFORMATIVO DE RACHAS ACTIVAS */}
       <AnimatePresence>
         {activeModal === 'streak' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -542,39 +768,61 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-center"
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-left"
             >
               <button
                 onClick={() => setActiveModal(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 ✕
               </button>
 
-              <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-3xl mx-auto mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-3xl mb-3">
                 🔥
               </div>
 
-              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase mb-2">
-                RACHA DE 4 EVENTOS
+              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase mb-1">
+                TUS RACHAS ACTIVAS
               </h3>
 
-              <p className="font-sans text-neutral-300 text-sm leading-relaxed mb-5">
-                Llevas <strong>4 eventos consecutivos</strong> asistidos usando tu QR en puerta. ¡No pierdas tu racha este fin de semana para duplicar tus Pluscoins!
+              <p className="font-sans text-neutral-400 text-xs mb-3 leading-relaxed">
+                Cantidad de eventos consecutivos asistidos de un mismo anfitrión o club:
               </p>
+
+              {/* Desglose por organizador con diseño brutalista mate */}
+              <div className="space-y-2.5 my-4">
+                <div className="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+                  <div className="text-left">
+                    <h4 className="font-display text-white text-sm font-black uppercase">Club Cacao</h4>
+                    <span className="font-sans text-neutral-400 text-[11px]">Recinto VIP · Electrónica</span>
+                  </div>
+                  <span className="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30">
+                    🔥 3 eventos seguidos
+                  </span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
+                  <div className="text-left">
+                    <h4 className="font-display text-white text-sm font-black uppercase">Drop Sessions</h4>
+                    <span className="font-sans text-neutral-400 text-[11px]">Club Nocturno · Underground</span>
+                  </div>
+                  <span className="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30">
+                    🔥 2 eventos seguidos
+                  </span>
+                </div>
+              </div>
 
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-full py-3 rounded-xl bg-[#F17D02] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-orange-600 transition-colors"
+                className="w-full py-3 rounded-xl bg-[#F17D02] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-orange-500 transition-colors cursor-pointer"
               >
-                CONTINUAR RACHA
+                ENTENDIDO
               </button>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* MODAL 3: TIENDA DE SOUVENIRS (PLUSCOINS) */}
+      {/* MODAL 3: PLUSCOINS & RECOMPENSAS */}
       <AnimatePresence>
         {activeModal === 'store' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -583,55 +831,42 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left"
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-left flex flex-col"
             >
               <button
                 onClick={() => setActiveModal(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 ✕
               </button>
 
-              <div className="flex items-center space-x-2 mb-1">
-                <span className="text-xl">⭐</span>
-                <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
-                  380 PLUSCOINS · TIENDA +1
-                </h3>
+              <div className="w-14 h-14 rounded-2xl bg-[#FAB205]/15 border border-[#FAB205]/30 flex items-center justify-center text-3xl mb-3">
+                ⭐
               </div>
 
-              <p className="font-sans text-neutral-300 text-xs mb-3.5 leading-relaxed">
-                Tus Pluscoins acumuladas por asistencia y rachas. Úsalas para canjear merchandising oficial y beneficios en puerta.
+              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase mb-2">
+                PLUSCOINS & RECOMPENSAS
+              </h3>
+
+              <div className="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800/80 mb-4">
+                <span className="font-display text-[#FAB205] text-3xl font-black tracking-tight block">
+                  {userProfileData?.points ?? user.plusPoints ?? 380}
+                </span>
+                <span className="font-sans text-neutral-400 text-xs uppercase font-semibold">
+                  Tus Pluscoins Disponibles
+                </span>
+              </div>
+
+              <p className="font-sans text-neutral-300 text-sm leading-relaxed mb-6 font-medium">
+                Tus Pluscoins acumuladas por asistencia y rachas. Úsalas para canjear merch oficial de +1
               </p>
 
-              <div className="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
-                {mockSouvenirs.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-lg bg-[#16171B] flex items-center justify-center text-xl">
-                        {item.imageEmoji}
-                      </div>
-                      <div>
-                        <h4 className="font-display text-white text-xs font-black uppercase line-clamp-1">
-                          {item.name}
-                        </h4>
-                        <span className="font-sans text-[#FAB205] text-xs font-bold block mt-0.5">
-                          {item.pointsCost} +COINS
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => showToast(`Canje solicitado: ${item.name}`)}
-                      className="py-1.5 px-3 rounded-lg bg-white hover:bg-neutral-200 text-black font-display font-black text-xs uppercase tracking-wider"
-                    >
-                      Canjear
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="w-full py-3.5 rounded-xl bg-[#FAB205] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-yellow-400 transition-colors cursor-pointer shadow-lg shadow-[#FAB205]/20 active:scale-98"
+              >
+                ENTENDIDO
+              </button>
             </motion.div>
           </div>
         )}
@@ -646,54 +881,74 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 15 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left"
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-left"
             >
               <button
                 onClick={() => setActiveModal(null)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 ✕
               </button>
 
-              <div className="w-12 h-12 rounded-xl bg-[#FAB205]/10 border border-[#FAB205]/30 flex items-center justify-center text-2xl mb-2.5">
-                👑
+              {/* Cabecera: Insignia amarilla con texto negro SOCIO + */}
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider mb-3.5 shadow-md">
+                <span>👑</span>
+                <span>SOCIO +</span>
               </div>
 
-              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase leading-tight">
-                PLAN SUSCRIPCIÓN PLUS
+              {/* Precio destacado */}
+              <h3 className="font-display text-white text-3xl sm:text-4xl font-black tracking-tight uppercase leading-tight">
+                $US 4.99 / MES
               </h3>
-              <p className="font-display text-[#FAB205] text-sm font-bold uppercase mb-4">
-                $5 / MES (Bs. 35)
+
+              {/* Público objetivo y propuesta */}
+              <p className="font-sans text-neutral-400 text-xs sm:text-sm mt-1 mb-4 leading-relaxed">
+                Diseñado para promotores, clubes y organizadores con alta afluencia de gente.
               </p>
 
-              <div className="space-y-2.5 font-sans text-xs text-neutral-300 mb-5">
-                <div className="flex items-start space-x-2">
-                  <span className="text-[#FAB205]">✦</span>
-                  <span><strong>Cupos ilimitados:</strong> Publica eventos masivos sin tope de 150 invitados.</span>
+              {/* Vista previa de beneficios (Coming Soon) */}
+              <div className="p-4 rounded-2xl bg-black/40 border border-[#26282E] space-y-3 font-sans text-xs sm:text-sm text-neutral-300 mb-6">
+                <div className="flex items-start space-x-2.5">
+                  <span className="text-[#FAB205] font-bold text-base leading-none">✦</span>
+                  <span className="leading-snug">Herramientas avanzadas de gestión de puerta y staff.</span>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-[#FAB205]">✦</span>
-                  <span><strong>Analíticas en tiempo real:</strong> Conoce la hora pico de ingreso y tasa de asistencia.</span>
+                <div className="flex items-start space-x-2.5">
+                  <span className="text-[#FAB205] font-bold text-base leading-none">✦</span>
+                  <span className="leading-snug">Métricas de asistencia y rendimiento de promotores.</span>
                 </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-[#FAB205]">✦</span>
-                  <span><strong>Enlaces RRPP:</strong> Asigna comisiones y listas personalizadas a promotores.</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="text-[#FAB205]">✦</span>
-                  <span><strong>Soporte Prioritario:</strong> Asistencia directa en puerta y línea exclusiva 24/7.</span>
+                <div className="flex items-start space-x-2.5">
+                  <span className="text-[#FAB205] font-bold text-base leading-none">✦</span>
+                  <span className="leading-snug">Enlaces de listas VIP y eventos sin límite de cupos.</span>
                 </div>
               </div>
 
-              <button
-                onClick={() => {
-                  showToast('¡Suscripción Plus activada!');
-                  setActiveModal(null);
-                }}
-                className="w-full py-3 rounded-xl bg-[#FAB205] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-yellow-500 transition-colors shadow-lg"
-              >
-                ACTIVAR SUSCRIPCIÓN PLUS
-              </button>
+              {/* Acciones */}
+              <div className="space-y-2.5">
+                {isPartner ? (
+                  <button
+                    onClick={handleCancelPartner}
+                    disabled={isSubscribing}
+                    className="w-full h-12 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-display font-black text-sm tracking-wider uppercase transition-colors shadow-lg active:scale-98 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubscribing ? 'ACTUALIZANDO...' : 'PAUSAR MEMBRESÍA (TEST)'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubscribePartner}
+                    disabled={isSubscribing}
+                    className="w-full h-12 sm:h-14 rounded-xl bg-[#FAB205] hover:bg-yellow-400 active:scale-98 text-black font-display font-black text-sm sm:text-base tracking-wider uppercase transition-all shadow-xl cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {isSubscribing ? 'ACTIVANDO...' : 'SUSCRIBIRME POR $US 4.99/MES'}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-full h-11 rounded-xl bg-[#101114] border border-[#26282E] text-neutral-400 hover:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  VOLVER
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

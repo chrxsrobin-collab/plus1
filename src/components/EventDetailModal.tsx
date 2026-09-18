@@ -3,19 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { VipFlyerItem } from '../types/home';
 
 interface EventDetailModalProps {
-  event: VipFlyerItem | null;
+  event?: any;
+  selectedEvent?: any;
   isOpen: boolean;
   onClose: () => void;
   onApplyVip: (eventId: string) => void;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
-  event,
+  event: propEvent,
+  selectedEvent: propSelectedEvent,
   isOpen,
   onClose,
   onApplyVip,
 }) => {
-  if (!event) return null;
+  const selectedEvent = propSelectedEvent || propEvent;
+  if (!selectedEvent) return null;
+  const event = selectedEvent;
 
   return (
     <AnimatePresence>
@@ -50,84 +54,60 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             {/* Contenido con scroll vertical limpio */}
             <div className="overflow-y-auto no-scrollbar pr-1 pb-3 flex-1 min-h-0">
               
-              {/* 1. Cabecera Gráfica: Flyer visual proporcional */}
-              <div className="relative w-full h-[145px] sm:h-[155px] rounded-2xl overflow-hidden border border-neutral-800 shadow mb-3.5 flex-shrink-0">
-                {event.theme === 'reggaeton' && (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-r from-[#e60050] via-[#850337] to-[#240011] p-4 text-center">
-                    <div className="flex items-center space-x-1.5 mb-1">
-                      <span className="text-3xl filter drop-shadow">🔥</span>
-                      <span className="text-3xl filter drop-shadow">💃</span>
-                    </div>
-                    <span className="font-display text-[#fab205] text-2xl font-black tracking-widest uppercase leading-tight">
-                      LATIN PERREO
+              {/* 1. CABECERA DINÁMICA CON FLYER DEL EVENTO */}
+              <div className="relative w-full h-52 sm:h-60 rounded-2xl overflow-hidden bg-[#16171B] mb-4 flex-shrink-0">
+                {selectedEvent?.imageUrl ? (
+                  <img
+                    src={selectedEvent.imageUrl}
+                    alt={selectedEvent.title}
+                    className="w-full h-full object-cover object-center"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1F2228] to-[#121316] p-4 text-center">
+                    <span className="font-display text-2xl text-white tracking-wide uppercase">
+                      {selectedEvent?.title}
+                    </span>
+                    <span className="text-xs text-zinc-500 font-sans mt-1">
+                      EVENTO SIN FLYER
                     </span>
                   </div>
                 )}
 
-                {event.theme === 'dubai' && (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] p-4">
-                    <div className="px-3 py-1 bg-[#101026] border border-[#00f3ff] rounded-sm mb-2">
-                      <span className="text-[#00f3ff] font-display text-sm tracking-widest font-black uppercase">
-                        CLUB DUBÁI
-                      </span>
-                    </div>
-                    <span className="font-display text-white text-lg font-bold tracking-wider uppercase">
-                      VIP NIGHT & COCKTAILS
-                    </span>
-                  </div>
-                )}
-
-                {event.theme === 'indie' && (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0c1626] to-[#04070e] p-4">
-                    <div className="flex items-center space-x-2 text-3xl mb-1">
-                      <span>🎸</span><span>🎤</span><span>⚡</span>
-                    </div>
-                    <span className="font-display text-cyan-400 text-xl font-black tracking-widest uppercase">
-                      INDIE LIVE CONCERT
-                    </span>
-                  </div>
-                )}
-
-                {event.theme === 'techno' && (
-                  <div className="w-full h-full relative flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0f] via-[#11131c] to-[#000000] p-4">
-                    <div className="w-12 h-12 border border-[#12c061] rounded-full flex items-center justify-center mb-1">
-                      <span className="font-display text-[#12c061] text-xs font-mono font-bold">135 BPM</span>
-                    </div>
-                    <span className="font-display text-white text-lg font-bold tracking-wider uppercase">
-                      TECHNO BASEMENT AFTER
-                    </span>
-                  </div>
-                )}
-
-                {/* Badge de Disponibilidad sobre el banner */}
-                <div className="absolute bottom-2 left-2.5 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm border border-neutral-700/80">
-                  <span className="font-sans text-xs font-bold text-[#E87A72] tracking-wide">
-                    {event.availabilityText}
+                {/* Badge flotante de Cupos o Tipo de Evento en la esquina inferior */}
+                <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10">
+                  <span className="text-xs font-sans text-[#E87A72] font-semibold">
+                    CUPO MÁX. {selectedEvent?.guestLimit || selectedEvent?.maxCapacity || 100}
                   </span>
                 </div>
               </div>
 
               {/* Título Principal y Subtítulo */}
               <h3 className="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-tight">
-                {event.typeBadge}: {event.title}
+                {selectedEvent.typeBadge ? `${selectedEvent.typeBadge}: ` : ''}{selectedEvent.title}
               </h3>
-              <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">
-                {event.subtitle}
-              </p>
+              {selectedEvent.subtitle && (
+                <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">
+                  {selectedEvent.subtitle}
+                </p>
+              )}
 
               {/* 2. Metadatos Completos */}
               <div className="mt-4 p-3.5 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
                 <div className="flex items-center text-white/90 text-xs sm:text-sm font-sans">
                   <span className="w-5 text-center mr-2 text-base">📅</span>
-                  <span className="font-display uppercase tracking-wide font-bold">{event.dateDisplay}</span>
+                  <span className="font-display uppercase tracking-wide font-bold">
+                    {event.dateDisplay || event.date || 'Próximamente'}
+                  </span>
                 </div>
                 <div className="flex items-center text-neutral-300 text-xs sm:text-sm font-sans">
                   <span className="w-5 text-center mr-2 text-base">⏰</span>
-                  <span>{event.timeRange}</span>
+                  <span>
+                    {event.timeRange || (event.startTime ? `${event.startTime} — ${event.endTime || 'Cierre'}` : '22:00 — 04:00')}
+                  </span>
                 </div>
                 <div className="flex items-center text-neutral-300 text-xs sm:text-sm font-sans">
                   <span className="w-5 text-center mr-2 text-base text-neutral-500">•</span>
-                  <span>{event.exactAddress || event.location}</span>
+                  <span>{event.exactAddress || event.location || 'Ubicación por confirmar'}</span>
                 </div>
               </div>
 

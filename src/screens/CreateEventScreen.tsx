@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { CreateEventFormData } from '../types/home';
 import '../styles/fonts.css';
 
@@ -34,6 +34,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   });
 
   const [isLoadingEvent, setIsLoadingEvent] = useState(isEditMode);
+  const [eventHostUserId, setEventHostUserId] = useState<string | null>(null);
 
   // Cargar datos del evento existente desde Firestore cuando se pasa eventId
   useEffect(() => {
@@ -47,6 +48,16 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         const snap = await getDoc(eventRef);
         if (snap.exists() && isMounted) {
           const d = snap.data();
+          const currentUserId = auth.currentUser?.uid;
+
+          // Validación de autoría: el usuario actual solo puede editar sus propios eventos
+          if (d.hostUserId && currentUserId && d.hostUserId !== currentUserId) {
+            alert('No tienes permisos para editar este evento.');
+            handleBack();
+            return;
+          }
+
+          setEventHostUserId(d.hostUserId || null);
           setFormData({
             artImage: d.imageUrl || d.artImage || null,
             name: d.title || '',
@@ -71,11 +82,22 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [eventId]);
+  }, [eventId, auth.currentUser]);
 
   // Estado de publicación y modales
   const [isPublished, setIsPublished] = useState(false);
+  const [createdEventData, setCreatedEventData] = useState<{
+    id: string;
+    title: string;
+    date: string;
+    startTime: string;
+    location: string;
+    imageUrl?: string | null;
+  } | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isBestPracticesOpen, setIsBestPracticesOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,6 +116,28 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       onNavigate('/');
     } else {
       console.log('[Navigation] -> Back to Home');
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!eventId) return;
+    if (eventHostUserId && auth.currentUser?.uid && eventHostUserId !== auth.currentUser.uid) {
+      alert('No tienes permisos para eliminar este evento.');
+      handleBack();
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+      setIsDeleteModalOpen(false);
+      showToast('🗑️ EVENTO ELIMINADO');
+      setTimeout(() => {
+        handleBack();
+      }, 600);
+    } catch (err) {
+      console.error('[DeleteEvent] Error al eliminar evento:', err);
+      showToast('Error al eliminar evento');
+      setIsDeleting(false);
     }
   };
 
@@ -161,6 +205,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       return;
     }
 
+    if (isEditMode && eventId) {
+      if (eventHostUserId && auth.currentUser?.uid && eventHostUserId !== auth.currentUser.uid) {
+        alert('No tienes permisos para editar este evento.');
+        handleBack();
+        return;
+      }
+    }
+
     setIsSaving(true);
 
     try {
@@ -196,8 +248,8 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           // Fallback silencioso
         }
 
-        // Inserción directa en Firestore
-        await addDoc(collection(db, 'events'), {
+        // Inserción directa en Firestore garantizando sellado con UID del autor
+        const docRef = await addDoc(collection(db, 'events'), {
           title: eventTitle,
           type: formData.privacy,
           date: formData.startDate,
@@ -209,23 +261,36 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           maxCapacity: Number(formData.maxCapacity),
           imageUrl: formData.artImage || null,
           artImage: formData.artImage || null,
-          hostUserId: auth.currentUser?.uid || 'anon_' + Date.now(),
+          hostUserId: auth.currentUser?.uid || null,
           hostName: auth.currentUser?.displayName || 'Anfitrión',
           createdAt: Date.now(),
         });
 
+        const newEventId = docRef.id;
+        setCreatedEventData({
+          id: newEventId,
+          title: eventTitle,
+          date: formData.startDate,
+          startTime: formData.startTime,
+          location: formData.location || 'Por definir',
+          imageUrl: formData.artImage || null,
+        });
+
         setIsPublished(true);
+        setIsShareModalOpen(true);
         showToast('¡Evento publicado en vivo con éxito!');
       }
 
-      // Redirigir al Home tras guardar exitosamente
-      setTimeout(() => {
-        if (onNavigate) {
-          onNavigate('/');
-        } else if (onBack) {
-          onBack();
-        }
-      }, 1000);
+      // En modo edición, redirigir al Home tras guardar exitosamente
+      if (isEditMode) {
+        setTimeout(() => {
+          if (onNavigate) {
+            onNavigate('/');
+          } else if (onBack) {
+            onBack();
+          }
+        }, 1000);
+      }
     } catch (err) {
       console.error('Error al guardar evento en Firestore:', err);
       showToast('Error al conectar con Firestore');
@@ -234,8 +299,38 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     }
   };
 
+  const handleShareEvent = (eventData: {
+    id: string;
+    title: string;
+    date: string;
+    startTime: string;
+    location: string;
+  }) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${eventData.id}`;
+    const shareText = `¡Te invito a mi evento en +1!\n🔥 ${eventData.title}\n📅 ${eventData.date} · ${eventData.startTime}\n📍 ${eventData.location}\n\nObtén tu pase aquí: ${shareUrl}`;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: eventData.title,
+          text: shareText,
+          url: shareUrl,
+        })
+        .catch(() => {});
+    } else {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareText);
+      }
+      alert('Enlace copiado al portapapeles listo para enviar por WhatsApp.');
+    }
+  };
+
   const handleShare = () => {
     if (!isPublished) return;
+    if (createdEventData) {
+      handleShareEvent(createdEventData);
+      return;
+    }
 
     if (navigator.share) {
       navigator
@@ -542,7 +637,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handlePublish}
-              disabled={isSaving || isPublished}
+              disabled={isSaving || isPublished || isDeleting}
               className={`w-full py-4 px-5 rounded-2xl font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none ${
                 isPublished
                   ? 'bg-neutral-900 text-[#12C061] border border-[#12C061]'
@@ -557,6 +652,21 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                 ? (isEditMode ? 'GUARDANDO...' : 'PUBLICANDO...')
                 : (isEditMode ? 'GUARDAR CAMBIOS' : 'PUBLICAR EVENTO')}
             </motion.button>
+
+            {/* BOTÓN "ELIMINAR EVENTO" (SOLO EN MODO EDICIÓN) */}
+            {isEditMode && (
+              <div className="mt-3">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  disabled={isSaving || isDeleting}
+                  className="w-full h-12 sm:h-14 rounded-2xl bg-[#DC2626] hover:bg-[#b91c1c] active:scale-98 text-white font-display text-lg sm:text-xl font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-lg focus:outline-none cursor-pointer"
+                >
+                  ELIMINAR EVENTO
+                </motion.button>
+              </div>
+            )}
           </div>
 
         </main>
@@ -640,6 +750,129 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                   className="w-full py-2.5 rounded-xl bg-white text-black font-display text-sm font-black tracking-wider uppercase hover:bg-neutral-200 transition-colors"
                 >
                   ENTENDIDO
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* MODAL CONFIRMACIÓN DE ELIMINACIÓN */}
+        {isDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-3xl bg-[#16171B] border border-[#26282E] p-6 shadow-2xl text-center relative"
+            >
+              <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-[#DC2626] flex items-center justify-center mx-auto mb-4 text-xl">
+                ⚠️
+              </div>
+
+              <h3 className="font-display text-white text-xl sm:text-2xl font-black tracking-wide uppercase mb-2">
+                ¿ELIMINAR ESTE EVENTO?
+              </h3>
+
+              <p className="font-sans text-xs sm:text-sm text-zinc-400 leading-relaxed mb-6">
+                Esta acción es permanente. Se cancelará el evento y se revocarán todos los pases asociados de los invitados.
+              </p>
+
+              <div className="flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleDeleteEvent}
+                  disabled={isDeleting}
+                  className="w-full h-12 rounded-xl bg-[#DC2626] hover:bg-[#b91c1c] text-white font-display text-sm sm:text-base font-black tracking-wider uppercase transition-colors flex items-center justify-center cursor-pointer shadow-lg active:scale-98 disabled:opacity-50"
+                >
+                  {isDeleting ? 'ELIMINANDO...' : 'SÍ, ELIMINAR'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  disabled={isDeleting}
+                  className="w-full h-12 rounded-xl bg-[#1A1C20] border border-[#26282E] text-zinc-300 hover:text-white font-display text-sm sm:text-base font-bold tracking-wider uppercase transition-colors flex items-center justify-center cursor-pointer active:scale-98"
+                >
+                  CANCELAR
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* MODAL DE EVENTO CREADO / COMPARTIR (ShareEventModal) */}
+        {isShareModalOpen && createdEventData && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="bg-[#16171B] border border-[#E87A72] rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl relative"
+            >
+              {/* Badge superior */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2">
+                <span className="font-display text-[#12C061] text-xs font-black tracking-wider uppercase">
+                  ✦ EVENTO PUBLICADO CON ÉXITO
+                </span>
+              </div>
+
+              {/* Flyer del evento */}
+              {createdEventData.imageUrl ? (
+                <img
+                  src={createdEventData.imageUrl}
+                  alt={createdEventData.title}
+                  className="w-full h-44 object-cover rounded-2xl my-3 border border-white/10 shadow-lg"
+                />
+              ) : (
+                <div className="w-full h-44 rounded-2xl my-3 border border-white/10 bg-gradient-to-br from-[#1F2228] to-[#121316] flex flex-col items-center justify-center p-4 text-center">
+                  <span className="text-3xl mb-1">🎫</span>
+                  <span className="font-display text-lg text-white font-black tracking-wider uppercase">
+                    {createdEventData.title}
+                  </span>
+                </div>
+              )}
+
+              {/* Título del evento */}
+              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase mt-1 mb-1 line-clamp-2">
+                {createdEventData.title}
+              </h3>
+
+              {/* Metadatos breves */}
+              <p className="font-sans text-xs sm:text-sm text-[#9CA3AF] mb-6 flex items-center justify-center gap-1.5 flex-wrap">
+                <span>📅 {createdEventData.date || 'Próximamente'}</span>
+                <span>·</span>
+                <span>⏰ {createdEventData.startTime || '22:00'}</span>
+                <span>·</span>
+                <span className="truncate max-w-[140px]">📍 {createdEventData.location}</span>
+              </p>
+
+              {/* Botón Principal: Compartir */}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleShareEvent(createdEventData)}
+                  className="w-full h-13 py-3.5 px-4 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display font-black text-sm tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+                >
+                  <span className="text-base">📲</span>
+                  <span>COMPARTIR ENLACE (WHATSAPP / REDES)</span>
+                </button>
+
+                {/* Botón Secundario: Ir al Inicio */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsShareModalOpen(false);
+                    if (onNavigate) {
+                      onNavigate('/');
+                    } else if (onBack) {
+                      onBack();
+                    }
+                  }}
+                  className="w-full py-2.5 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                >
+                  IR AL INICIO
                 </button>
               </div>
             </motion.div>

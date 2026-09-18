@@ -5,11 +5,11 @@ import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
 import { ActionFooter } from '../components/ActionFooter';
 import { BottomNav } from '../components/BottomNav';
 import { NoEventsModal } from '../components/NoEventsModal';
+import { SelectEventToScanSheet, HostScanEventItem } from '../components/SelectEventToScanSheet';
 import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
-import { NotificationsModal } from '../components/NotificationsModal';
-import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
+import { collection, query, where, onSnapshot, doc, getDocs } from 'firebase/firestore';
 import { mockUserProfile } from '../data/mockData';
 import { TabType, VipFlyerItem } from '../types/home';
 import '../styles/fonts.css';
@@ -39,6 +39,9 @@ export interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUser }) => {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isSelectEventSheetOpen, setIsSelectEventSheetOpen] = useState<boolean>(false);
+  const [hostEventsToScan, setHostEventsToScan] = useState<HostScanEventItem[]>([]);
+  const [isCheckingScannerEvents, setIsCheckingScannerEvents] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<VipFlyerItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -68,6 +71,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
 
     return () => unsubscribe();
   }, []);
+
+  // Estado reactivo del perfil del usuario conectado (por cada dispositivo)
+  const [userProfile, setUserProfile] = useState<{ name?: string } | null>(null);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setUserProfile(snapshot.data() as { name?: string });
+      }
+    });
+    return () => unsubscribe();
+  }, [auth.currentUser]);
 
   // Estado para la barra flotante dinámica (inicialmente oculta)
   const [isNavVisible, setIsNavVisible] = useState<boolean>(false);
@@ -174,8 +191,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     handleNavigate('/create-event');
   };
 
-  const handleScanQr = () => {
-    handleNavigate('/scanner');
+  const handleScanQr = async () => {
+    const currentUserId = auth.currentUser?.uid;
+    if (!currentUserId) {
+      // Usuario no autenticado -> No abrir cámara ni pedir permisos
+      setIsModalOpen(true);
+      return;
+    }
+
+    try {
+      setIsCheckingScannerEvents(true);
+      const q = query(collection(db, 'events'), where('hostUserId', '==', currentUserId));
+      const snapshot = await getDocs(q);
+      const hostEvents = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as HostScanEventItem[];
+
+      if (hostEvents.length === 0) {
+        // CASO A: EL USUARIO NO TIENE EVENTOS
+        // No intentes abrir la cámara ni pidas permisos de video
+        setIsModalOpen(true);
+      } else if (hostEvents.length === 1) {
+        // CASO B: EL USUARIO ES ANFITRIÓN CON EXACTAMENTE 1 EVENTO
+        handleNavigate(`/scanner?eventId=${hostEvents[0].id}`);
+      } else {
+        // CASO B: EL USUARIO TIENE MÁS DE 1 EVENTO
+        setHostEventsToScan(hostEvents);
+        setIsSelectEventSheetOpen(true);
+      }
+    } catch (error) {
+      console.warn('Error consultando eventos del anfitrión para escanear:', error);
+      setIsModalOpen(true);
+    } finally {
+      setIsCheckingScannerEvents(false);
+    }
+  };
+
+  const handleSelectEventForScan = (eventId: string) => {
+    setIsSelectEventSheetOpen(false);
+    handleNavigate(`/scanner?eventId=${eventId}`);
   };
 
   const handleTabSelect = (tab: TabType) => {
@@ -232,7 +287,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           className="px-6 pt-1 pb-1"
         >
           <h1 className="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-            HEY, {user.name || 'CHRIS G.'}
+            HEY, {userProfile?.name || auth.currentUser?.displayName || (auth.currentUser?.isAnonymous ? "INVITADO #" + auth.currentUser.uid.slice(-4).toUpperCase() : (user.name || 'USUARIO'))}
           </h1>
         </motion.div>
 
@@ -304,15 +359,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         variant="floating"
       />
 
-      {/* MODAL BRUTALISTA DE CONSOLA DE PUERTA */}
+      {/* MODAL DE ADVERTENCIA: NO TIENES EVENTOS ACTIVOS */}
       <NoEventsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreateEvent={handleCreateEvent}
       />
 
+      {/* BOTTOM SHEET DE SELECCIÓN CUANDO HAY MÁS DE 1 EVENTO */}
+      <SelectEventToScanSheet
+        isOpen={isSelectEventSheetOpen}
+        events={hostEventsToScan}
+        onClose={() => setIsEventSelectSheetOpen(false)}
+        onSelectEvent={handleSelectEventForScan}
+      />
+
       {/* MODAL DE DETALLE DEL EVENTO PÚBLICO */}
       <EventDetailModal
+        selectedEvent={selectedEvent}
         event={selectedEvent}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
