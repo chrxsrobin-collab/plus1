@@ -8,10 +8,11 @@ import { NoEventsModal } from '../components/NoEventsModal';
 import { SelectEventToScanSheet, HostScanEventItem } from '../components/SelectEventToScanSheet';
 import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
+import { NotificationsModal } from '../components/NotificationsModal';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, getDocs } from 'firebase/firestore';
-import { mockUserProfile } from '../data/mockData';
-import { TabType, VipFlyerItem } from '../types/home';
+import { mockUserProfile, mockNotifications } from '../data/mockData';
+import { TabType, VipFlyerItem, NotificationItem } from '../types/home';
 import '../styles/fonts.css';
 
 // Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
@@ -83,6 +84,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         setUserProfile(snapshot.data() as { name?: string });
       }
     });
+    return () => unsubscribe();
+  }, [auth.currentUser]);
+
+  // Escucha reactiva en tiempo real de pases aprobados/activos del usuario
+  const [activeApprovedPasses, setActiveApprovedPasses] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const q = query(
+      collection(db, 'passes'),
+      where('userId', '==', auth.currentUser.uid),
+      where('status', '==', 'active')
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const passes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setActiveApprovedPasses(passes);
+        if (passes.length > 0) {
+          setUnreadCount(passes.length);
+        }
+      },
+      (error) => {
+        console.warn('Error escuchando pases activos en HomeScreen:', error);
+      }
+    );
     return () => unsubscribe();
   }, [auth.currentUser]);
 
@@ -183,7 +210,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   };
 
   const handleApplyVip = (flyerId: string) => {
-    handleNavigate(`/vip/${flyerId}`);
+    const targetEvt = events.find((e) => e.id === flyerId);
+    if (targetEvt) {
+      setSelectedEvent(targetEvt);
+      setIsDetailModalOpen(true);
+    } else {
+      handleNavigate(`/vip/${flyerId}`);
+    }
   };
 
   const handleCreateEvent = () => {
@@ -381,6 +414,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         onApplyVip={handleApplyVip}
+        onNavigate={handleNavigate}
       />
 
       {/* MODAL DE BÚSQUEDA Y DESCUBRIMIENTO DE EVENTOS */}
@@ -401,7 +435,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       <NotificationsModal
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
-        onViewPass={(passId) => handleNavigate(`/pass/${passId}`)}
+        notifications={[
+          ...activeApprovedPasses.map((p) => ({
+            id: `notif_active_${p.id}`,
+            type: 'vip_approved' as const,
+            title: '¡SOLICITUD VIP APROBADA! 🎉',
+            message: `Tu pase VIP para ${p.eventTitle || 'el evento'} ha sido confirmado por el anfitrión. Código QR emitido para acceso en puerta.`,
+            timeAgo: 'Reciente',
+            isRead: false,
+            passId: p.id,
+          })),
+          ...mockNotifications,
+        ]}
+        onViewPass={() => handleNavigate('/tickets')}
         onNavigate={handleNavigate}
       />
     </div>

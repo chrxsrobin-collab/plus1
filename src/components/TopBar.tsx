@@ -4,21 +4,26 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { UserProfile } from '../types/home';
 
-interface TopHudProps {
-  user: UserProfile;
+export interface TopBarProps {
+  user?: UserProfile;
   onNotificationsClick?: () => void;
   onProfileClick?: () => void;
+  activePassesCount?: number;
 }
 
-export const TopHud: React.FC<TopHudProps> = ({
+export const TopBar: React.FC<TopBarProps> = ({
   user,
   onNotificationsClick,
   onProfileClick,
+  activePassesCount: propActiveCount,
 }) => {
-  const [activePassesCount, setActivePassesCount] = useState<number>(0);
+  const [activeCount, setActiveCount] = useState<number>(propActiveCount || 0);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      setActiveCount(propActiveCount || 0);
+      return;
+    }
 
     // Escuchar pases activos recientes o notificaciones no leídas
     const q = query(
@@ -30,17 +35,19 @@ export const TopHud: React.FC<TopHudProps> = ({
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        setActivePassesCount(snapshot.docs.length);
+        setActiveCount(snapshot.docs.length);
       },
       (error) => {
-        console.warn('Error escuchando pases activos en TopHud:', error);
+        console.warn('Error escuchando pases activos en TopBar:', error);
       }
     );
 
     return () => unsubscribe();
-  }, [auth.currentUser]);
+  }, [auth.currentUser, propActiveCount]);
 
-  const displayCount = activePassesCount > 0 ? activePassesCount : (user.unreadNotifications || 0);
+  const displayCount = activeCount > 0 ? activeCount : (user?.unreadNotifications || 0);
+  const avatarUrl = user?.avatarUrl || './assets/images/avatar_chris.png';
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}
@@ -55,13 +62,13 @@ export const TopHud: React.FC<TopHudProps> = ({
         </span>
       </div>
 
-      {/* Acciones Derecha: Campana con Badge Rojo 2 y Avatar */}
+      {/* Acciones Derecha: Campana con Badge Dinámico y Avatar */}
       <div className="flex items-center space-x-3.5">
         {/* Notificaciones */}
         <button
           onClick={onNotificationsClick}
           aria-label="Notificaciones"
-          className="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none"
+          className="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none cursor-pointer"
         >
           <svg
             className="w-6 h-6 fill-current"
@@ -82,11 +89,11 @@ export const TopHud: React.FC<TopHudProps> = ({
         <button
           onClick={onProfileClick}
           aria-label="Perfil de usuario"
-          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#E87A72] bg-[#16171B] overflow-hidden focus:outline-none transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-md flex items-center justify-center"
+          className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#E87A72] bg-[#16171B] overflow-hidden focus:outline-none transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-md flex items-center justify-center p-0"
         >
           <img
-            src={user.avatarUrl}
-            alt={user.name}
+            src={avatarUrl}
+            alt={user?.name || 'Usuario'}
             className="w-full h-full rounded-full object-cover"
           />
         </button>
@@ -95,4 +102,4 @@ export const TopHud: React.FC<TopHudProps> = ({
   );
 };
 
-export default TopHud;
+export default TopBar;

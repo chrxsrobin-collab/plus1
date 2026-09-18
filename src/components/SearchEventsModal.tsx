@@ -238,50 +238,16 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
                     className="bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/70 rounded-2xl p-2.5 flex items-center space-x-3 cursor-pointer transition-colors group"
                   >
                     {/* Miniatura Izquierda (~1:1, w-20 h-20) */}
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-neutral-900 border border-[#26282E] relative flex items-center justify-center">
-                      {event.theme === 'dubai' && (
-                        <div className="w-full h-full bg-gradient-to-br from-[#1b003a] via-[#090b1c] to-[#04040a] flex flex-col items-center justify-center p-1 text-center">
-                          <span className="text-[#00f3ff] font-display text-[9px] font-black tracking-widest uppercase">
-                            DUBÁI
-                          </span>
-                          <span className="text-white text-xs font-bold font-display uppercase">
-                            VIP
-                          </span>
-                        </div>
-                      )}
-
-                      {event.theme === 'indie' && (
-                        <div className="w-full h-full bg-gradient-to-br from-[#0c1626] to-[#04070e] flex flex-col items-center justify-center p-1 text-center">
-                          <span className="text-xl">🎸</span>
-                          <span className="text-cyan-400 font-display text-[9px] font-black tracking-wider uppercase">
-                            INDIE
-                          </span>
-                        </div>
-                      )}
-
-                      {event.theme === 'reggaeton' && (
-                        <div className="w-full h-full bg-gradient-to-br from-[#2b0805] via-[#140605] to-[#0a0202] flex flex-col items-center justify-center p-1 text-center">
-                          <span className="text-xl">🔥</span>
-                          <span className="text-[#E87A72] font-display text-[9px] font-black tracking-wider uppercase">
-                            PERREO
-                          </span>
-                        </div>
-                      )}
-
-                      {event.theme === 'techno' && (
-                        <div className="w-full h-full bg-gradient-to-br from-[#0a0a0f] via-[#11131c] to-[#000000] flex flex-col items-center justify-center p-1 text-center">
-                          <div className="w-6 h-6 border border-[#12c061] rounded-full flex items-center justify-center mb-0.5">
-                            <span className="text-[#12c061] text-[8px] font-mono font-bold">135</span>
-                          </div>
-                          <span className="text-white font-display text-[9px] font-bold uppercase">
-                            TECHNO
-                          </span>
-                        </div>
-                      )}
-
-                      {event.theme === 'custom' && (
-                        <div className="w-full h-full bg-[#181A1E] flex items-center justify-center">
-                          <span className="text-2xl">🎉</span>
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#16171B] shrink-0 border border-white/10">
+                      {event.imageUrl ? (
+                        <img
+                          src={event.imageUrl}
+                          alt={event.title}
+                          className="w-full h-full object-cover object-center"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#1A1C20] text-[#E87A72] font-display text-xs text-center p-1 uppercase">
+                          {event.title.slice(0, 10)}
                         </div>
                       )}
                     </div>

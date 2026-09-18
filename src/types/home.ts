@@ -1,12 +1,13 @@
 export interface PassItem {
   id: string;
+  eventId?: string;
   title: string;
   emoji: string;
   badgeNumber?: number;
   dateStr: string;
   timeStr: string;
   location: string;
-  status: 'confirmed' | 'pending' | 'rejected' | 'capacity_reached' | 'used';
+  status: 'confirmed' | 'active' | 'pending' | 'rejected' | 'capacity_reached' | 'used';
   statusText: string;
   companionsCount: number; // e.g. 1 for 'Tú + 1'
   imageUrl?: string;
@@ -24,11 +25,17 @@ export interface PassItem {
 
 export interface VipFlyerItem {
   id: string;
+  eventId?: string;
+  hostUserId?: string;
   typeBadge: string;
   title: string;
   subtitle: string;
   dateDisplay: string; // ej: "SÁB. 14 DE SEPTIEMBRE"
+  date?: string;
   timeRange: string;   // ej: "22:00 — 04:30"
+  startTime?: string;
+  endTime?: string;
+  time?: string;
   location: string;    // ej: "📍 Club Dubái · Sopocachi"
   availabilityText: string; // ej: "ÚLTIMOS 18 CUPOS ·"
   theme: 'dubai' | 'indie' | 'reggaeton' | 'techno' | 'custom';

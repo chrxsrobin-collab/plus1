@@ -10,6 +10,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import TicketsScreen from './screens/TicketsScreen';
 import ScannerScreen from './screens/ScannerScreen';
 import EventManagerScreen from './screens/EventManagerScreen';
+import ExploreScreen from './screens/ExploreScreen';
 import EventInviteModal from './components/EventInviteModal';
 import { PassItem, UserProfile } from './types/home';
 import { mockMamacitaPass, mockUserProfile } from './data/mockData';
@@ -194,6 +195,15 @@ export const App: React.FC = () => {
       return (
         <CreateEventScreen
           eventId={editEventId}
+          onBack={() => setCurrentRoute('/')}
+          onNavigate={handleNavigate}
+        />
+      );
+    }
+
+    if (currentRoute === '/explore' || currentRoute === '/search') {
+      return (
+        <ExploreScreen
           onBack={() => setCurrentRoute('/')}
           onNavigate={handleNavigate}
         />

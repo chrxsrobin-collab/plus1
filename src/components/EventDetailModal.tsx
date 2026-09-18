@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
 import { VipFlyerItem } from '../types/home';
 
 interface EventDetailModalProps {
@@ -7,7 +9,8 @@ interface EventDetailModalProps {
   selectedEvent?: any;
   isOpen: boolean;
   onClose: () => void;
-  onApplyVip: (eventId: string) => void;
+  onApplyVip?: (eventId: string) => void;
+  onNavigate?: (route: string) => void;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
@@ -16,10 +19,64 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   isOpen,
   onClose,
   onApplyVip,
+  onNavigate,
 }) => {
   const selectedEvent = propSelectedEvent || propEvent;
+  const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'capacity_reached' | 'used'>('none');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !selectedEvent?.id || !auth.currentUser) {
+      setPassStatus('none');
+      return;
+    }
+    const q = query(
+      collection(db, 'passes'),
+      where('userId', '==', auth.currentUser.uid),
+      where('eventId', '==', selectedEvent.id)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        const pData = snap.docs[0].data();
+        setPassStatus((pData.status as any) || 'pending');
+      } else {
+        setPassStatus('none');
+      }
+    }, (err) => {
+      console.warn('Error escuchando estado del pase en modal:', err);
+    });
+    return () => unsub();
+  }, [isOpen, selectedEvent?.id]);
+
   if (!selectedEvent) return null;
   const event = selectedEvent;
+
+  const handleRequestVip = async () => {
+    if (!auth.currentUser) return;
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'passes'), {
+        eventId: event.id,
+        eventTitle: event.title,
+        eventDate: event.date || event.dateDisplay || '',
+        eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : ''),
+        eventLocation: event.location || event.exactAddress || '',
+        eventImageUrl: event.imageUrl || '',
+        hostUserId: event.hostUserId || '',
+        userId: auth.currentUser.uid,
+        holderName: auth.currentUser.displayName || 'Invitado',
+        accessTier: 'VIP',
+        status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
+        createdAt: Date.now(),
+      });
+      setPassStatus('pending');
+      if (onApplyVip) onApplyVip(event.id);
+    } catch (err) {
+      console.error('Error solicitando VIP:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -144,17 +201,42 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
             {/* 5. Botón de Conversión Fijo al pie del modal: SOLICITAR VIP */}
             <div className="pt-3 border-t border-neutral-800/80 mt-auto">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  onApplyVip(event.id);
-                  onClose();
-                }}
-                className="w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none"
-              >
-                SOLICITAR VIP
-              </motion.button>
+              {passStatus === 'pending' || isSubmitting ? (
+                <button
+                  disabled
+                  className="w-full py-3.5 px-4 rounded-full bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
+                >
+                  SOLICITUD ENVIADA ⏳
+                </button>
+              ) : passStatus === 'active' ? (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    onClose();
+                    if (onNavigate) onNavigate('/tickets');
+                  }}
+                  className="w-full py-3.5 px-4 rounded-full bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98"
+                >
+                  VER MI PASE QR 🎟️
+                </motion.button>
+              ) : passStatus === 'capacity_reached' ? (
+                <button
+                  disabled
+                  className="w-full py-3.5 px-4 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed"
+                >
+                  AFORO COMPLETADO ⏳
+                </button>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleRequestVip}
+                  className="w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none cursor-pointer active:scale-98"
+                >
+                  SOLICITAR VIP
+                </motion.button>
+              )}
             </div>
 
           </motion.div>
