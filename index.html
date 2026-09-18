@@ -1425,8 +1425,8 @@
           </div>
 
           <!-- Botón Cerrar Sesión Real -->
-          <div class="mt-8 text-center pb-4">
-            <button onclick="handleLogout()" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer">
+          <div class="mt-8 text-center pb-8">
+            <button onclick="handleLogout()" class="font-display text-sm font-bold tracking-widest text-[#EF4444] hover:text-red-400 uppercase py-2.5 px-6 rounded-xl hover:bg-red-500/10 active:scale-95 transition-all focus:outline-none cursor-pointer">
               CERRAR SESIÓN
             </button>
           </div>
@@ -1844,17 +1844,18 @@
 
     async function handleLogout() {
       try {
+        closeProfileScreen();
+        openAuthScreen();
         if (fbAuth) {
           await fbAuth.signOut();
         }
         showToast('Sesión cerrada');
-        closeProfileScreen();
-        openAuthScreen();
       } catch (err) {
         console.error('Error al cerrar sesión:', err);
         showToast('Error al cerrar sesión');
       }
     }
+    window.handleLogout = handleLogout;
 
         // Sincronización en tiempo real de la invitación de cumpleaños
         fbDb.collection('invites').doc('pepe-birthday').onSnapshot((docSnapshot) => {
