@@ -3,25 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile, CreatedEventItem } from '../types/home';
 import { mockUserProfile, mockSouvenirs } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
-import { signOut, updateProfile } from 'firebase/auth';
 import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { signOut, updateProfile } from 'firebase/auth';
 import BottomNav from '../components/BottomNav';
 import '../styles/fonts.css';
 
 export interface ProfileScreenProps {
   user?: UserProfile;
-  userName?: string;
-  onUpdateUserName?: (newName: string) => void;
   onBack?: () => void;
   onNavigate?: (route: string) => void;
+  onUpdateName?: (newName: string) => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   user = mockUserProfile,
-  userName,
-  onUpdateUserName,
   onBack,
   onNavigate,
+  onUpdateName,
 }) => {
   const [activeModal, setActiveModal] = useState<
     'events' | 'streak' | 'store' | 'subscription' | null
@@ -29,25 +27,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [userEvents, setUserEvents] = useState<CreatedEventItem[]>([]);
 
-  // Estado reactivo para nombre de usuario y edición
-  const [displayName, setDisplayName] = useState<string>(
-    userName || auth.currentUser?.displayName || user.name || 'CHRIS G.'
-  );
+  // Estado del nombre de usuario y modo edición inline
+  const [displayName, setDisplayName] = useState<string>(() => {
+    return (
+      auth.currentUser?.displayName ||
+      user.name ||
+      (typeof window !== 'undefined' ? localStorage.getItem('plus1_display_name') : null) ||
+      'CHRIS G.'
+    );
+  });
   const [isEditingName, setIsEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(displayName);
+  const [editNameValue, setEditNameValue] = useState(displayName);
   const [isSavingName, setIsSavingName] = useState(false);
 
   React.useEffect(() => {
-    if (userName) {
-      setDisplayName(userName);
-      setNameInput(userName);
+    if (user.name) {
+      setDisplayName(user.name);
     }
-  }, [userName]);
+  }, [user.name]);
 
   const handleSaveName = async () => {
-    const trimmed = nameInput.trim();
+    const trimmed = editNameValue.trim();
     if (!trimmed) {
-      showToast('Ingresa un nombre válido');
+      showToast('El nombre no puede estar vacío');
       return;
     }
 
@@ -55,28 +57,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     try {
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: trimmed });
+        await setDoc(doc(db, 'users', auth.currentUser.uid), { name: trimmed }, { merge: true });
       }
-
-      const userId = auth.currentUser?.uid || 'usr_current';
-      await setDoc(
-        doc(db, 'users', userId),
-        {
-          name: trimmed,
-          displayName: trimmed,
-          updatedAt: Date.now(),
-        },
-        { merge: true }
-      );
-
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('plus1_display_name', trimmed);
+      }
       setDisplayName(trimmed);
-      if (onUpdateUserName) {
-        onUpdateUserName(trimmed);
+      if (onUpdateName) {
+        onUpdateName(trimmed);
       }
       setIsEditingName(false);
       showToast('🟢 NOMBRE ACTUALIZADO');
     } catch (err) {
       console.error('Error al actualizar nombre:', err);
-      showToast('Error al actualizar nombre');
+      showToast('Error al actualizar el nombre');
     } finally {
       setIsSavingName(false);
     }
@@ -233,25 +227,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             />
           </motion.div>
 
-          {/* Nombre de usuario y Edición con Lápiz */}
+          {/* Nombre de usuario con botón de edición (lápiz) */}
           {!isEditingName ? (
-            <div className="flex items-center justify-center space-x-2 mt-3">
+            <div className="flex items-center justify-center space-x-2.5 mt-3 group">
               <h2 className="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none">
                 {displayName}
               </h2>
               <button
                 onClick={() => {
-                  setNameInput(displayName);
+                  setEditNameValue(displayName);
                   setIsEditingName(true);
                 }}
-                className="w-8 h-8 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-[#9CA3AF] hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer"
                 aria-label="Editar nombre de usuario"
-                title="Editar nombre"
+                className="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] flex items-center justify-center text-[#9CA3AF] hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer"
               >
                 <svg
-                  className="w-3.5 h-3.5 fill-none stroke-current"
+                  className="w-3.5 h-3.5 stroke-current fill-none"
                   viewBox="0 0 24 24"
-                  strokeWidth="2"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -260,38 +253,33 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </button>
             </div>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveName();
-              }}
-              className="flex flex-col items-center space-y-2 mt-3 w-full max-w-xs mx-auto"
-            >
-              <div className="flex items-center space-x-2 w-full">
-                <input
-                  type="text"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value.toUpperCase())}
-                  autoFocus
-                  placeholder="TU NOMBRE"
-                  className="flex-1 h-11 px-3 rounded-xl bg-[#101114] border border-[#E87A72] text-white font-display text-xl font-black uppercase text-center focus:outline-none shadow-lg tracking-wide"
-                />
-                <button
-                  type="submit"
-                  disabled={isSavingName}
-                  className="h-11 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-sm font-black uppercase tracking-wider transition-all shadow cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingName ? '...' : 'GUARDAR'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(false)}
-                  className="h-11 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white font-sans text-xs font-bold uppercase transition-all"
-                >
-                  ✕
-                </button>
-              </div>
-            </form>
+            <div className="mt-3 flex items-center justify-center space-x-2 max-w-xs w-full mx-auto">
+              <input
+                type="text"
+                value={editNameValue}
+                onChange={(e) => setEditNameValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveName();
+                  else if (e.key === 'Escape') setIsEditingName(false);
+                }}
+                autoFocus
+                placeholder="TU NOMBRE"
+                className="flex-1 h-11 px-3.5 rounded-xl bg-[#101114] border border-[#E87A72] text-white font-display text-lg font-black tracking-wide uppercase outline-none focus:ring-1 focus:ring-[#E87A72]"
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={isSavingName}
+                className="h-11 px-3.5 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md flex items-center justify-center cursor-pointer disabled:opacity-50"
+              >
+                {isSavingName ? '...' : 'GUARDAR'}
+              </button>
+              <button
+                onClick={() => setIsEditingName(false)}
+                className="h-11 w-9 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white font-sans text-xs flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
           )}
 
           {/* Badge de Membresía: PLUS MEMBER (oro) / REGULAR */}
@@ -418,7 +406,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </motion.div>
           </div>
 
-          {/* Botón Cerrar Sesión Real */}
+          {/* Botón Cerrar Sesión */}
           <div className="mt-8 text-center pb-4">
             <button
               onClick={handleLogout}
