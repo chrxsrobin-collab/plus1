@@ -25,11 +25,11 @@ export const TopBar: React.FC<TopBarProps> = ({
       return;
     }
 
-    // Escuchar pases activos recientes o notificaciones no leídas
+    // Escuchar notificaciones no leídas
     const q = query(
-      collection(db, 'passes'),
+      collection(db, 'notifications'),
       where('userId', '==', auth.currentUser.uid),
-      where('status', '==', 'active')
+      where('read', '==', false)
     );
 
     const unsubscribe = onSnapshot(
@@ -38,7 +38,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         setActiveCount(snapshot.docs.length);
       },
       (error) => {
-        console.warn('Error escuchando pases activos en TopBar:', error);
+        console.warn('Error escuchando notificaciones en TopBar:', error);
       }
     );
 

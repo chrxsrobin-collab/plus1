@@ -155,3 +155,12 @@ export const mockEventInvites: Record<string, EventInviteData> = {
     description: 'La sesión indie más esperada del mes con tributo en vivo a The Strokes y Foals. Acceso preferencial a preventas y solicitudes VIP para miembros de la comunidad +1.',
   },
 };
+
+export const GENTLE_MESSAGES = [
+  "Aforo VIP completado por el momento. ¡Atento a próximas fechas!",
+  "Cupos limitados alcanzados. Esperamos verte en la siguiente edición.",
+  "Capacidad máxima del recinto completada para esta noche.",
+  "Lista de invitados cerrada por límite de espacio del local.",
+  "Pases agotados para esta zona. Mantente al tanto de nuevas fechas."
+];
+

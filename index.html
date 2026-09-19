@@ -12,6 +12,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Leaflet CSS & JS para selector de mapa interactivo -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <style>
     @font-face {
       font-family: 'Antonio';
@@ -147,8 +150,8 @@
             <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
             </svg>
-            <span id="topNotifBadge" class="absolute -top-0.5 -right-0.5 bg-[#ff3b30] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-black">
-              3
+            <span id="topNotifBadge" class="hidden absolute -top-1 -right-1 bg-[#E87A72] text-black text-[10px] font-display font-black rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center border border-black shadow-md">
+              0
             </span>
           </button>
 
@@ -312,6 +315,7 @@
 
           <!-- Título Principal y Subtítulo -->
           <h3 id="modalTitle" class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-tight"></h3>
+          <div id="modalHostAuthor" class="flex items-center space-x-2 mt-2"></div>
           <p id="modalSubtitle" class="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1"></p>
 
           <!-- 2. Metadatos Completos -->
@@ -897,8 +901,8 @@
         <h1 class="font-display text-[96px] sm:text-[120px] font-black tracking-tighter text-[#E87A72] leading-none drop-shadow-[0_10px_35px_rgba(232,122,114,0.35)]">
           +1
         </h1>
-        <p class="font-sans text-xs sm:text-sm font-bold tracking-[0.28em] text-[#8E8E93] uppercase mt-3">
-          DONDE EMPIEZA LA NOCHE
+        <p class="font-sans text-xs sm:text-sm font-bold tracking-[0.28em] text-[#D1D5DB] uppercase mt-3">
+          TU EVENTO. TU GENTE.
         </p>
         <div class="w-8 h-[2px] bg-[#E87A72]/40 rounded-full mt-4"></div>
       </div>
@@ -1159,16 +1163,39 @@
         <!-- 2. FORMULARIO PRINCIPAL EN SCROLL -->
         <main class="flex-1 flex flex-col space-y-4 pt-1">
           
-          <!-- CAMPO 1: ARTE DEL EVENTO (UPLOADER CASI CUADRADO) -->
+          <!-- CAMPO 1: ARTE DEL EVENTO (UPLOADER CUADRADO 1:1) -->
           <div class="flex flex-col items-center">
             <input type="file" id="createArtFileInput" accept="image/*" class="hidden" onchange="handleArtFileSelected(event)" />
             
-            <div onclick="document.getElementById('createArtFileInput').click()" class="relative w-full aspect-square max-w-[320px] rounded-2xl overflow-hidden bg-[#16171B] border-2 border-dashed border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl">
-              <img id="createArtPreviewImg" src="./assets/images/pantalla_crear_evento.webp" alt="Arte del evento" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <span class="font-display text-white text-xs font-black px-3.5 py-1.5 rounded-full bg-black/80 border border-neutral-700 uppercase tracking-wider">
-                  CAMBIAR ARTE
+            <div id="createArtUploaderBox" onclick="triggerArtFileInput()" class="relative w-full aspect-square max-w-[340px] mx-auto rounded-2xl overflow-hidden bg-[#141518] border-2 border-dashed border-[#26282E] hover:border-[#E87A72] flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl">
+              <!-- Estado con Imagen -->
+              <div id="createArtPreviewWrapper" class="hidden relative w-full h-full">
+                <img id="createArtPreviewImg" src="" alt="Arte del evento" class="w-full h-full aspect-square object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300" />
+                <button type="button" onclick="event.stopPropagation(); handleRemoveArtImage();" aria-label="Eliminar imagen" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-black border border-neutral-700/80 text-white flex items-center justify-center backdrop-blur-md shadow-lg transition-all active:scale-90 cursor-pointer">
+                  <span class="text-sm font-bold leading-none">✕</span>
+                </button>
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+                  <span class="font-sans text-white text-xs font-bold px-3.5 py-1.5 rounded-full bg-black/85 border border-neutral-700 uppercase tracking-wider backdrop-blur-sm">
+                    Cambiar imagen
+                  </span>
+                </div>
+              </div>
+
+              <!-- Estado Vacío (Uploader) -->
+              <div id="createArtEmptyState" class="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none">
+                <div class="w-14 h-14 rounded-2xl bg-[#1A1C20] border border-[#26282E] flex items-center justify-center text-[#E87A72] mb-3.5 group-hover:scale-105 group-hover:border-[#E87A72]/50 transition-all shadow-md">
+                  <svg class="w-7 h-7 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <line x1="12" y1="9" x2="12" y2="15" />
+                    <line x1="9" y1="12" x2="15" y2="12" />
+                  </svg>
+                </div>
+                <span class="font-sans text-white text-base font-bold tracking-tight">
+                  SUBIR ARTE DEL EVENTO
                 </span>
+                <p class="font-sans text-[#6B7280] text-xs text-center mt-1 max-w-[220px] leading-relaxed">
+                  Toca para seleccionar desde tu galería (JPG, PNG, WEBP)
+                </p>
               </div>
             </div>
           </div>
@@ -1178,7 +1205,7 @@
             <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
               NOMBRE DEL EVENTO
             </label>
-            <input type="text" id="createEventNameInput" placeholder="Ej. FIESTA DE PEPE ⚡" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
+            <input type="text" id="createEventNameInput" placeholder="Ej. FIESTA DE JOSIE 🔥" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
           </div>
 
           <!-- CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS ALINEADAS CON LOS OTROS CAMPOS) -->
@@ -1202,16 +1229,56 @@
             </div>
           </div>
 
-          <!-- CAMPO 4: LUGAR / UBICACIÓN -->
+          <!-- CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) -->
           <div class="space-y-1.5">
             <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
               LUGAR / UBICACIÓN
             </label>
-            <div class="relative flex items-center">
-              <span class="absolute left-3.5 text-neutral-500 text-sm pointer-events-none">
-                📍
+
+            <!-- Input oculto para compatibilidad con el resto del script -->
+            <input type="hidden" id="createEventLocationInput" value="" />
+
+            <!-- ESTADO INICIAL (VACÍO / SIN UBICACIÓN FIJADA) -->
+            <button
+              id="createLocationEmptyBtn"
+              type="button"
+              onclick="openLocationPickerModal()"
+              class="w-full h-12 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/60 text-white flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] group cursor-pointer shadow-sm"
+            >
+              <span class="text-[#E87A72] text-base group-hover:scale-110 transition-transform">
+                <svg class="w-4 h-4 fill-none stroke-current inline-block" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
               </span>
-              <input type="text" id="createEventLocationInput" placeholder="Nombre del local, dirección o zona" class="w-full h-12 pl-10 pr-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
+              <span class="font-sans text-xs sm:text-sm font-semibold uppercase tracking-wider text-neutral-200 group-hover:text-white">
+                🗺️ SELECCIONAR EN EL MAPA
+              </span>
+            </button>
+
+            <!-- ESTADO CONFIRMADO (UNA VEZ SELECCIONADO EL PUNTO EN EL MAPA) -->
+            <div
+              id="createLocationConfirmedBox"
+              class="hidden w-full min-h-[48px] p-3 rounded-xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between gap-2.5 transition-all shadow-sm anim-slide-up"
+            >
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span class="text-[#E87A72] text-base shrink-0">📍</span>
+                <div class="flex flex-col min-w-0 flex-1">
+                  <span id="createLocationConfirmedText" class="font-sans text-xs sm:text-sm font-semibold text-white truncate">
+                    Ubicación fijada
+                  </span>
+                  <span id="createLocationConfirmedCoords" class="font-mono text-[10px] text-neutral-500 hidden"></span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onclick="openLocationPickerModal()"
+                class="px-3 py-1.5 rounded-lg bg-[#1E2025] hover:bg-[#26282E] border border-[#26282E] hover:border-[#E87A72]/60 text-neutral-300 hover:text-white font-sans text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+              >
+                <span class="text-xs">🗺️</span>
+                <span>CAMBIAR</span>
+              </button>
             </div>
           </div>
 
@@ -1309,57 +1376,57 @@
           BUENAS PRÁCTICAS PARA EVENTOS
         </h3>
 
-        <div class="space-y-3 font-sans text-xs text-neutral-300 max-h-[60vh] overflow-y-auto pr-1">
+        <div class="space-y-3.5 font-sans text-xs text-neutral-300 max-h-[60vh] overflow-y-auto pr-1">
           <div>
             <h4 class="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-              1. DIMENSIONES DE ARTE
+              1. Dimensiones del arte
             </h4>
             <p class="mt-0.5 text-neutral-400 leading-relaxed">
-              Usa relación 9:16 (vertical) o casi cuadrada (1:1), mínimo 1080x1080px y peso menor a 2MB para carga inmediata.
+              Usa relación cuadrada, mínimo de 1080x1080px y peso menor a 2mb para carga inmediata.
             </p>
           </div>
 
           <div>
             <h4 class="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-              2. COMPOSICIÓN Y MÁRGENES
+              2. Composición y márgenes
             </h4>
             <p class="mt-0.5 text-neutral-400 leading-relaxed">
-              Mantén márgenes de seguridad limpios en los bordes para evitar que la interfaz o botones tapen textos clave.
+              Mantén márgenes de seguridad limpios en los bordes, trata de no usar textos dentro de la imagen.
             </p>
           </div>
 
           <div>
             <h4 class="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-              3. HORARIOS DE INICIO Y CIERRE
+              3. Horarios de inicio y cierre
             </h4>
             <p class="mt-0.5 text-neutral-400 leading-relaxed">
-              Define claramente el lapso del evento para orientar a los invitados y calcular el corte de listas.
+              Define claramente el horario del evento para orientar a los invitados.
             </p>
           </div>
 
           <div>
             <h4 class="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-              4. PÚBLICO VS. PRIVADO
+              4. Público vs. Privado
             </h4>
             <p class="mt-0.5 text-neutral-400 leading-relaxed">
-              <strong>Público:</strong> Visible en el carrusel de inicio y feed.<br />
-              <strong>Privado:</strong> Oculto; acceso exclusivo por enlace directo.
+              · <strong>Público:</strong> Visible en el feed, ideal para eventos grandes, clubs, etc.<br />
+              · <strong>Privado:</strong> Oculto, ideal para cumpleaños, bodas, etc.
             </p>
           </div>
 
           <div>
             <h4 class="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-              5. CONTROL DE ACCESO (ESCANEO)
+              5. Control de acceso (escaneo)
             </h4>
             <p class="mt-0.5 text-neutral-400 leading-relaxed">
-              Usa el modo escáner en puerta para validar pases QR en tiempo real, incluso sin conexión a internet.
+              Una vez publicado tu evento usa el modo escáner en puerta para validar pases QR en tiempo real, incluso sin conexión a internet.
             </p>
           </div>
         </div>
 
         <div class="mt-4 pt-3 border-t border-neutral-800">
-          <button onclick="closeBestPracticesModal()" class="w-full py-2.5 rounded-xl bg-white text-black font-display text-sm font-black tracking-wider uppercase hover:bg-neutral-200 transition-colors">
-            ENTENDIDO
+          <button onclick="closeBestPracticesModal()" class="w-full py-3 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase transition-all shadow-lg active:scale-95 cursor-pointer">
+            ¡CAPISCO!
           </button>
         </div>
       </div>
@@ -1434,6 +1501,70 @@
             IR AL INICIO
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL SELECTOR DE UBICACIÓN INTERACTIVO CON MAPA (LocationPickerModal) -->
+    <div id="locationPickerModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
+      <div class="bg-[#16171B] border border-[#26282E] rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative anim-modal-zoom flex flex-col max-h-[92vh]">
+        
+        <!-- ENCABEZADO -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#26282E]/80">
+          <div class="flex items-center space-x-2">
+            <span class="text-[#E87A72] text-base">🗺️</span>
+            <h2 class="font-display text-white text-lg sm:text-xl font-black tracking-wider uppercase">
+              UBICACIÓN DEL EVENTO
+            </h2>
+          </div>
+          <button type="button" onclick="closeLocationPickerModal()" aria-label="Cerrar modal de mapa" class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer">
+            ✕
+          </button>
+        </div>
+
+        <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
+        <div class="px-5 py-2.5 bg-[#121316] border-b border-[#26282E]/60 flex items-center justify-between gap-2">
+          <button id="mapGeoLocationBtn" type="button" onclick="centerMapOnCurrentLocation()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E2025] hover:bg-[#26282E] border border-[#26282E] hover:border-[#E87A72]/50 text-white font-sans text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer shrink-0">
+            <span id="mapGeoLocationIcon">🎯</span>
+            <span id="mapGeoLocationText">Mi ubicación actual</span>
+          </button>
+          
+          <span class="font-sans text-[11px] text-neutral-400 text-right truncate">
+            Toca en el mapa para fijar el punto
+          </span>
+        </div>
+
+        <!-- VISOR DEL MAPA (LEAFLET CONTAINER) -->
+        <div class="relative w-full h-72 sm:h-80 bg-[#0E0F12]">
+          <div id="leafletMapBox" class="w-full h-full" style="z-index: 1;"></div>
+          
+          <div id="mapAddressLoader" class="hidden absolute top-2.5 left-2.5 z-10 px-2.5 py-1 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-sans text-white flex items-center gap-1.5 pointer-events-none">
+            <span class="w-2 h-2 rounded-full bg-[#E87A72] animate-ping"></span>
+            <span id="mapAddressLoaderText">Actualizando dirección...</span>
+          </div>
+        </div>
+
+        <!-- BARRA INFERIOR DE CONFIRMACIÓN -->
+        <div class="p-4 sm:p-5 bg-[#16171B] border-t border-[#26282E] flex flex-col space-y-3">
+          <!-- Visualización de la dirección detectada -->
+          <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-[#121316] border border-[#26282E]">
+            <span class="text-[#E87A72] text-lg mt-0.5 shrink-0">📍</span>
+            <div class="flex-1 min-w-0">
+              <p id="mapDetectedAddressText" class="font-sans text-xs font-semibold text-white truncate">
+                Ubicación seleccionada en el mapa
+              </p>
+              <p id="mapDetectedCoordsText" class="font-mono text-[10px] text-neutral-500 mt-0.5">
+                Lat: -16.5042 · Lng: -68.1294
+              </p>
+            </div>
+          </div>
+
+          <!-- Botón de confirmación ancho -->
+          <button type="button" onclick="confirmMapLocation()" class="w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] active:scale-[0.98] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer">
+            <span>CONFIRMAR UBICACIÓN</span>
+            <span class="text-lg leading-none">✓</span>
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -1624,8 +1755,8 @@
 
     <!-- MODAL 1: GESTIÓN DE EVENTOS -->
     <div id="myEventsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom">
-        <button onclick="closeMyEventsModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
+      <div class="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom flex flex-col max-h-[82vh]">
+        <button onclick="closeMyEventsModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer">
           ✕
         </button>
 
@@ -1633,13 +1764,13 @@
           MIS EVENTOS
         </h3>
 
-        <button onclick="closeMyEventsModal(); closeProfileScreen(); openCreateEventScreen();" class="w-full py-3 px-4 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase mb-3.5 flex items-center justify-center shadow active:scale-98">
-          [ + ] CREAR NUEVO EVENTO
-        </button>
-
-        <div id="myEventsListContainer" class="space-y-2 max-h-[48vh] overflow-y-auto pr-1">
+        <div id="myEventsListContainer" class="space-y-2 max-h-[48vh] overflow-y-auto pr-1 flex-1">
           <!-- Renderizado dinámicamente vía renderMyEventsModal() -->
         </div>
+
+        <button onclick="closeMyEventsModal(); closeProfileScreen(); openCreateEventScreen();" class="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#e06d65] text-black font-display font-black text-sm sm:text-base tracking-wider uppercase mt-4 flex items-center justify-center shadow-lg active:scale-98 transition-all cursor-pointer flex-shrink-0">
+          [ + ] CREAR NUEVO EVENTO
+        </button>
       </div>
     </div>
 
@@ -1912,6 +2043,8 @@
         });
 
         let userPassesUnsubscribe = null;
+        let userNotifsUnsubscribe = null;
+        let realtimeNotifsList = [];
 
         // Escucha del estado de autenticación
         fbAuth.onAuthStateChanged((user) => {
@@ -1936,6 +2069,27 @@
                   updatePartnerBadgeDom(false);
                 }
               }, (err) => console.warn('[+1 Firestore] Escucha usuario:', err));
+
+              // Escucha en tiempo real de notificaciones dedicadas
+              if (userNotifsUnsubscribe) {
+                userNotifsUnsubscribe();
+                userNotifsUnsubscribe = null;
+              }
+              userNotifsUnsubscribe = fbDb.collection('notifications')
+                .where('userId', '==', user.uid)
+                .onSnapshot((querySnap) => {
+                  const list = [];
+                  if (querySnap) {
+                    querySnap.forEach((doc) => {
+                      list.push({ id: doc.id, ...doc.data() });
+                    });
+                  }
+                  list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                  realtimeNotifsList = list;
+                  if (typeof updateNotificationsDom === 'function') {
+                    updateNotificationsDom(list);
+                  }
+                }, (err) => console.warn('[+1 Firestore] Escucha notificaciones usuario:', err));
 
               // Escucha en tiempo real de los pases del usuario
               if (userPassesUnsubscribe) {
@@ -1997,26 +2151,11 @@
                 const attendedCountEl = document.getElementById('profileAttendedCount');
                 if (attendedCountEl) attendedCountEl.innerText = attendedList.length;
 
-                // Notificación en tiempo real en la campanilla
-                const topBadge = document.getElementById('topNotifBadge');
-                const notifBadgeCount = document.getElementById('notifBadgeCount');
-                if (topBadge) {
-                  if (activeApprovedList.length > 0) {
-                    topBadge.innerText = activeApprovedList.length;
-                    topBadge.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-                  } else {
-                    topBadge.classList.add('hidden');
-                  }
-                }
-                if (notifBadgeCount) {
-                  notifBadgeCount.innerText = activeApprovedList.length > 0 ? `${activeApprovedList.length} NUEVAS` : 'Al día';
-                }
-                if (typeof renderActivePassNotifications === 'function') {
-                  renderActivePassNotifications(activeApprovedList);
-                }
-
                 if (typeof renderTicketCoverFlow === 'function') {
                   renderTicketCoverFlow();
+                }
+                if (typeof renderCoverFlow === 'function') {
+                  renderCoverFlow();
                 }
               }, (err) => console.warn('[+1 Firestore] Escucha pases usuario:', err));
             } else {
@@ -2026,6 +2165,14 @@
           } else {
             console.log('[+1 Firebase Auth] Desconectado');
             if (authView) authView.classList.remove('hidden');
+            if (userNotifsUnsubscribe) {
+              userNotifsUnsubscribe();
+              userNotifsUnsubscribe = null;
+            }
+            realtimeNotifsList = [];
+            if (typeof updateNotificationsDom === 'function') {
+              updateNotificationsDom([]);
+            }
             if (userPassesUnsubscribe) {
               userPassesUnsubscribe();
               userPassesUnsubscribe = null;
@@ -2066,6 +2213,9 @@
               const d = doc.data();
               liveEvents.push({
                 id: doc.id,
+                hostUserId: d.hostUserId || '',
+                hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
+                hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
                 title: d.title || 'SIN TÍTULO',
                 subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
                 dateDisplay: d.date || 'PRÓXIMAMENTE',
@@ -2160,6 +2310,19 @@
       // Generar tarjetas Cover Flow con soporte 3D
       track.innerHTML = eventsData.map((event, idx) => {
         const borderCol = event.accentColor || '#E87A72';
+        const userPass = (typeof userTickets !== 'undefined' && userTickets) ? userTickets.find(t => t.eventId === event.id) : null;
+        const isPending = userPass && userPass.status === 'pending';
+        const isActive = userPass && (userPass.status === 'active' || userPass.status === 'confirmed');
+
+        let btnMarkup = '';
+        if (isPending) {
+          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-3 py-3 px-4 rounded-full bg-[#26282E] text-neutral-400 font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-700/60 cursor-default opacity-85 shadow-inner">⏳ PENDIENTE</button>`;
+        } else if (isActive) {
+          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); goToSection('passesView')" class="w-full mt-3 py-3 px-4 rounded-full bg-[#12C061] text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm cursor-pointer">🎟️ PASE ACTIVO</button>`;
+        } else {
+          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); requestVipCoverFlow(${idx}, this)" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 cursor-pointer focus:outline-none">SOLICITAR VIP</button>`;
+        }
+
         return `
           <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
             <!-- Miniatura Superior -->
@@ -2192,9 +2355,7 @@
                   ${event.availabilityText || 'CUPO LIMITADO ·'}
                 </p>
               </div>
-              <button onclick="event.stopPropagation(); openEventDetail(${idx})" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 focus:outline-none">
-                SOLICITAR VIP
-              </button>
+              ${btnMarkup}
             </div>
           </div>
         `;
@@ -2217,6 +2378,7 @@
       
       cards.forEach((card, idx) => {
         const offset = idx - currentCardIndex;
+        const isCenter = offset === 0;
         let rotateY = 0;
         let scale = 1;
         let opacity = 1;
@@ -2243,6 +2405,8 @@
         card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
         card.style.opacity = opacity;
         card.style.zIndex = zIndex;
+        card.style.filter = isCenter ? 'blur(0px)' : 'blur(2.5px)';
+        card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-out, filter 0.3s ease-out';
       });
 
       // Actualizar dots
@@ -2254,6 +2418,63 @@
           } else {
             dot.className = "w-1.5 h-1.5 bg-neutral-600 hover:bg-neutral-400 rounded-full transition-all duration-300 focus:outline-none";
           }
+        }
+      }
+    }
+
+    async function requestVipCoverFlow(idx, btn) {
+      const event = eventsData[idx];
+      if (!event) return;
+      if (!fbCurrentUser) {
+        showToast('Inicia sesión para solicitar tu pase VIP');
+        return;
+      }
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ PENDIENTE';
+        btn.className = 'w-full mt-3 py-3 px-4 rounded-full bg-[#26282E] text-neutral-400 font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-700/60 cursor-default opacity-85 shadow-inner';
+      }
+      showToast('⏳ Solicitud VIP enviada al anfitrión');
+      try {
+        const cleanTitle = (event.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
+        const passRef = await fbDb.collection('passes').add({
+          eventId: event.id || 'evt_' + Date.now(),
+          eventTitle: cleanTitle,
+          eventDate: event.dateDisplay || event.date || '',
+          eventTime: event.timeRange ? event.timeRange.split('—')[0].trim() : (event.startTime || event.time || '22:00'),
+          eventLocation: event.location || event.exactAddress || '',
+          eventImageUrl: event.imageUrl || '',
+          hostUserId: event.hostUserId || '',
+          userId: fbCurrentUser.uid,
+          holderName: fbCurrentUser.displayName || 'Invitado',
+          accessTier: 'VIP',
+          status: 'pending',
+          createdAt: Date.now()
+        });
+
+        // Notificar al anfitrión
+        if (event.hostUserId && event.hostUserId !== fbCurrentUser.uid) {
+          await fbDb.collection('notifications').add({
+            userId: event.hostUserId,
+            type: 'VIP_REQUEST',
+            title: 'NUEVA SOLICITUD VIP ⚡',
+            message: `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`,
+            eventId: event.id || '',
+            eventTitle: cleanTitle,
+            passId: passRef.id,
+            senderName: fbCurrentUser.displayName || 'Invitado',
+            senderId: fbCurrentUser.uid,
+            read: false,
+            createdAt: Date.now()
+          });
+        }
+      } catch (err) {
+        console.error('Error enviando solicitud VIP directa:', err);
+        showToast('Error al enviar la solicitud');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'SOLICITAR VIP';
+          btn.className = 'w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 cursor-pointer focus:outline-none';
         }
       }
     }
@@ -2278,6 +2499,9 @@
               const d = docSnap.data();
               openEventDetail({
                 id: docSnap.id,
+                hostUserId: d.hostUserId || '',
+                hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
+                hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
                 title: d.title || 'SIN TÍTULO',
                 subtitle: d.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
                 dateDisplay: d.date ? d.date.toUpperCase() : 'PRÓXIMAMENTE',
@@ -2332,7 +2556,26 @@
 
       document.getElementById('modalBanner').innerHTML = bannerHtml;
       document.getElementById('modalTitle').innerText = event.title;
-      document.getElementById('modalSubtitle').innerText = event.subtitle;
+
+      const hostAuthorEl = document.getElementById('modalHostAuthor');
+      if (hostAuthorEl) {
+        const hostName = (event.hostName || 'ANFITRIÓN').toUpperCase();
+        const hostPhoto = event.hostPhotoUrl;
+        let avatarMarkup = '';
+        if (hostPhoto) {
+          avatarMarkup = `<img src="${hostPhoto}" alt="${hostName}" class="w-[18px] h-[18px] rounded-full object-cover border border-white/20 shrink-0" />`;
+        } else {
+          avatarMarkup = `<div class="w-[18px] h-[18px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">${hostName.slice(0, 1)}</div>`;
+        }
+        hostAuthorEl.innerHTML = `
+          ${avatarMarkup}
+          <span class="font-display text-xs sm:text-sm font-bold tracking-wider text-[#9CA3AF] uppercase flex items-center gap-1">
+            BY <span class="text-[#E87A72]">${hostName}</span>
+          </span>
+        `;
+      }
+
+      document.getElementById('modalSubtitle').innerText = event.subtitle || '';
       document.getElementById('modalDate').innerText = event.dateDisplay;
       document.getElementById('modalTime').innerText = event.timeRange;
       document.getElementById('modalAddress').innerText = event.exactAddress || event.location;
@@ -2400,7 +2643,7 @@
       }
       try {
         const cleanTitle = (event.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
-        await fbDb.collection('passes').add({
+        const passRef = await fbDb.collection('passes').add({
           eventId: event.id || 'evt_' + Date.now(),
           eventTitle: cleanTitle,
           eventDate: event.dateDisplay || event.date || '',
@@ -2414,6 +2657,23 @@
           status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
           createdAt: Date.now()
         });
+
+        // Notificar al anfitrión
+        if (event.hostUserId && event.hostUserId !== fbCurrentUser.uid) {
+          await fbDb.collection('notifications').add({
+            userId: event.hostUserId,
+            type: 'VIP_REQUEST',
+            title: 'NUEVA SOLICITUD VIP ⚡',
+            message: `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`,
+            eventId: event.id || '',
+            eventTitle: cleanTitle,
+            passId: passRef.id,
+            senderName: fbCurrentUser.displayName || 'Invitado',
+            senderId: fbCurrentUser.uid,
+            read: false,
+            createdAt: Date.now()
+          });
+        }
         showToast('✦ Solicitud VIP enviada al anfitrión');
       } catch (err) {
         console.error('Error enviando solicitud VIP:', err);
@@ -2890,6 +3150,8 @@
       editingEventId = null;
       isEventPublished = false;
       currentEventArtBase64 = null;
+      removeCreateEventCoords();
+      updateLocationUI('', null);
       const deleteContainer = document.getElementById('deleteEventBtnContainer');
       if (deleteContainer) deleteContainer.classList.add('hidden');
       const nameInput = document.getElementById('createEventNameInput');
@@ -2905,7 +3167,7 @@
       if (startTimeInput) startTimeInput.value = '';
       if (endTimeInput) endTimeInput.value = '';
       if (locationInput) locationInput.value = '';
-      if (previewImg) previewImg.src = './assets/images/pantalla_crear_evento.webp';
+      handleRemoveArtImage();
       setCreatePrivacy('public');
       createCapacity = 150;
       const display = document.getElementById('createCapacityDisplay');
@@ -2925,6 +3187,8 @@
       const endTimeInput = document.getElementById('createEventEndTimeInput');
       const locationInput = document.getElementById('createEventLocationInput');
       const previewImg = document.getElementById('createArtPreviewImg');
+      const previewWrapper = document.getElementById('createArtPreviewWrapper');
+      const emptyState = document.getElementById('createArtEmptyState');
       const btn = document.getElementById('publishEventBtn');
 
       if (nameInput) nameInput.value = data.title || '';
@@ -2932,6 +3196,12 @@
       if (startTimeInput) startTimeInput.value = data.startTime || '';
       if (endTimeInput) endTimeInput.value = data.endTime || '';
       if (locationInput) locationInput.value = data.location || '';
+      if (data.coordinates) {
+        setCreateEventCoords(data.coordinates);
+      } else {
+        removeCreateEventCoords();
+      }
+      updateLocationUI(data.location || '', data.coordinates || null);
       if (data.type) setCreatePrivacy(data.type);
       if (data.maxCapacity || data.guestLimit) {
         createCapacity = Number(data.maxCapacity || data.guestLimit);
@@ -2941,6 +3211,10 @@
       if (data.imageUrl || data.artImage) {
         currentEventArtBase64 = data.imageUrl || data.artImage;
         if (previewImg) previewImg.src = currentEventArtBase64;
+        if (emptyState) emptyState.classList.add('hidden');
+        if (previewWrapper) previewWrapper.classList.remove('hidden');
+      } else {
+        handleRemoveArtImage();
       }
       if (btn) {
         btn.innerText = "GUARDAR CAMBIOS";
@@ -3017,6 +3291,23 @@
 
     let currentEventArtBase64 = null;
 
+    function triggerArtFileInput() {
+      const input = document.getElementById('createArtFileInput');
+      if (input) input.click();
+    }
+
+    function handleRemoveArtImage() {
+      currentEventArtBase64 = null;
+      const previewWrapper = document.getElementById('createArtPreviewWrapper');
+      const emptyState = document.getElementById('createArtEmptyState');
+      const previewImg = document.getElementById('createArtPreviewImg');
+      const fileInput = document.getElementById('createArtFileInput');
+      if (previewImg) previewImg.src = '';
+      if (fileInput) fileInput.value = '';
+      if (previewWrapper) previewWrapper.classList.add('hidden');
+      if (emptyState) emptyState.classList.remove('hidden');
+    }
+
     function handleArtFileSelected(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
@@ -3046,7 +3337,11 @@
             }
             currentEventArtBase64 = compressedDataUrl;
             const previewImg = document.getElementById('createArtPreviewImg');
+            const previewWrapper = document.getElementById('createArtPreviewWrapper');
+            const emptyState = document.getElementById('createArtEmptyState');
             if (previewImg) previewImg.src = compressedDataUrl;
+            if (emptyState) emptyState.classList.add('hidden');
+            if (previewWrapper) previewWrapper.classList.remove('hidden');
             showToast('Flyer optimizado y cargado');
           }
         };
@@ -3121,10 +3416,12 @@
         startTime: startTime,
         endTime: endTime,
         location: location,
+        coordinates: createEventCoordinates || null,
         allowsPlusOne: Boolean(createPlusOneEnabled),
         maxCapacity: createCapacity || 150,
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
-        hostName: fbCurrentUser ? (fbCurrentUser.displayName || 'Host +1') : 'Host +1',
+        hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
+        hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
         imageUrl: currentEventArtBase64 || null,
         artImage: currentEventArtBase64 || null,
         createdAt: new Date().toISOString()
@@ -3140,6 +3437,7 @@
               startTime: eventPayload.startTime,
               endTime: eventPayload.endTime,
               location: eventPayload.location,
+              coordinates: eventPayload.coordinates,
               allowsPlusOne: eventPayload.allowsPlusOne,
               guestLimit: Number(eventPayload.maxCapacity),
               maxCapacity: Number(eventPayload.maxCapacity),
@@ -3227,6 +3525,235 @@
           btn.removeAttribute('disabled');
         }
       }
+    }
+
+    // ==========================================
+    // SELECTOR DE UBICACIÓN INTERACTIVO CON MAPA (LEAFLET + OSM)
+    // ==========================================
+    let createEventCoordinates = null;
+    let locationPickerMap = null;
+    let locationPickerMarker = null;
+    let tempPickerCoords = { lat: -16.5042, lng: -68.1294 };
+    let tempPickerAddress = '';
+
+    function updateLocationUI(locationStr, coords) {
+      const emptyBtn = document.getElementById('createLocationEmptyBtn');
+      const confirmedBox = document.getElementById('createLocationConfirmedBox');
+      const confirmedText = document.getElementById('createLocationConfirmedText');
+      const confirmedCoords = document.getElementById('createLocationConfirmedCoords');
+      const input = document.getElementById('createEventLocationInput');
+
+      if (locationStr && locationStr.trim()) {
+        const textVal = locationStr.trim();
+        if (input) input.value = textVal;
+        if (confirmedText) confirmedText.innerText = textVal;
+        if (confirmedCoords) {
+          if (coords && coords.lat && coords.lng) {
+            confirmedCoords.innerText = `GPS: ${Number(coords.lat).toFixed(4)}, ${Number(coords.lng).toFixed(4)}`;
+            confirmedCoords.classList.remove('hidden');
+          } else {
+            confirmedCoords.classList.add('hidden');
+          }
+        }
+        if (emptyBtn) emptyBtn.classList.add('hidden');
+        if (confirmedBox) confirmedBox.classList.remove('hidden');
+      } else {
+        if (input) input.value = '';
+        if (emptyBtn) emptyBtn.classList.remove('hidden');
+        if (confirmedBox) confirmedBox.classList.add('hidden');
+      }
+    }
+
+    function setCreateEventCoords(coords) {
+      if (!coords || !coords.lat || !coords.lng) return;
+      createEventCoordinates = { lat: Number(coords.lat), lng: Number(coords.lng) };
+    }
+
+    function removeCreateEventCoords() {
+      createEventCoordinates = null;
+    }
+
+    function openLocationPickerModal() {
+      const modal = document.getElementById('locationPickerModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+
+      const initial = createEventCoordinates || { lat: -16.5042, lng: -68.1294 };
+      tempPickerCoords = { ...initial };
+
+      const existingInput = document.getElementById('createEventLocationInput')?.value.trim();
+      tempPickerAddress = existingInput || 'Ubicación seleccionada en el mapa';
+
+      const addrDisplay = document.getElementById('mapDetectedAddressText');
+      const coordsDisplay = document.getElementById('mapDetectedCoordsText');
+      if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
+      if (coordsDisplay) coordsDisplay.innerText = `Lat: ${tempPickerCoords.lat.toFixed(5)} · Lng: ${tempPickerCoords.lng.toFixed(5)}`;
+
+      initOrUpdateLocationMap();
+    }
+
+    function closeLocationPickerModal() {
+      const modal = document.getElementById('locationPickerModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function initOrUpdateLocationMap() {
+      const container = document.getElementById('leafletMapBox');
+      if (!container || typeof L === 'undefined') return;
+
+      const customPinHtml = `
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto; cursor: grab;">
+          <div style="background: #E87A72; color: #000000; font-family: 'Antonio', -apple-system, sans-serif; font-weight: 800; font-size: 11px; padding: 3px 9px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(232, 122, 114, 0.45); display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em;">
+            <span style="font-weight: 900;">EVENTO +1</span>
+          </div>
+          <div style="width: 12px; height: 12px; background: #E87A72; transform: rotate(45deg); margin-top: -6px; border-right: 1.5px solid #FFFFFF; border-bottom: 1.5px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></div>
+        </div>
+      `;
+
+      const customIcon = L.divIcon({
+        className: 'custom-plus1-marker',
+        html: customPinHtml,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+
+      if (!locationPickerMap) {
+        locationPickerMap = L.map('leafletMapBox', {
+          center: [tempPickerCoords.lat, tempPickerCoords.lng],
+          zoom: 16,
+          zoomControl: false
+        });
+
+        L.control.zoom({ position: 'topright' }).addTo(locationPickerMap);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap',
+          maxZoom: 19
+        }).addTo(locationPickerMap);
+
+        locationPickerMarker = L.marker([tempPickerCoords.lat, tempPickerCoords.lng], {
+          icon: customIcon,
+          draggable: true
+        }).addTo(locationPickerMap);
+
+        locationPickerMarker.on('dragend', function() {
+          const pos = locationPickerMarker.getLatLng();
+          tempPickerCoords = { lat: pos.lat, lng: pos.lng };
+          reverseGeocodeMapCoords(pos.lat, pos.lng);
+        });
+
+        locationPickerMap.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          locationPickerMarker.setLatLng([lat, lng]);
+          tempPickerCoords = { lat: lat, lng: lng };
+          reverseGeocodeMapCoords(lat, lng);
+        });
+      } else {
+        locationPickerMap.setView([tempPickerCoords.lat, tempPickerCoords.lng], 16);
+        if (locationPickerMarker) {
+          locationPickerMarker.setLatLng([tempPickerCoords.lat, tempPickerCoords.lng]);
+        }
+      }
+
+      setTimeout(() => {
+        if (locationPickerMap) {
+          locationPickerMap.invalidateSize();
+        }
+      }, 200);
+
+      const existingInput = document.getElementById('createEventLocationInput')?.value.trim();
+      if (!existingInput) {
+        reverseGeocodeMapCoords(tempPickerCoords.lat, tempPickerCoords.lng);
+      }
+    }
+
+    async function reverseGeocodeMapCoords(lat, lng) {
+      const loader = document.getElementById('mapAddressLoader');
+      const loaderText = document.getElementById('mapAddressLoaderText');
+      const addrDisplay = document.getElementById('mapDetectedAddressText');
+      const coordsDisplay = document.getElementById('mapDetectedCoordsText');
+
+      if (loader) loader.classList.remove('hidden');
+      if (loaderText) loaderText.innerText = 'Detectando dirección en OpenStreetMap...';
+      if (coordsDisplay) coordsDisplay.innerText = `Lat: ${lat.toFixed(5)} · Lng: ${lng.toFixed(5)}`;
+
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+          headers: { 'Accept-Language': 'es, en' }
+        });
+        if (!resp.ok) throw new Error('Error de conexión con Nominatim');
+        const data = await resp.json();
+        if (data && data.display_name) {
+          const addr = data.address || {};
+          const road = addr.road || addr.pedestrian || addr.street || '';
+          const neighborhood = addr.neighbourhood || addr.suburb || addr.quarter || addr.city_district || '';
+          const city = addr.city || addr.town || addr.village || addr.county || '';
+
+          let formatted = '';
+          if (road && neighborhood) {
+            formatted = `${road}, ${neighborhood}${city ? ` · ${city}` : ''}`;
+          } else if (road && city) {
+            formatted = `${road} · ${city}`;
+          } else if (neighborhood && city) {
+            formatted = `${neighborhood} · ${city}`;
+          } else {
+            formatted = data.display_name.split(',').slice(0, 3).join(', ');
+          }
+          tempPickerAddress = formatted.trim() || data.display_name;
+        } else {
+          tempPickerAddress = `Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
+      } catch (e) {
+        console.warn('Fallo en geocodificación inversa:', e);
+        tempPickerAddress = `Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      } finally {
+        if (loader) loader.classList.add('hidden');
+        if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
+      }
+    }
+
+    function centerMapOnCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert('Tu navegador no soporta geolocalización.');
+        return;
+      }
+
+      const icon = document.getElementById('mapGeoLocationIcon');
+      const text = document.getElementById('mapGeoLocationText');
+      if (icon) icon.innerText = '⏳';
+      if (text) text.innerText = 'Detectando...';
+
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          if (icon) icon.innerText = '🎯';
+          if (text) text.innerText = 'Mi ubicación actual';
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          tempPickerCoords = { lat, lng };
+
+          if (locationPickerMap && locationPickerMarker) {
+            locationPickerMap.flyTo([lat, lng], 16, { duration: 1.2 });
+            locationPickerMarker.setLatLng([lat, lng]);
+          }
+
+          reverseGeocodeMapCoords(lat, lng);
+        },
+        function(err) {
+          if (icon) icon.innerText = '🎯';
+          if (text) text.innerText = 'Mi ubicación actual';
+          console.warn('Error al obtener ubicación actual:', err);
+          alert('No se pudo acceder a tu ubicación actual. Revisa los permisos de ubicación en tu navegador.');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+      );
+    }
+
+    function confirmMapLocation() {
+      createEventCoordinates = { lat: Number(tempPickerCoords.lat), lng: Number(tempPickerCoords.lng) };
+      updateLocationUI(tempPickerAddress, createEventCoordinates);
+      closeLocationPickerModal();
+      showToast('📍 Ubicación fijada en el mapa');
     }
 
     let latestCreatedEvent = null;
@@ -3618,14 +4145,11 @@
 
       if (userCreatedEvents.length === 0) {
         container.innerHTML = `
-          <div class="py-8 px-4 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-3 flex flex-col items-center">
+          <div class="py-10 px-4 text-center rounded-2xl bg-neutral-900/60 border border-neutral-800 space-y-3 flex flex-col items-center justify-center my-1">
             <span class="text-3xl filter drop-shadow">🎪</span>
             <p class="font-sans text-xs sm:text-sm font-semibold text-neutral-300 tracking-wider uppercase leading-relaxed px-2">
               AÚN NO HAS CREADO NINGÚN EVENTO · CREA TU PRIMER EVENTO PARA GESTIONARLO AQUÍ
             </p>
-            <button onclick="closeMyEventsModal(); closeProfileScreen(); openCreateEventScreen();" class="mt-2 px-5 py-2.5 rounded-xl bg-[#12C061] text-black font-display font-black text-xs tracking-wider uppercase shadow-lg active:scale-95 cursor-pointer hover:bg-[#0fa854] transition-colors">
-              CREAR EVENTO
-            </button>
           </div>
         `;
         return;
@@ -4365,7 +4889,309 @@
       }, 3200);
     }
 
-    // Funciones para Modal de Notificaciones (NotificationsModal)
+    // ==========================================
+    // NOTIFICACIONES BIDIRECCIONALES (+1 Notifications)
+    // ==========================================
+    const GENTLE_MESSAGES_HTML = [
+      "Aforo VIP completado por el momento. ¡Atento a próximas fechas!",
+      "Cupos limitados alcanzados. Esperamos verte en la siguiente edición.",
+      "Capacidad máxima del recinto completada para esta noche.",
+      "Lista de invitados cerrada por límite de espacio del local.",
+      "Pases agotados para esta zona. Mantente al tanto de nuevas fechas."
+    ];
+
+    function formatTimeAgoHtml(ts) {
+      if (!ts) return 'Reciente';
+      const diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 60) return 'Ahora';
+      if (diff < 3600) return `Hace ${Math.floor(diff / 60)} min`;
+      if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} h`;
+      return `Hace ${Math.floor(diff / 86400)} d`;
+    }
+
+    function escapeHtmlAttr(str) {
+      if (!str) return '';
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function updateNotificationsDom(notifs) {
+      const topBadge = document.getElementById('topNotifBadge');
+      const notifBadgeCount = document.getElementById('notifBadgeCount');
+      const container = document.getElementById('notificationsList');
+
+      const unreadCount = notifs.filter(n => !n.read).length;
+
+      // Actualizar Badge en campanilla
+      if (topBadge) {
+        if (unreadCount > 0) {
+          topBadge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+          topBadge.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+        } else {
+          topBadge.classList.add('hidden');
+        }
+      }
+
+      // Actualizar contador en header del modal
+      if (notifBadgeCount) {
+        if (unreadCount > 0) {
+          notifBadgeCount.innerText = `${unreadCount} NUEVAS`;
+          notifBadgeCount.className = "px-2 py-0.5 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 text-[#E87A72] font-display font-bold text-[11px] uppercase tracking-wider";
+        } else {
+          notifBadgeCount.innerText = 'Al día';
+          notifBadgeCount.className = "text-neutral-500 font-sans text-xs";
+        }
+      }
+
+      if (!container) return;
+
+      if (!notifs || notifs.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center flex flex-col items-center justify-center">
+            <div class="w-12 h-12 rounded-2xl bg-[#1A1C22] border border-[#26282E] flex items-center justify-center text-xl mb-3">
+              🔔
+            </div>
+            <p class="font-display text-white text-base font-bold tracking-wide uppercase">ESTÁS AL DÍA</p>
+            <p class="font-sans text-neutral-400 text-xs mt-1">No tienes notificaciones pendientes en este momento.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = notifs.map(n => {
+        const type = (n.type || '').toUpperCase();
+        const timeAgo = formatTimeAgoHtml(n.createdAt);
+        const unreadRing = !n.read ? 'border-[#E87A72]/40 ring-1 ring-[#E87A72]/30' : 'border-[#26282E] opacity-90';
+
+        if (type === 'VIP_REQUEST') {
+          const actionTaken = n.actionTaken;
+          return `
+            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} shadow-md transition-all">
+              <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div class="w-9 h-9 rounded-xl bg-[#FAB205]/15 border border-[#FAB205]/40 flex items-center justify-center text-base">
+                    ⚡
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                      ${escapeHtmlAttr(n.title || 'SOLICITUD VIP ⚡')}
+                    </h4>
+                    <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                      ${timeAgo}
+                    </span>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                    <strong class="text-white">${escapeHtmlAttr(n.senderName || 'Un usuario')}</strong> ha solicitado pase VIP para <span class="text-[#E87A72] font-semibold">${escapeHtmlAttr(n.eventTitle || 'tu evento')}</span>.
+                  </p>
+
+                  ${actionTaken === 'approved' ? `
+                    <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-[#12C061]">
+                      <span>✓ SOLICITUD APROBADA</span>
+                    </div>
+                  ` : actionTaken === 'declined' ? `
+                    <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-neutral-400">
+                      <span>✕ CUPO LLENO INFORMADO</span>
+                    </div>
+                  ` : `
+                    <div class="flex items-center space-x-2 mt-3">
+                      <button onclick="approveNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 py-2 px-3 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer">
+                        APROBAR ✓
+                      </button>
+                      <button onclick="declineNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 py-2 px-3 rounded-xl bg-[#26282E] hover:bg-[#32353D] text-neutral-300 font-display text-xs font-bold uppercase tracking-wider border border-neutral-700/60 transition-all active:scale-95 cursor-pointer">
+                        PASO / LLENO
+                      </button>
+                    </div>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (type === 'VIP_APPROVED') {
+          return `
+            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} border-[#12C061]/50 shadow-md transition-all">
+              <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                      ${escapeHtmlAttr(n.title || '¡PASE VIP APROBADO! 🎉')}
+                    </h4>
+                    <span class="font-sans text-[11px] text-[#12C061] font-bold uppercase ml-2 flex-shrink-0">
+                      ACTIVO
+                    </span>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                    ${escapeHtmlAttr(n.message || `Tu pase VIP para ${n.eventTitle || 'el evento'} ha sido confirmado.`)}
+                  </p>
+                  <div class="mt-2.5">
+                    <button onclick="closeNotificationsModal(); openTicketsScreen();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#12C061]/20 border border-[#12C061]/50 hover:bg-[#12C061]/30 text-[#12C061] font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 cursor-pointer">
+                      <span>VER MI QR</span>
+                      <span>🎟️</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (type === 'VIP_DECLINED') {
+          return `
+            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} border-[#26282E] shadow-md transition-all">
+              <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0 mt-0.5">
+                  <div class="w-9 h-9 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center text-base">
+                    ⏳
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                      ${escapeHtmlAttr(n.title || 'CUPO COMPLETO · ACCESO LIMITADO')}
+                    </h4>
+                    <span class="font-sans text-[11px] text-neutral-400 font-bold ml-2 flex-shrink-0">
+                      ${timeAgo}
+                    </span>
+                  </div>
+                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                    ${escapeHtmlAttr(n.message || 'Cupos completados por el momento. ¡Atento a nuevas fechas!')}
+                  </p>
+                  <div class="mt-2.5">
+                    <button onclick="closeNotificationsModal();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-neutral-300 font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 cursor-pointer">
+                      <span>EXPLORAR EVENTOS</span>
+                      <span>🔍</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Genérica / Invitación
+        return `
+          <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} shadow-md transition-all">
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-[#26282E] border border-[#E87A72]/40 flex items-center justify-center text-base">
+                  🔔
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    ${escapeHtmlAttr(n.title || 'Notificación +1')}
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    ${timeAgo}
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  ${escapeHtmlAttr(n.message || '')}
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function approveNotificationVip(notifId, passId, senderId, eventTitle) {
+      try {
+        if (passId) {
+          await fbDb.collection('passes').doc(passId).update({
+            status: 'active',
+            approvedAt: Date.now()
+          });
+        }
+        if (senderId) {
+          await fbDb.collection('notifications').add({
+            userId: senderId,
+            type: 'VIP_APPROVED',
+            title: '¡PASE VIP APROBADO! 🎉',
+            message: `Tu acceso para ${eventTitle || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
+            eventTitle: eventTitle || '',
+            passId: passId || '',
+            read: false,
+            createdAt: Date.now()
+          });
+        }
+        if (notifId) {
+          await fbDb.collection('notifications').doc(notifId).update({
+            read: true,
+            actionTaken: 'approved'
+          });
+        }
+        showToast('✓ Solicitud VIP aprobada');
+      } catch (err) {
+        console.error('Error aprobando VIP:', err);
+        showToast('Error al aprobar la solicitud');
+      }
+    }
+
+    async function declineNotificationVip(notifId, passId, senderId, eventTitle) {
+      try {
+        const randomReason = GENTLE_MESSAGES_HTML[Math.floor(Math.random() * GENTLE_MESSAGES_HTML.length)];
+        if (passId) {
+          await fbDb.collection('passes').doc(passId).update({
+            status: 'capacity_reached',
+            declineReason: randomReason,
+            declinedAt: Date.now()
+          });
+        }
+        if (senderId) {
+          await fbDb.collection('notifications').add({
+            userId: senderId,
+            type: 'VIP_DECLINED',
+            title: 'CUPO COMPLETO · ACCESO LIMITADO',
+            message: randomReason,
+            eventTitle: eventTitle || '',
+            passId: passId || '',
+            read: false,
+            createdAt: Date.now()
+          });
+        }
+        if (notifId) {
+          await fbDb.collection('notifications').doc(notifId).update({
+            read: true,
+            actionTaken: 'declined'
+          });
+        }
+        showToast('Cupo informado diplomáticamente');
+      } catch (err) {
+        console.error('Error declinando VIP:', err);
+        showToast('Error al procesar solicitud');
+      }
+    }
+
+    async function markAllNotificationsAsRead() {
+      try {
+        if (realtimeNotifsList && realtimeNotifsList.length > 0) {
+          const unread = realtimeNotifsList.filter(n => !n.read);
+          if (unread.length > 0) {
+            const batch = fbDb.batch();
+            unread.forEach(n => {
+              const ref = fbDb.collection('notifications').doc(n.id);
+              batch.update(ref, { read: true });
+            });
+            await batch.commit();
+          }
+        }
+        showToast('Notificaciones marcadas como leídas');
+      } catch (err) {
+        console.error('Error marcando notificaciones:', err);
+      }
+    }
+
     function openNotificationsModal() {
       const modal = document.getElementById('notificationsModal');
       if (modal) {
@@ -4376,75 +5202,12 @@
           void container.offsetWidth;
           container.classList.add('anim-modal-slide-down');
         }
-        // Desvanecer el badge rojo de la campana
-        const topBadge = document.getElementById('topNotifBadge');
-        if (topBadge) {
-          topBadge.classList.add('opacity-0', 'pointer-events-none');
-        }
       }
-    }
-
-    function renderActivePassNotifications(activeApprovedList) {
-      const container = document.getElementById('notificationsList');
-      if (!container) return;
-      document.querySelectorAll('.dynamic-active-pass-notif').forEach(el => el.remove());
-
-      if (!activeApprovedList || activeApprovedList.length === 0) return;
-
-      const html = activeApprovedList.map(pass => `
-        <div class="dynamic-active-pass-notif rounded-2xl p-3.5 border bg-[#1A1C22] border-[#12C061]/50 shadow-lg transition-all">
-          <div class="flex items-start space-x-3">
-            <div class="flex-shrink-0 mt-0.5">
-              <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
-                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-              </div>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between">
-                <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                  ¡SOLICITUD VIP APROBADA! 🎉
-                </h4>
-                <span class="font-sans text-[11px] text-[#12C061] font-bold uppercase ml-2 flex-shrink-0">
-                  ACTIVO
-                </span>
-              </div>
-              <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
-                Tu pase VIP para <strong class="text-white">${pass.title}</strong> ha sido confirmado por el anfitrión. Código QR emitido para acceso en puerta.
-              </p>
-              <div class="mt-2.5">
-                <button onclick="closeNotificationsModal(); openTicketsScreen();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#12C061]/20 border border-[#12C061]/50 hover:bg-[#12C061]/30 text-[#12C061] font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 cursor-pointer">
-                  <span>Ver mi QR</span>
-                  <span>🎟️</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      container.insertAdjacentHTML('afterbegin', html);
     }
 
     function closeNotificationsModal() {
       const modal = document.getElementById('notificationsModal');
       if (modal) modal.classList.add('hidden');
-    }
-
-    function markAllNotificationsAsRead() {
-      const badge = document.getElementById('notifBadgeCount');
-      if (badge) {
-        badge.innerText = "Al día";
-        badge.className = "text-neutral-500 font-sans text-xs";
-      }
-      for (let i = 1; i <= 4; i++) {
-        const item = document.getElementById('notifItem_' + i);
-        if (item) {
-          item.className = "rounded-2xl p-3.5 border bg-[#121316] border-[#22242A] opacity-80 transition-all";
-        }
-      }
-      showToast('Notificaciones marcadas como leídas');
     }
 
     function respondInvitation(id, accept) {

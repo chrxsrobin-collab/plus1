@@ -4,13 +4,17 @@ import { VipFlyerItem } from '../types/home';
 
 interface FullCardCoverFlowProps {
   flyers: VipFlyerItem[];
-  onApplyVipClick: (flyerId: string) => void;
+  userPasses?: Record<string, string>;
+  onApplyVipClick?: (flyerId: string) => void;
+  onRequestVip?: (event: VipFlyerItem) => void;
   onSelectEvent?: (event: VipFlyerItem) => void;
 }
 
 export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
   flyers,
+  userPasses = {},
   onApplyVipClick,
+  onRequestVip,
   onSelectEvent,
 }) => {
   // Inicializamos en 1 (Indie Night) para coincidir con la referencia visual
@@ -75,6 +79,10 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
               translateZ = -70;
             }
 
+            const passStatus = userPasses[flyer.id];
+            const isPending = passStatus === 'pending';
+            const isActive = passStatus === 'active';
+
             return (
               <motion.div
                 key={flyer.id}
@@ -96,6 +104,7 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                   rotateY,
                   scale,
                   opacity,
+                  filter: isCenter ? 'blur(0px)' : 'blur(2.5px)',
                 }}
                 transition={{
                   type: 'spring',
@@ -104,7 +113,9 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                 }}
               >
                 {/* TARJETA COMPLETA ALARGADA CON BORDE FINO SALMÓN #E87A72 Y FONDO OSCURO #181A1E */}
-                <div className="w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer">
+                <div className={`w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                  isCenter ? 'blur-0' : 'blur-[2px]'
+                }`}>
                   
                   {/* 1. Miniatura Superior del Flyer: CASI CUADRADA (~1:1) */}
                   <div className="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden shadow-inner border border-neutral-800/80 flex-shrink-0">
@@ -150,17 +161,33 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                       </p>
                     </div>
 
-                    {/* 3. Botón de Acción Individual: SOLICITAR VIP */}
+                    {/* 3. Botón de Acción Individual: SOLICITAR VIP aislado */}
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileHover={isPending ? {} : { scale: 1.02 }}
+                      whileTap={isPending ? {} : { scale: 0.97 }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onApplyVipClick(flyer.id);
+                        if (!isCenter) {
+                          setCurrentIndex(index);
+                          return;
+                        }
+                        if (isPending) return;
+                        if (onRequestVip) {
+                          onRequestVip(flyer);
+                        } else if (onApplyVipClick) {
+                          onApplyVipClick(flyer.id);
+                        }
                       }}
-                      className="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm focus:outline-none"
+                      disabled={isPending}
+                      className={`w-full mt-3 py-3 px-4 rounded-full font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-all duration-300 shadow-sm focus:outline-none ${
+                        isPending
+                          ? 'bg-[#26282E] text-neutral-400 border border-neutral-700/60 cursor-default opacity-85'
+                          : isActive
+                          ? 'bg-[#12C061] text-black hover:bg-[#10a855] cursor-pointer'
+                          : 'bg-white hover:bg-neutral-100 text-black cursor-pointer'
+                      }`}
                     >
-                      SOLICITAR VIP
+                      {isPending ? '⏳ PENDIENTE' : isActive ? '🎟️ PASE ACTIVO' : 'SOLICITAR VIP'}
                     </motion.button>
                   </div>
 

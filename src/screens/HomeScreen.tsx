@@ -10,14 +10,17 @@ import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
 import { NotificationsModal } from '../components/NotificationsModal';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDocs, addDoc } from 'firebase/firestore';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
-import { TabType, VipFlyerItem, NotificationItem } from '../types/home';
+import { TabType, VipFlyerItem, NotificationItem, AppNotification } from '../types/home';
 import '../styles/fonts.css';
 
 // Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
 const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   id,
+  hostUserId: data.hostUserId || '',
+  hostName: data.hostName || (data.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
+  hostPhotoUrl: data.hostPhotoUrl || data.hostAvatar || undefined,
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
   subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
@@ -87,27 +90,74 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     return () => unsubscribe();
   }, [auth.currentUser]);
 
-  // Escucha reactiva en tiempo real de pases aprobados/activos del usuario
+  // Escucha reactiva en tiempo real de los pases del usuario (activos y pendientes)
+  const [userPasses, setUserPasses] = useState<Record<string, string>>({});
   const [activeApprovedPasses, setActiveApprovedPasses] = useState<any[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  };
 
   useEffect(() => {
     if (!auth.currentUser) return;
     const q = query(
       collection(db, 'passes'),
-      where('userId', '==', auth.currentUser.uid),
-      where('status', '==', 'active')
+      where('userId', '==', auth.currentUser.uid)
     );
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const passes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setActiveApprovedPasses(passes);
-        if (passes.length > 0) {
-          setUnreadCount(passes.length);
-        }
+        const passMap: Record<string, string> = {};
+        const activeList: any[] = [];
+        snapshot.docs.forEach((d) => {
+          const data = d.data();
+          if (data.eventId) {
+            passMap[data.eventId] = data.status || 'pending';
+          }
+          if (data.status === 'active' || data.status === 'confirmed') {
+            activeList.push({ id: d.id, ...data });
+          }
+        });
+        setUserPasses(passMap);
+        setActiveApprovedPasses(activeList);
       },
       (error) => {
-        console.warn('Error escuchando pases activos en HomeScreen:', error);
+        console.warn('Error escuchando pases en HomeScreen:', error);
+      }
+    );
+    return () => unsubscribe();
+  }, [auth.currentUser]);
+
+  // Escucha reactiva en tiempo real de notificaciones dedicadas del usuario
+  const [realtimeNotifications, setRealtimeNotifications] = useState<AppNotification[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', auth.currentUser.uid)
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const notifs = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as AppNotification[];
+        // Ordenar más recientes primero
+        notifs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setRealtimeNotifications(notifs);
+        const unread = notifs.filter((n) => !n.read).length;
+        setUnreadNotifCount(unread);
+        setUnreadCount(unread);
+      },
+      (error) => {
+        console.warn('Error escuchando notifications en HomeScreen:', error);
       }
     );
     return () => unsubscribe();
@@ -216,6 +266,60 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       setIsDetailModalOpen(true);
     } else {
       handleNavigate(`/vip/${flyerId}`);
+    }
+  };
+
+  const handleRequestVipDirect = async (flyer: VipFlyerItem) => {
+    if (!auth.currentUser) {
+      showToast('Inicia sesión para solicitar tu pase VIP');
+      return;
+    }
+
+    // Actualización reactiva optimista local
+    setUserPasses((prev) => ({ ...prev, [flyer.id]: 'pending' }));
+    showToast('⏳ Solicitud VIP enviada al anfitrión');
+
+    try {
+      const cleanTitle = (flyer.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
+      const passDocRef = await addDoc(collection(db, 'passes'), {
+        eventId: flyer.id,
+        eventTitle: cleanTitle,
+        eventDate: flyer.dateDisplay || flyer.date || '',
+        eventTime: flyer.timeRange ? flyer.timeRange.split('—')[0].trim() : (flyer.startTime || flyer.time || '22:00'),
+        eventLocation: flyer.location || flyer.exactAddress || '',
+        eventImageUrl: flyer.imageUrl || '',
+        hostUserId: flyer.hostUserId || '',
+        userId: auth.currentUser.uid,
+        holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+        accessTier: 'VIP',
+        status: 'pending',
+        createdAt: Date.now(),
+      });
+
+      // DISPARADOR A: Notificación reactiva para el ANFITRIÓN
+      if (flyer.hostUserId && flyer.hostUserId !== auth.currentUser.uid) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: flyer.hostUserId,
+          type: 'VIP_REQUEST',
+          title: 'NUEVA SOLICITUD VIP ⚡',
+          message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${cleanTitle}.`,
+          eventId: flyer.id,
+          eventTitle: cleanTitle,
+          passId: passDocRef.id,
+          senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+          senderId: auth.currentUser.uid,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+    } catch (err) {
+      console.error('Error enviando solicitud VIP directa:', err);
+      showToast('Error al enviar la solicitud');
+      setUserPasses((prev) => {
+        const copy = { ...prev };
+        delete copy[flyer.id];
+        return copy;
+      });
     }
   };
 
@@ -365,6 +469,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           ) : (
             <FullCardCoverFlow
               flyers={events}
+              userPasses={userPasses}
+              onRequestVip={handleRequestVipDirect}
               onApplyVipClick={handleApplyVip}
               onSelectEvent={(event) => {
                 setSelectedEvent(event);
@@ -435,21 +541,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       <NotificationsModal
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
-        notifications={[
-          ...activeApprovedPasses.map((p) => ({
-            id: `notif_active_${p.id}`,
-            type: 'vip_approved' as const,
-            title: '¡SOLICITUD VIP APROBADA! 🎉',
-            message: `Tu pase VIP para ${p.eventTitle || 'el evento'} ha sido confirmado por el anfitrión. Código QR emitido para acceso en puerta.`,
-            timeAgo: 'Reciente',
-            isRead: false,
-            passId: p.id,
-          })),
-          ...mockNotifications,
-        ]}
+        notifications={realtimeNotifications.length > 0 ? realtimeNotifications : mockNotifications}
         onViewPass={() => handleNavigate('/tickets')}
         onNavigate={handleNavigate}
       />
+
+      {/* TOAST FLOTANTE DE CONFIRMACIÓN */}
+      {toastMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 15 }}
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2.5 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap pointer-events-none"
+        >
+          {toastMessage}
+        </motion.div>
+      )}
     </div>
   );
 };

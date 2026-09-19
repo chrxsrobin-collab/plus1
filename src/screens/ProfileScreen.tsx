@@ -661,37 +661,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </button>
 
               <h3 className="font-display text-white text-xl font-black tracking-wide uppercase mb-3">
-                MIS EVENTOS CREADOS
+                MIS EVENTOS
               </h3>
-
-              {/* Botón Crear Nuevo Evento */}
-              <button
-                onClick={() => {
-                  setActiveModal(null);
-                  if (onNavigate) onNavigate('/create-event');
-                }}
-                className="w-full py-3 px-4 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase mb-3.5 flex items-center justify-center shadow active:scale-98 cursor-pointer"
-              >
-                [ + ] CREAR NUEVO EVENTO
-              </button>
 
               <div className="space-y-2 overflow-y-auto pr-1 flex-1">
                 {userEvents.length === 0 ? (
-                  <div className="py-8 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2 flex flex-col items-center">
-                    <span className="text-3xl block mb-2">🎪</span>
+                  <div className="py-10 px-4 text-center bg-neutral-900/80 border border-neutral-800 rounded-2xl my-2 flex flex-col items-center justify-center space-y-3">
+                    <span className="text-3xl block">🎪</span>
                     <p className="font-sans text-neutral-300 text-xs sm:text-sm font-semibold uppercase tracking-wider leading-relaxed px-2">
                       AÚN NO HAS CREADO NINGÚN EVENTO · CREA TU PRIMER EVENTO PARA GESTIONARLO AQUÍ
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveModal(null);
-                        if (onNavigate) onNavigate('/create-event');
-                      }}
-                      className="mt-4 px-5 py-2.5 rounded-xl bg-[#12C061] text-black font-display font-black text-xs tracking-wider uppercase shadow-lg active:scale-95 cursor-pointer hover:bg-[#0fa854] transition-colors"
-                    >
-                      CREAR EVENTO
-                    </button>
                   </div>
                 ) : (
                   userEvents.map((evt) => (
@@ -754,6 +733,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   ))
                 )}
               </div>
+
+              {/* Botón Principal al pie del modal */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveModal(null);
+                  if (onNavigate) onNavigate('/create-event');
+                }}
+                className="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#e06d65] text-black font-display font-black text-sm sm:text-base tracking-wider uppercase mt-4 flex items-center justify-center shadow-lg active:scale-98 transition-all cursor-pointer flex-shrink-0"
+              >
+                [ + ] CREAR NUEVO EVENTO
+              </button>
             </motion.div>
           </div>
         )}

@@ -34,6 +34,8 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   id,
   eventId: id,
   hostUserId: data.hostUserId,
+  hostName: data.hostName || (data.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
+  hostPhotoUrl: data.hostPhotoUrl || data.hostAvatar || undefined,
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
   subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',

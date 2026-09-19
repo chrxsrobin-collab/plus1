@@ -27,6 +27,8 @@ export interface VipFlyerItem {
   id: string;
   eventId?: string;
   hostUserId?: string;
+  hostName?: string;
+  hostPhotoUrl?: string;
   typeBadge: string;
   title: string;
   subtitle: string;
@@ -49,6 +51,7 @@ export interface VipFlyerItem {
   isVipOrFree?: boolean;
   guestLimit?: number;
   maxCapacity?: number;
+  coordinates?: { lat: number; lng: number } | null;
 }
 
 export interface UserProfile {
@@ -83,27 +86,60 @@ export interface SouvenirItem {
   category: string;
 }
 
+export interface AppNotification {
+  id?: string;
+  userId: string;          // Destinatario de la alerta (auth.uid)
+  type: 'VIP_REQUEST' | 'VIP_APPROVED' | 'VIP_DECLINED' | 'invitation' | 'vip_approved' | 'streak_alert' | 'companion_confirmed';
+  title: string;           // Título en Antonio Bold
+  message: string;         // Descripción en Cabinet Grotesk
+  eventId?: string;
+  eventTitle?: string;
+  passId?: string;
+  senderName?: string;      // Quién genera la acción
+  senderId?: string;
+  read: boolean;           // false por defecto
+  createdAt: number;
+  timeAgo?: string;
+  actionTaken?: 'approved' | 'declined';
+  metadata?: {
+    allowsPlusOne?: boolean;
+    declineReason?: string;
+  };
+}
+
 export interface NotificationItem {
   id: string;
-  type: 'invitation' | 'vip_approved' | 'streak_alert' | 'companion_confirmed';
+  type: 'VIP_REQUEST' | 'VIP_APPROVED' | 'VIP_DECLINED' | 'invitation' | 'vip_approved' | 'streak_alert' | 'companion_confirmed';
   title: string;
   message: string;
   timeAgo: string;
   isRead?: boolean;
+  read?: boolean;
   actionRequired?: boolean;
   passId?: string;
+  eventId?: string;
+  eventTitle?: string;
+  senderName?: string;
+  senderId?: string;
+  actionTaken?: 'approved' | 'declined';
+  metadata?: {
+    allowsPlusOne?: boolean;
+    declineReason?: string;
+  };
 }
 
 export type TabType = 'home' | 'passes' | 'search';
 
 export interface CreateEventFormData {
   artImage?: string | null;
+  imageUrl?: string | null;
   name: string;
   startDate: string;
   startTime: string;
   endDate: string;
   endTime: string;
   location: string;
+  coordinates?: { lat: number; lng: number } | null;
   privacy: 'public' | 'private';
   allowPlusOne: boolean;
   maxCapacity: number;
@@ -121,6 +157,7 @@ export interface EventInviteData {
   timeRange: string;
   venueName: string;
   exactAddress?: string;
+  coordinates?: { lat: number; lng: number } | null;
   confirmedCount: number;
   confirmedAvatars?: string[];
   allowsPlusOne: boolean;

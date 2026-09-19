@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import {
   collection,
   query,
@@ -14,6 +14,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { GuestPassItem } from '../types/home';
+import { GENTLE_MESSAGES } from '../data/mockData';
 import '../styles/fonts.css';
 
 export interface EventManagerScreenProps {
@@ -159,6 +160,24 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
         updatedAt: Date.now(),
       });
 
+      // DISPARADOR B: Notificación para el ASISTENTE
+      const passItem = passes.find((p) => p.id === passId);
+      if (passItem && passItem.userId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: passItem.userId,
+          type: 'VIP_APPROVED',
+          title: '¡PASE VIP APROBADO! 🎉',
+          message: `Tu acceso para ${passItem.eventTitle || eventData?.title || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
+          eventId: passItem.eventId || eventId,
+          eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
+          passId: passId,
+          senderName: auth.currentUser?.displayName || 'Anfitrión',
+          senderId: auth.currentUser?.uid || '',
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+
       try {
         confetti({
           particleCount: 50,
@@ -179,25 +198,40 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
     }
   };
 
-  const AMABLE_RESPONSES = [
-    "Aforo VIP completado por el momento. ¡Atento a próximas fechas!",
-    "Cupos limitados alcanzados. Esperamos verte en la siguiente edición.",
-    "Capacidad máxima del recinto completada para esta noche.",
-    "Lista de invitados cerrada por límite de espacio del local.",
-    "Pases agotados para esta zona. Mantente al tanto de nuevas activaciones."
-  ];
-
   // Declinación amable por límite de aforo alcanzado
   const handleDeclineRequest = async (passId: string, userName: string) => {
     setActionLoadingId(passId);
-    const randomMessage = AMABLE_RESPONSES[Math.floor(Math.random() * AMABLE_RESPONSES.length)];
+    const randomMessage = GENTLE_MESSAGES[Math.floor(Math.random() * GENTLE_MESSAGES.length)];
 
     try {
       await updateDoc(doc(db, 'passes', passId), {
-        status: 'capacity_reached', // En lugar de 'rejected'
+        status: 'capacity_reached',
+        declineReason: randomMessage,
         feedbackMessage: randomMessage,
         updatedAt: Date.now(),
       });
+
+      // DISPARADOR B: Notificación para el ASISTENTE
+      const passItem = passes.find((p) => p.id === passId);
+      if (passItem && passItem.userId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: passItem.userId,
+          type: 'VIP_DECLINED',
+          title: 'CUPO COMPLETO · ACCESO LIMITADO',
+          message: randomMessage,
+          eventId: passItem.eventId || eventId,
+          eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
+          passId: passId,
+          senderName: auth.currentUser?.displayName || 'Anfitrión',
+          senderId: auth.currentUser?.uid || '',
+          read: false,
+          createdAt: Date.now(),
+          metadata: {
+            declineReason: randomMessage,
+          },
+        });
+      }
+
       showToast(`AFORO COMPLETADO · COMUNICADO A ${userName.toUpperCase()}`);
     } catch (err) {
       console.error('Error al declinar solicitud por aforo:', err);

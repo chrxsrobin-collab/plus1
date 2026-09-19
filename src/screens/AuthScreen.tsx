@@ -90,9 +90,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
             +1
           </h1>
 
-          {/* Lema: DONDE EMPIEZA LA NOCHE */}
-          <p className="font-sans text-xs sm:text-sm font-bold tracking-[0.28em] text-[#8E8E93] uppercase mt-3">
-            DONDE EMPIEZA LA NOCHE
+          {/* Lema: TU EVENTO. TU GENTE. */}
+          <p className="font-sans text-xs sm:text-sm font-bold tracking-[0.28em] text-[#D1D5DB] uppercase mt-3">
+            TU EVENTO. TU GENTE.
           </p>
 
           <div className="w-8 h-[2px] bg-[#E87A72]/40 rounded-full mt-4" />

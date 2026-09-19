@@ -20,6 +20,7 @@ export * from './screens/ScannerScreen';
 export * from './components/CoverFlowTicketCard';
 export * from './components/TicketsCoverFlow';
 export * from './components/EventInviteModal';
+export * from './components/LocationPickerModal';
 export * from './lib/firebase';
 export * from './types/home';
 export * from './data/mockData';

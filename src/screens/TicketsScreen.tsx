@@ -1,26 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PassItem } from '../types/home';
 import { TicketsCoverFlow } from '../components/TicketsCoverFlow';
 import { BottomNav } from '../components/BottomNav';
+import { db, auth } from '../lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import '../styles/fonts.css';
 
 export interface TicketsScreenProps {
   tickets?: PassItem[];
+  initialPassId?: string;
   initialIndex?: number;
   onBack?: () => void;
   onNavigate?: (route: string) => void;
 }
 
 export const TicketsScreen: React.FC<TicketsScreenProps> = ({
-  tickets = [],
+  tickets: propTickets = [],
+  initialPassId,
   initialIndex = 0,
   onBack,
   onNavigate,
 }) => {
+  const [liveTickets, setLiveTickets] = useState<PassItem[]>(propTickets);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Sincronización reactiva con prop o directamente desde Firestore
+  useEffect(() => {
+    if (propTickets.length > 0) {
+      setLiveTickets(propTickets);
+      return;
+    }
+
+    if (!auth.currentUser) return;
+    const q = query(
+      collection(db, 'passes'),
+      where('userId', '==', auth.currentUser.uid),
+      where('status', 'in', ['active', 'confirmed'])
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const passesList = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          eventId: data.eventId,
+          title: data.eventTitle || 'EVENTO +1',
+          emoji: '🎟️',
+          dateStr: data.eventDate || 'PRÓXIMAMENTE',
+          timeStr: data.eventTime || '22:00',
+          location: data.eventLocation || 'CLUB OFICIAL +1',
+          status: 'active' as const,
+          statusText: 'PASE ACTIVO',
+          companionsCount: data.withPlusOne ? 1 : 0,
+          accentBorderColor: '#12C061',
+          holderName: (data.holderName || auth.currentUser?.displayName || 'INVITADO') + (data.withPlusOne ? ' · +1 INCLUIDO' : ' · INDIVIDUAL'),
+          listType: 'LISTA VIP',
+          ticketId: '#' + d.id.slice(-4).toUpperCase(),
+          verifiedProvider: 'VERIFICADO CON GOOGLE',
+          feedbackMessage: data.feedbackMessage,
+        };
+      });
+      setLiveTickets(passesList);
+    }, (err) => {
+      console.warn('Error escuchando pases en TicketsScreen:', err);
+    });
+
+    return () => unsubscribe();
+  }, [propTickets, auth.currentUser]);
+
+  // Si se pasa un passId específico, auto-enfocar ese ticket en el carrusel
+  useEffect(() => {
+    if (initialPassId && liveTickets.length > 0) {
+      const idx = liveTickets.findIndex(t => t.id === initialPassId || t.eventId === initialPassId);
+      if (idx !== -1) {
+        setCurrentIndex(idx);
+      }
+    }
+  }, [initialPassId, liveTickets]);
+
+  const tickets = liveTickets;
   const activeTicket = tickets[currentIndex] || tickets[0] || null;
 
   const showToast = (msg: string) => {

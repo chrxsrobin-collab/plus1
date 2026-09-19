@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { CreateEventFormData } from '../types/home';
+import { LocationPickerModal, Coordinates } from '../components/LocationPickerModal';
 import '../styles/fonts.css';
 
 export interface CreateEventScreenProps {
@@ -22,12 +23,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   // Estado del formulario (inicialmente limpio si es nuevo, o precargado al editar)
   const [formData, setFormData] = useState<CreateEventFormData>({
     artImage: null,
+    imageUrl: null,
     name: '',
     startDate: '',
     startTime: '',
     endDate: '',
     endTime: '',
     location: '',
+    coordinates: null,
     privacy: 'public',
     allowPlusOne: true,
     maxCapacity: 150,
@@ -60,12 +63,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           setEventHostUserId(d.hostUserId || null);
           setFormData({
             artImage: d.imageUrl || d.artImage || null,
+            imageUrl: d.imageUrl || d.artImage || null,
             name: d.title || '',
             startDate: d.date || '',
             startTime: d.startTime || '',
             endDate: d.endDate || d.date || '',
             endTime: d.endTime || '',
             location: d.location || '',
+            coordinates: d.coordinates || null,
             privacy: (d.type as 'public' | 'private') || 'public',
             allowPlusOne: d.allowsPlusOne !== undefined ? Boolean(d.allowsPlusOne) : true,
             maxCapacity: d.guestLimit || d.maxCapacity || 150,
@@ -92,12 +97,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     date: string;
     startTime: string;
     location: string;
+    coordinates?: Coordinates | null;
     imageUrl?: string | null;
   } | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isBestPracticesOpen, setIsBestPracticesOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,7 +178,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             if (!base64String.startsWith('data:image/webp')) {
               base64String = canvas.toDataURL('image/jpeg', 0.7);
             }
-            setFormData((prev) => ({ ...prev, artImage: base64String }));
+            setFormData((prev) => ({
+              ...prev,
+              artImage: base64String,
+              imageUrl: base64String,
+            }));
             showToast('Arte de flyer optimizado y cargado');
           }
         };
@@ -179,6 +190,18 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       };
 
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFormData((prev) => ({
+      ...prev,
+      artImage: null,
+      imageUrl: null,
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -225,6 +248,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           startTime: formData.startTime,
           endTime: formData.endTime,
           location: formData.location || 'Por definir',
+          coordinates: formData.coordinates || null,
           allowsPlusOne: formData.allowPlusOne,
           guestLimit: Number(formData.maxCapacity),
           maxCapacity: Number(formData.maxCapacity),
@@ -248,6 +272,23 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           // Fallback silencioso
         }
 
+        // Resolver nombre y avatar del anfitrión desde la colección 'users' o auth.currentUser
+        let resolvedHostName = auth.currentUser?.displayName || (auth.currentUser?.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Anfitrión');
+        let resolvedHostPhoto: string | null = auth.currentUser?.photoURL || null;
+
+        if (auth.currentUser?.uid) {
+          try {
+            const uDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+            if (uDoc.exists()) {
+              const uData = uDoc.data();
+              if (uData.name) resolvedHostName = uData.name;
+              if (uData.avatarUrl || uData.photoURL) resolvedHostPhoto = uData.avatarUrl || uData.photoURL;
+            }
+          } catch {
+            // Fallback silencioso a auth
+          }
+        }
+
         // Inserción directa en Firestore garantizando sellado con UID del autor
         const docRef = await addDoc(collection(db, 'events'), {
           title: eventTitle,
@@ -256,13 +297,15 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           startTime: formData.startTime,
           endTime: formData.endTime,
           location: formData.location || 'Por definir',
+          coordinates: formData.coordinates || null,
           allowsPlusOne: formData.allowPlusOne,
           guestLimit: Number(formData.maxCapacity),
           maxCapacity: Number(formData.maxCapacity),
           imageUrl: formData.artImage || null,
           artImage: formData.artImage || null,
           hostUserId: auth.currentUser?.uid || null,
-          hostName: auth.currentUser?.displayName || 'Anfitrión',
+          hostName: resolvedHostName,
+          hostPhotoUrl: resolvedHostPhoto,
           createdAt: Date.now(),
         });
 
@@ -273,6 +316,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           date: formData.startDate,
           startTime: formData.startTime,
           location: formData.location || 'Por definir',
+          coordinates: formData.coordinates || null,
           imageUrl: formData.artImage || null,
         });
 
@@ -428,31 +472,54 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-full aspect-square max-w-[320px] rounded-2xl overflow-hidden bg-[#16171B] border-2 border-dashed border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl"
+              className="relative w-full aspect-square max-w-[340px] mx-auto rounded-2xl overflow-hidden bg-[#141518] border-2 border-dashed border-[#26282E] hover:border-[#E87A72] flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl"
             >
-              {formData.artImage ? (
+              {formData.imageUrl || formData.artImage ? (
                 <>
                   <img
-                    src={formData.artImage}
+                    src={(formData.imageUrl || formData.artImage) as string}
                     alt="Arte del evento"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full aspect-square object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="font-display text-white text-xs font-black px-3 py-1.5 rounded-full bg-black/80 border border-neutral-700 uppercase tracking-wider">
-                      CAMBIAR ARTE
+                  {/* Botón flotante superior derecho para eliminar la foto */}
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    aria-label="Eliminar imagen"
+                    className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-black border border-neutral-700/80 text-white flex items-center justify-center backdrop-blur-md shadow-lg transition-all active:scale-90 cursor-pointer"
+                  >
+                    <span className="text-sm font-bold leading-none">✕</span>
+                  </button>
+                  {/* Overlay sutil para cambiar imagen al hacer hover */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+                    <span className="font-sans text-white text-xs font-bold px-3.5 py-1.5 rounded-full bg-black/85 border border-neutral-700 uppercase tracking-wider backdrop-blur-sm">
+                      Cambiar imagen
                     </span>
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center p-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
-                    🖼️
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none">
+                  {/* Ícono minimalista de carga/imagen */}
+                  <div className="w-14 h-14 rounded-2xl bg-[#1A1C20] border border-[#26282E] flex items-center justify-center text-[#E87A72] mb-3.5 group-hover:scale-105 group-hover:border-[#E87A72]/50 transition-all shadow-md">
+                    <svg
+                      className="w-7 h-7 stroke-current fill-none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <line x1="12" y1="9" x2="12" y2="15" />
+                      <line x1="9" y1="12" x2="15" y2="12" />
+                    </svg>
                   </div>
-                  <span className="font-display text-white text-sm font-black uppercase tracking-wider">
+                  {/* Texto principal en Cabinet Grotesk */}
+                  <span className="font-sans text-white text-base font-bold tracking-tight">
                     SUBIR ARTE DEL EVENTO
                   </span>
-                  <p className="font-sans text-neutral-400 text-xs mt-1">
-                    Relación 1:1 o 9:16 · Máx 2MB
+                  {/* Subtexto sutil */}
+                  <p className="font-sans text-[#6B7280] text-xs text-center mt-1 max-w-[220px] leading-relaxed">
+                    Toca para seleccionar desde tu galería (JPG, PNG, WEBP)
                   </p>
                 </div>
               )}
@@ -468,7 +535,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ej. FIESTA DE PEPE ⚡"
+              placeholder="Ej. FIESTA DE JOSIE 🔥"
               className="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors"
             />
           </div>
@@ -514,23 +581,69 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             </div>
           </div>
 
-          {/* CAMPO 4: LUGAR / UBICACIÓN */}
+          {/* CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) */}
           <div className="space-y-1.5">
             <label className="font-display text-white text-xs font-bold tracking-wider uppercase block">
               LUGAR / UBICACIÓN
             </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-neutral-500 text-sm pointer-events-none">
-                📍
-              </span>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Nombre del local, dirección o zona"
-                className="w-full h-12 pl-10 pr-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors"
-              />
-            </div>
+
+            {!formData.location ? (
+              /* ESTADO INICIAL (VACÍO / SIN UBICACIÓN FIJADA) */
+              <button
+                type="button"
+                onClick={() => setIsLocationPickerOpen(true)}
+                className="w-full h-12 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/60 text-white flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] group cursor-pointer shadow-sm"
+              >
+                <span className="text-[#E87A72] text-base group-hover:scale-110 transition-transform">
+                  <svg
+                    className="w-4 h-4 fill-none stroke-current inline-block"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </span>
+                <span className="font-sans text-xs sm:text-sm font-semibold uppercase tracking-wider text-neutral-200 group-hover:text-white">
+                  🗺️ SELECCIONAR EN EL MAPA
+                </span>
+              </button>
+            ) : (
+              /* ESTADO CONFIRMADO (UNA VEZ SELECCIONADO EL PUNTO EN EL MAPA) */
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-full min-h-[48px] p-3 rounded-xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between gap-2.5 transition-colors shadow-sm"
+              >
+                {/* Izquierda: Icono salmón y dirección legible */}
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="text-[#E87A72] text-base shrink-0">📍</span>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-sans text-xs sm:text-sm font-semibold text-white truncate">
+                      {formData.location}
+                    </span>
+                    {formData.coordinates && (
+                      <span className="font-mono text-[10px] text-neutral-500">
+                        GPS: {formData.coordinates.lat.toFixed(4)}, {formData.coordinates.lng.toFixed(4)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Derecha: Acción de Reajuste (Botón compacto pastilla CAMBIAR) */}
+                <button
+                  type="button"
+                  onClick={() => setIsLocationPickerOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-[#1E2025] hover:bg-[#26282E] border border-[#26282E] hover:border-[#E87A72]/60 text-neutral-300 hover:text-white font-sans text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+                >
+                  <span className="text-xs">🗺️</span>
+                  <span>CAMBIAR</span>
+                </button>
+              </motion.div>
+            )}
           </div>
 
           {/* CAMPO 5: PRIVACIDAD DEL EVENTO (SEGMENTED SELECTOR) */}
@@ -696,50 +809,50 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                 BUENAS PRÁCTICAS PARA EVENTOS
               </h3>
 
-              <div className="space-y-3 font-sans text-xs text-neutral-300 max-h-[60vh] overflow-y-auto pr-1">
+              <div className="space-y-3.5 font-sans text-xs text-neutral-300 max-h-[60vh] overflow-y-auto pr-1">
                 <div>
                   <h4 className="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-                    1. DIMENSIONES DE ARTE
+                    1. Dimensiones del arte
                   </h4>
                   <p className="mt-0.5 text-neutral-400 leading-relaxed">
-                    Usa relación 9:16 (vertical) o casi cuadrada (1:1), mínimo 1080x1080px y peso menor a 2MB para carga inmediata.
+                    Usa relación cuadrada, mínimo de 1080x1080px y peso menor a 2mb para carga inmediata.
                   </p>
                 </div>
 
                 <div>
                   <h4 className="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-                    2. COMPOSICIÓN Y MÁRGENES
+                    2. Composición y márgenes
                   </h4>
                   <p className="mt-0.5 text-neutral-400 leading-relaxed">
-                    Mantén márgenes de seguridad limpios en los bordes para evitar que la interfaz o botones tapen textos clave.
+                    Mantén márgenes de seguridad limpios en los bordes, trata de no usar textos dentro de la imagen.
                   </p>
                 </div>
 
                 <div>
                   <h4 className="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-                    3. HORARIOS DE INICIO Y CIERRE
+                    3. Horarios de inicio y cierre
                   </h4>
                   <p className="mt-0.5 text-neutral-400 leading-relaxed">
-                    Define claramente el lapso del evento para orientar a los invitados y calcular el corte de listas.
+                    Define claramente el horario del evento para orientar a los invitados.
                   </p>
                 </div>
 
                 <div>
                   <h4 className="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-                    4. PÚBLICO VS. PRIVADO
+                    4. Público vs. Privado
                   </h4>
                   <p className="mt-0.5 text-neutral-400 leading-relaxed">
-                    <strong>Público:</strong> Visible en el carrusel de inicio y feed.<br />
-                    <strong>Privado:</strong> Oculto; acceso exclusivo por enlace directo.
+                    · <strong>Público:</strong> Visible en el feed, ideal para eventos grandes, clubs, etc.<br />
+                    · <strong>Privado:</strong> Oculto, ideal para cumpleaños, bodas, etc.
                   </p>
                 </div>
 
                 <div>
                   <h4 className="font-display text-[#E87A72] text-xs font-bold uppercase tracking-wider">
-                    5. CONTROL DE ACCESO (ESCANEO)
+                    5. Control de acceso (escaneo)
                   </h4>
                   <p className="mt-0.5 text-neutral-400 leading-relaxed">
-                    Usa el modo escáner en puerta para validar pases QR en tiempo real, incluso sin conexión a internet.
+                    Una vez publicado tu evento usa el modo escáner en puerta para validar pases QR en tiempo real, incluso sin conexión a internet.
                   </p>
                 </div>
               </div>
@@ -747,9 +860,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
               <div className="mt-4 pt-3 border-t border-neutral-800">
                 <button
                   onClick={() => setIsBestPracticesOpen(false)}
-                  className="w-full py-2.5 rounded-xl bg-white text-black font-display text-sm font-black tracking-wider uppercase hover:bg-neutral-200 transition-colors"
+                  className="w-full py-3 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase transition-all shadow-lg active:scale-95 cursor-pointer"
                 >
-                  ENTENDIDO
+                  ¡CAPISCO!
                 </button>
               </div>
             </motion.div>
@@ -879,6 +992,23 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* MODAL SELECTOR DE UBICACIÓN INTERACTIVO CON MAPA */}
+      <LocationPickerModal
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        initialCoordinates={formData.coordinates}
+        initialAddress={formData.location}
+        onConfirm={(address, coords) => {
+          setFormData((prev) => ({
+            ...prev,
+            location: address,
+            coordinates: coords,
+          }));
+          setIsLocationPickerOpen(false);
+          showToast('📍 Ubicación fijada en el mapa');
+        }}
+      />
 
       {/* TOAST FLOTANTE */}
       {toastMessage && (

@@ -55,7 +55,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     if (!auth.currentUser) return;
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'passes'), {
+      const passDocRef = await addDoc(collection(db, 'passes'), {
         eventId: event.id,
         eventTitle: event.title,
         eventDate: event.date || event.dateDisplay || '',
@@ -64,12 +64,30 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         eventImageUrl: event.imageUrl || '',
         hostUserId: event.hostUserId || '',
         userId: auth.currentUser.uid,
-        holderName: auth.currentUser.displayName || 'Invitado',
+        holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
         accessTier: 'VIP',
         status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
         createdAt: Date.now(),
       });
       setPassStatus('pending');
+
+      // DISPARADOR A: Notificación reactiva para el ANFITRIÓN
+      if (event.hostUserId && event.hostUserId !== auth.currentUser.uid) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: event.hostUserId,
+          type: 'VIP_REQUEST',
+          title: 'NUEVA SOLICITUD VIP ⚡',
+          message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${event.title}.`,
+          eventId: event.id,
+          eventTitle: event.title,
+          passId: passDocRef.id,
+          senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+          senderId: auth.currentUser.uid,
+          read: false,
+          createdAt: Date.now(),
+        });
+      }
+
       if (onApplyVip) onApplyVip(event.id);
     } catch (err) {
       console.error('Error solicitando VIP:', err);
@@ -138,10 +156,29 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Título Principal y Subtítulo */}
+              {/* Título Principal */}
               <h3 className="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-tight">
                 {selectedEvent.typeBadge ? `${selectedEvent.typeBadge}: ` : ''}{selectedEvent.title}
               </h3>
+
+              {/* Atribución del Anfitrión / Creador */}
+              <div className="flex items-center space-x-2 mt-2">
+                {selectedEvent.hostPhotoUrl ? (
+                  <img
+                    src={selectedEvent.hostPhotoUrl}
+                    alt={selectedEvent.hostName || 'Anfitrión'}
+                    className="w-[18px] h-[18px] rounded-full object-cover border border-white/20 shrink-0"
+                  />
+                ) : (
+                  <div className="w-[18px] h-[18px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">
+                    {(selectedEvent.hostName || 'A').slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <span className="font-display text-xs sm:text-sm font-bold tracking-wider text-[#9CA3AF] uppercase flex items-center gap-1">
+                  BY <span className="text-[#E87A72]">{selectedEvent.hostName || 'ANFITRIÓN'}</span>
+                </span>
+              </div>
+
               {selectedEvent.subtitle && (
                 <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">
                   {selectedEvent.subtitle}
