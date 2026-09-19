@@ -2461,9 +2461,11 @@
             message: `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`,
             eventId: event.id || '',
             eventTitle: cleanTitle,
+            eventImageUrl: event.imageUrl || '',
             passId: passRef.id,
             senderName: fbCurrentUser.displayName || 'Invitado',
             senderId: fbCurrentUser.uid,
+            senderPhotoUrl: fbCurrentUser.photoURL || '',
             read: false,
             createdAt: Date.now()
           });
@@ -2667,9 +2669,11 @@
             message: `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`,
             eventId: event.id || '',
             eventTitle: cleanTitle,
+            eventImageUrl: event.imageUrl || '',
             passId: passRef.id,
             senderName: fbCurrentUser.displayName || 'Invitado',
             senderId: fbCurrentUser.uid,
+            senderPhotoUrl: fbCurrentUser.photoURL || '',
             read: false,
             createdAt: Date.now()
           });
@@ -4964,13 +4968,26 @@
 
         if (type === 'VIP_REQUEST') {
           const actionTaken = n.actionTaken;
+          const rawName = n.senderName || '';
+          const cleanName = rawName.replace(/^Invitado\s*#?/i, '').trim();
+          const nameParts = (cleanName || rawName).trim().split(/\s+/);
+          const initials = (nameParts.length >= 2 && nameParts[0] && nameParts[1])
+            ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+            : (cleanName || rawName || 'IP').slice(0, 2).toUpperCase();
+
+          const avatarHtml = n.senderPhotoUrl
+            ? `<div class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-white/10 bg-[#1F2228]">
+                 <img src="${escapeHtmlAttr(n.senderPhotoUrl)}" alt="${escapeHtmlAttr(n.senderName || 'Solicitante')}" class="w-full h-full object-cover">
+               </div>`
+            : `<div class="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-[#E87A72]/40 bg-[#1F2228] flex items-center justify-center shadow-inner">
+                 <span class="font-display font-black text-white text-sm tracking-wider uppercase">${initials}</span>
+               </div>`;
+
           return `
             <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} shadow-md transition-all">
               <div class="flex items-start space-x-3">
                 <div class="flex-shrink-0 mt-0.5">
-                  <div class="w-9 h-9 rounded-xl bg-[#FAB205]/15 border border-[#FAB205]/40 flex items-center justify-center text-base">
-                    ⚡
-                  </div>
+                  ${avatarHtml}
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between">
@@ -4995,11 +5012,11 @@
                     </div>
                   ` : `
                     <div class="flex items-center space-x-2 mt-3">
-                      <button onclick="approveNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 py-2 px-3 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-xs font-black uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer">
+                      <button onclick="approveNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 h-10 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer flex items-center justify-center">
                         APROBAR ✓
                       </button>
-                      <button onclick="declineNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 py-2 px-3 rounded-xl bg-[#26282E] hover:bg-[#32353D] text-neutral-300 font-display text-xs font-bold uppercase tracking-wider border border-neutral-700/60 transition-all active:scale-95 cursor-pointer">
-                        PASO / LLENO
+                      <button onclick="declineNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" title="Aforo completo / Descartar" aria-label="Aforo completo / Descartar" class="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-[#26282E]/70 hover:bg-[#26282E] border border-neutral-700/50 text-[#9CA3AF] hover:text-white text-base transition-colors active:scale-95 cursor-pointer">
+                        ✕
                       </button>
                     </div>
                   `}
@@ -5044,14 +5061,20 @@
           `;
         }
 
-        if (type === 'VIP_DECLINED') {
+        if (type === 'VIP_DECLINED' || type === 'CAPACITY_REACHED') {
+          const flyerHtml = n.eventImageUrl
+            ? `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10">
+                 <img src="${escapeHtmlAttr(n.eventImageUrl)}" alt="${escapeHtmlAttr(n.eventTitle || 'Evento')}" class="w-full h-full object-cover">
+               </div>`
+            : `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10 flex items-center justify-center font-display text-xs text-[#E87A72] uppercase font-bold">
+                 ${escapeHtmlAttr(n.eventTitle ? n.eventTitle.slice(0, 4) : '+1')}
+               </div>`;
+
           return `
             <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} border-[#26282E] shadow-md transition-all">
               <div class="flex items-start space-x-3">
                 <div class="flex-shrink-0 mt-0.5">
-                  <div class="w-9 h-9 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center text-base">
-                    ⏳
-                  </div>
+                  ${flyerHtml}
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between">
@@ -5107,7 +5130,12 @@
 
     async function approveNotificationVip(notifId, passId, senderId, eventTitle) {
       try {
+        let eventImageUrl = '';
         if (passId) {
+          const pSnap = await fbDb.collection('passes').doc(passId).get();
+          if (pSnap.exists) {
+            eventImageUrl = pSnap.data().eventImageUrl || '';
+          }
           await fbDb.collection('passes').doc(passId).update({
             status: 'active',
             approvedAt: Date.now()
@@ -5120,6 +5148,7 @@
             title: '¡PASE VIP APROBADO! 🎉',
             message: `Tu acceso para ${eventTitle || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
             eventTitle: eventTitle || '',
+            eventImageUrl: eventImageUrl,
             passId: passId || '',
             read: false,
             createdAt: Date.now()
@@ -5141,7 +5170,12 @@
     async function declineNotificationVip(notifId, passId, senderId, eventTitle) {
       try {
         const randomReason = GENTLE_MESSAGES_HTML[Math.floor(Math.random() * GENTLE_MESSAGES_HTML.length)];
+        let eventImageUrl = '';
         if (passId) {
+          const pSnap = await fbDb.collection('passes').doc(passId).get();
+          if (pSnap.exists) {
+            eventImageUrl = pSnap.data().eventImageUrl || '';
+          }
           await fbDb.collection('passes').doc(passId).update({
             status: 'capacity_reached',
             declineReason: randomReason,
@@ -5155,6 +5189,7 @@
             title: 'CUPO COMPLETO · ACCESO LIMITADO',
             message: randomReason,
             eventTitle: eventTitle || '',
+            eventImageUrl: eventImageUrl,
             passId: passId || '',
             read: false,
             createdAt: Date.now()

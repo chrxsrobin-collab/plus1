@@ -305,9 +305,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${cleanTitle}.`,
           eventId: flyer.id,
           eventTitle: cleanTitle,
+          eventImageUrl: flyer.imageUrl || '',
           passId: passDocRef.id,
           senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
           senderId: auth.currentUser.uid,
+          senderPhotoUrl: auth.currentUser.photoURL || '',
           read: false,
           createdAt: Date.now(),
         });

@@ -70,6 +70,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
             maxCapacity: Number(d.maxCapacity || d.guestLimit || 150),
             type: d.type || 'public',
             hostUserId: d.hostUserId,
+            imageUrl: d.imageUrl || d.flyerImage || '',
           });
         }
       } catch (err) {
@@ -101,6 +102,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
             id: d.id,
             eventId: data.eventId,
             eventTitle: data.eventTitle,
+            eventImageUrl: data.eventImageUrl || '',
             userId: data.userId || 'anon',
             userName: data.userName || 'Invitado',
             userAvatar: data.userAvatar || null,
@@ -170,6 +172,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
           message: `Tu acceso para ${passItem.eventTitle || eventData?.title || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
           eventId: passItem.eventId || eventId,
           eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
+          eventImageUrl: passItem.eventImageUrl || eventData?.imageUrl || '',
           passId: passId,
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -221,6 +224,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
           message: randomMessage,
           eventId: passItem.eventId || eventId,
           eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
+          eventImageUrl: passItem.eventImageUrl || eventData?.imageUrl || '',
           passId: passId,
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',

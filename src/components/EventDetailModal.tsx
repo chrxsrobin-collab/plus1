@@ -80,9 +80,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${event.title}.`,
           eventId: event.id,
           eventTitle: event.title,
+          eventImageUrl: event.imageUrl || '',
           passId: passDocRef.id,
           senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
           senderId: auth.currentUser.uid,
+          senderPhotoUrl: auth.currentUser.photoURL || '',
           read: false,
           createdAt: Date.now(),
         });

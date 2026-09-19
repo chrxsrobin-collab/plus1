@@ -94,9 +94,11 @@ export interface AppNotification {
   message: string;         // Descripción en Cabinet Grotesk
   eventId?: string;
   eventTitle?: string;
+  eventImageUrl?: string;
   passId?: string;
   senderName?: string;      // Quién genera la acción
   senderId?: string;
+  senderPhotoUrl?: string;
   read: boolean;           // false por defecto
   createdAt: number;
   timeAgo?: string;
@@ -119,8 +121,10 @@ export interface NotificationItem {
   passId?: string;
   eventId?: string;
   eventTitle?: string;
+  eventImageUrl?: string;
   senderName?: string;
   senderId?: string;
+  senderPhotoUrl?: string;
   actionTaken?: 'approved' | 'declined';
   metadata?: {
     allowsPlusOne?: boolean;
@@ -168,6 +172,7 @@ export interface GuestPassItem {
   id: string;
   eventId: string;
   eventTitle?: string;
+  eventImageUrl?: string;
   userId: string;
   userName: string;
   userAvatar?: string | null;

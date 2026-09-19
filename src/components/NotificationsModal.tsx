@@ -70,12 +70,15 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         });
       }
 
-      // 2. Identificar destinatario del pase
+      // 2. Identificar destinatario del pase y arte del evento
       let recipientUserId = notif.senderId;
-      if (!recipientUserId && notif.passId) {
+      let eventImageUrl = notif.eventImageUrl || '';
+      if (notif.passId) {
         const passDoc = await getDoc(doc(db, 'passes', notif.passId));
         if (passDoc.exists()) {
-          recipientUserId = passDoc.data().userId;
+          const pData = passDoc.data();
+          if (!recipientUserId) recipientUserId = pData.userId;
+          if (!eventImageUrl) eventImageUrl = pData.eventImageUrl || '';
         }
       }
 
@@ -88,6 +91,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
           message: `Tu acceso para ${notif.eventTitle || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
           eventId: notif.eventId || '',
           eventTitle: notif.eventTitle || 'Evento +1',
+          eventImageUrl: eventImageUrl,
           passId: notif.passId || '',
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -128,12 +132,15 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         });
       }
 
-      // 2. Identificar destinatario del pase
+      // 2. Identificar destinatario del pase y arte del evento
       let recipientUserId = notif.senderId;
-      if (!recipientUserId && notif.passId) {
+      let eventImageUrl = notif.eventImageUrl || '';
+      if (notif.passId) {
         const passDoc = await getDoc(doc(db, 'passes', notif.passId));
         if (passDoc.exists()) {
-          recipientUserId = passDoc.data().userId;
+          const pData = passDoc.data();
+          if (!recipientUserId) recipientUserId = pData.userId;
+          if (!eventImageUrl) eventImageUrl = pData.eventImageUrl || '';
         }
       }
 
@@ -146,6 +153,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
           message: randomReason,
           eventId: notif.eventId || '',
           eventTitle: notif.eventTitle || 'Evento +1',
+          eventImageUrl: eventImageUrl,
           passId: notif.passId || '',
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -243,7 +251,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                 const isRead = notif.isRead || notif.read || feedback;
                 const isVipRequest = notif.type === 'VIP_REQUEST';
                 const isVipApproved = notif.type === 'VIP_APPROVED' || notif.type === 'vip_approved';
-                const isVipDeclined = notif.type === 'VIP_DECLINED';
+                const isVipDeclined = notif.type === 'VIP_DECLINED' || (notif.type as string) === 'capacity_reached';
 
                 return (
                   <div
@@ -258,9 +266,30 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                       {/* Icono Izquierdo según tipo */}
                       <div className="flex-shrink-0 mt-0.5">
                         {isVipRequest && (
-                          <div className="w-9 h-9 rounded-xl bg-[#FAB205]/15 border border-[#FAB205]/40 flex items-center justify-center text-base text-[#FAB205]">
-                            ⚡
-                          </div>
+                          notif.senderPhotoUrl ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-white/10 bg-[#1F2228]">
+                              <img
+                                src={notif.senderPhotoUrl}
+                                alt={notif.senderName || 'Solicitante'}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-[#E87A72]/40 bg-[#1F2228] flex items-center justify-center shadow-inner">
+                              <span className="font-display font-black text-white text-sm tracking-wider uppercase">
+                                {(() => {
+                                  const name = notif.senderName;
+                                  if (!name) return 'IP';
+                                  const clean = name.replace(/^Invitado\s*#?/i, '').trim();
+                                  const parts = (clean || name).trim().split(/\s+/);
+                                  if (parts.length >= 2 && parts[0] && parts[1]) {
+                                    return (parts[0][0] + parts[1][0]).toUpperCase();
+                                  }
+                                  return (clean || name).slice(0, 2).toUpperCase();
+                                })()}
+                              </span>
+                            </div>
+                          )
                         )}
 
                         {isVipApproved && (
@@ -272,8 +301,18 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         )}
 
                         {isVipDeclined && (
-                          <div className="w-9 h-9 rounded-xl bg-[#E87A72]/15 border border-[#E87A72]/40 flex items-center justify-center text-base text-[#E87A72]">
-                            ⏳
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10">
+                            {notif.eventImageUrl ? (
+                              <img
+                                src={notif.eventImageUrl}
+                                alt={notif.eventTitle}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-display text-xs text-[#E87A72] uppercase font-bold">
+                                {notif.eventTitle ? notif.eventTitle.slice(0, 4) : "+1"}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -317,16 +356,18 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                             <button
                               onClick={() => handleApproveVipRequest(notif)}
                               disabled={loadingActionId === notif.id}
-                              className="py-1.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-xs uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow cursor-pointer disabled:opacity-50"
+                              className="flex-1 h-10 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-bold text-xs uppercase tracking-wider transition-all active:scale-95 focus:outline-none shadow cursor-pointer disabled:opacity-50 flex items-center justify-center"
                             >
                               {loadingActionId === notif.id ? 'Aprobando...' : 'APROBAR ✓'}
                             </button>
                             <button
                               onClick={() => handleDeclineVipRequest(notif)}
                               disabled={loadingActionId === notif.id}
-                              className="py-1.5 px-3.5 rounded-xl bg-[#26282E] hover:bg-[#32353D] text-neutral-300 border border-[#3A3D46] font-display font-black text-xs uppercase tracking-wider transition-all active:scale-95 focus:outline-none cursor-pointer disabled:opacity-50"
+                              title="Aforo completo / Descartar"
+                              aria-label="Aforo completo / Descartar"
+                              className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-[#26282E]/70 hover:bg-[#26282E] border border-neutral-700/50 text-[#9CA3AF] hover:text-white text-base transition-colors active:scale-95 focus:outline-none cursor-pointer disabled:opacity-50"
                             >
-                              PASO / LLENO
+                              ✕
                             </button>
                           </div>
                         )}
