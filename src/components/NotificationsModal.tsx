@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NotificationItem } from '../types/home';
 import { mockNotifications, GENTLE_MESSAGES } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
-import { doc, updateDoc, addDoc, collection, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, collection, getDoc, deleteDoc } from 'firebase/firestore';
 
 export interface NotificationsModalProps {
   isOpen: boolean;
@@ -25,10 +25,102 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
   const [items, setItems] = useState<NotificationItem[]>(notifications);
   const [actionFeedback, setActionFeedback] = useState<{ [id: string]: 'approved' | 'declined' | 'accepted' | 'rejected' }>({});
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
+  const resolvedNotifIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setItems(notifications);
   }, [notifications]);
+
+  // Swipe-to-delete: Elimina la notificación optimísticamente y en Firestore
+  const handleDeleteNotification = async (notifId: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== notifId));
+
+    if (!auth.currentUser) return;
+    try {
+      if (notifId && !notifId.startsWith('mock_') && !notifId.startsWith('notif_0')) {
+        await deleteDoc(doc(db, 'notifications', notifId));
+      }
+    } catch (err) {
+      console.error('Error eliminando notificación de Firestore:', err);
+    }
+  };
+
+  // Auto-resolver: Si una notificación de Firestore carecía de eventImageUrl o eventTitle, recuperarlos automáticamente
+  useEffect(() => {
+    const missing = items.filter(
+      (n) =>
+        !resolvedNotifIdsRef.current.has(n.id) &&
+        (n.type === 'VIP_DECLINED' || (n.type as string) === 'capacity_reached' || n.type === 'VIP_APPROVED' || (n.type as string) === 'vip_approved') &&
+        (!n.eventImageUrl || !n.eventTitle || n.eventTitle === 'CUPO COMPLETO · ACCESO LIMITADO' || n.title === 'CUPO COMPLETO · ACCESO LIMITADO') &&
+        (n.eventId || n.passId)
+    );
+
+    if (missing.length === 0) return;
+    missing.forEach((n) => resolvedNotifIdsRef.current.add(n.id));
+
+    let isCancelled = false;
+
+    const resolveMissingFlyers = async () => {
+      const updates: { [id: string]: { eventImageUrl?: string; eventTitle?: string } } = {};
+
+      for (const n of missing) {
+        let img = n.eventImageUrl;
+        let title = n.eventTitle && n.eventTitle !== 'CUPO COMPLETO · ACCESO LIMITADO' ? n.eventTitle : '';
+
+        if (n.eventId) {
+          try {
+            const evSnap = await getDoc(doc(db, 'events', n.eventId));
+            if (evSnap.exists()) {
+              const d = evSnap.data();
+              img = img || d.imageUrl || d.artImage || d.flyerImage || '';
+              if (!title) title = d.title || '';
+            }
+          } catch (e) {
+            console.warn('Error resolviendo evento para notificación:', e);
+          }
+        }
+
+        if ((!img || !title) && n.passId) {
+          try {
+            const pSnap = await getDoc(doc(db, 'passes', n.passId));
+            if (pSnap.exists()) {
+              const d = pSnap.data();
+              img = img || d.eventImageUrl || '';
+              if (!title) title = d.eventTitle || '';
+            }
+          } catch (e) {
+            console.warn('Error resolviendo pase para notificación:', e);
+          }
+        }
+
+        if (img || title) {
+          updates[n.id] = { eventImageUrl: img, eventTitle: title };
+        }
+      }
+
+      if (!isCancelled && Object.keys(updates).length > 0) {
+        setItems((prev) =>
+          prev.map((it) => {
+            if (updates[it.id]) {
+              const resolvedTitle = updates[it.id].eventTitle || it.eventTitle;
+              return {
+                ...it,
+                eventImageUrl: updates[it.id].eventImageUrl || it.eventImageUrl,
+                eventTitle: resolvedTitle,
+                title: resolvedTitle || (it.title === 'CUPO COMPLETO · ACCESO LIMITADO' ? resolvedTitle || it.title : it.title),
+              };
+            }
+            return it;
+          })
+        );
+      }
+    };
+
+    resolveMissingFlyers();
+    return () => {
+      isCancelled = true;
+    };
+  }, [items]);
 
   const unreadCount = items.filter(
     (item) => !item.isRead && !item.read && !actionFeedback[item.id]
@@ -73,12 +165,26 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       // 2. Identificar destinatario del pase y arte del evento
       let recipientUserId = notif.senderId;
       let eventImageUrl = notif.eventImageUrl || '';
+      let targetTitle = notif.eventTitle || notif.title || 'Evento +1';
       if (notif.passId) {
         const passDoc = await getDoc(doc(db, 'passes', notif.passId));
         if (passDoc.exists()) {
           const pData = passDoc.data();
           if (!recipientUserId) recipientUserId = pData.userId;
           if (!eventImageUrl) eventImageUrl = pData.eventImageUrl || '';
+          if (!targetTitle || targetTitle === 'Evento +1') targetTitle = pData.eventTitle || targetTitle;
+        }
+      }
+      if (!eventImageUrl && notif.eventId) {
+        try {
+          const evDoc = await getDoc(doc(db, 'events', notif.eventId));
+          if (evDoc.exists()) {
+            const evData = evDoc.data();
+            eventImageUrl = evData.imageUrl || evData.artImage || evData.flyerImage || '';
+            if (!targetTitle || targetTitle === 'Evento +1') targetTitle = evData.title || targetTitle;
+          }
+        } catch (e) {
+          console.warn('Fallback al consultar flyer de evento:', e);
         }
       }
 
@@ -87,10 +193,10 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         await addDoc(collection(db, 'notifications'), {
           userId: recipientUserId,
           type: 'VIP_APPROVED',
-          title: '¡PASE VIP APROBADO! 🎉',
-          message: `Tu acceso para ${notif.eventTitle || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
+          title: targetTitle,
+          message: `Tu acceso para ${targetTitle} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
           eventId: notif.eventId || '',
-          eventTitle: notif.eventTitle || 'Evento +1',
+          eventTitle: targetTitle,
           eventImageUrl: eventImageUrl,
           passId: notif.passId || '',
           senderName: auth.currentUser?.displayName || 'Anfitrión',
@@ -135,12 +241,26 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       // 2. Identificar destinatario del pase y arte del evento
       let recipientUserId = notif.senderId;
       let eventImageUrl = notif.eventImageUrl || '';
+      let targetTitle = notif.eventTitle || notif.title || 'Evento +1';
       if (notif.passId) {
         const passDoc = await getDoc(doc(db, 'passes', notif.passId));
         if (passDoc.exists()) {
           const pData = passDoc.data();
           if (!recipientUserId) recipientUserId = pData.userId;
           if (!eventImageUrl) eventImageUrl = pData.eventImageUrl || '';
+          if (!targetTitle || targetTitle === 'Evento +1') targetTitle = pData.eventTitle || targetTitle;
+        }
+      }
+      if (!eventImageUrl && notif.eventId) {
+        try {
+          const evDoc = await getDoc(doc(db, 'events', notif.eventId));
+          if (evDoc.exists()) {
+            const evData = evDoc.data();
+            eventImageUrl = evData.imageUrl || evData.artImage || evData.flyerImage || '';
+            if (!targetTitle || targetTitle === 'Evento +1') targetTitle = evData.title || targetTitle;
+          }
+        } catch (e) {
+          console.warn('Fallback al consultar flyer de evento:', e);
         }
       }
 
@@ -149,11 +269,11 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         await addDoc(collection(db, 'notifications'), {
           userId: recipientUserId,
           type: 'VIP_DECLINED',
-          title: 'CUPO COMPLETO · ACCESO LIMITADO',
-          message: randomReason,
           eventId: notif.eventId || '',
-          eventTitle: notif.eventTitle || 'Evento +1',
+          eventTitle: targetTitle,
           eventImageUrl: eventImageUrl,
+          title: targetTitle,
+          message: randomReason,
           passId: notif.passId || '',
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -246,23 +366,67 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
             {/* 2. LISTA VERTICAL DE NOTIFICACIONES (SCROLL DESCENDENTE) */}
             <div className="flex-1 overflow-y-auto space-y-3 p-4">
-              {items.map((notif) => {
-                const feedback = actionFeedback[notif.id] || notif.actionTaken;
-                const isRead = notif.isRead || notif.read || feedback;
-                const isVipRequest = notif.type === 'VIP_REQUEST';
-                const isVipApproved = notif.type === 'VIP_APPROVED' || notif.type === 'vip_approved';
-                const isVipDeclined = notif.type === 'VIP_DECLINED' || (notif.type as string) === 'capacity_reached';
+              <AnimatePresence initial={false} mode="popLayout">
+                {items.map((notif) => {
+                  const feedback = actionFeedback[notif.id] || notif.actionTaken;
+                  const isRead = notif.isRead || notif.read || feedback;
+                  const isVipRequest = notif.type === 'VIP_REQUEST';
+                  const isVipApproved = notif.type === 'VIP_APPROVED' || notif.type === 'vip_approved';
+                  const isVipDeclined = notif.type === 'VIP_DECLINED' || (notif.type as string) === 'capacity_reached';
 
-                return (
-                  <div
-                    key={notif.id}
-                    className={`rounded-2xl p-3.5 border transition-all ${
-                      isRead
-                        ? 'bg-[#121316] border-[#22242A] opacity-85'
-                        : 'bg-[#1A1C22] border-[#2E313A] shadow-md'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
+                  return (
+                    <motion.div
+                      key={notif.id}
+                      layout
+                      initial={{ opacity: 1, height: 'auto' }}
+                      exit={{
+                        opacity: 0,
+                        x: '-100%',
+                        height: 0,
+                        marginBottom: 0,
+                        transition: {
+                          duration: 0.25,
+                          ease: 'easeInOut',
+                        },
+                      }}
+                      className="relative overflow-hidden rounded-2xl select-none"
+                    >
+                      {/* Fondo de acción revelado: capa roja mate #DC2626 con icono de papelera a la derecha */}
+                      <div className="absolute inset-0 bg-[#DC2626] rounded-2xl flex items-center justify-end pr-5 z-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(notif.id);
+                          }}
+                          className="w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 flex items-center justify-center text-white transition-all active:scale-90 cursor-pointer focus:outline-none"
+                          title="Eliminar notificación"
+                          aria-label="Eliminar notificación"
+                        >
+                          <span className="text-xl leading-none">🗑️</span>
+                        </button>
+                      </div>
+
+                      {/* Tarjeta deslizable hacia la izquierda */}
+                      <motion.div
+                        drag="x"
+                        dragDirectionLock
+                        dragConstraints={{ left: -140, right: 0 }}
+                        dragElastic={{ left: 0.25, right: 0 }}
+                        onDragEnd={(_, info) => {
+                          if (info.offset.x < -100) {
+                            handleDeleteNotification(notif.id);
+                          }
+                        }}
+                        animate={{ x: 0 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                        className={`relative z-10 rounded-2xl p-3.5 border transition-colors touch-pan-y cursor-grab active:cursor-grabbing ${
+                          isRead
+                            ? 'bg-[#121316] border-[#22242A] opacity-85'
+                            : 'bg-[#1A1C22] border-[#2E313A] shadow-md'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
                       {/* Icono Izquierdo según tipo */}
                       <div className="flex-shrink-0 mt-0.5">
                         {isVipRequest && (
@@ -301,7 +465,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         )}
 
                         {isVipDeclined && (
-                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
                             {notif.eventImageUrl ? (
                               <img
                                 src={notif.eventImageUrl}
@@ -309,8 +473,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center font-display text-xs text-[#E87A72] uppercase font-bold">
-                                {notif.eventTitle ? notif.eventTitle.slice(0, 4) : "+1"}
+                              <div className="w-full h-full flex items-center justify-center bg-[#1E2025] text-white font-display text-[10px] text-center p-1 uppercase">
+                                {notif.eventTitle ? notif.eventTitle.slice(0, 5) : "+1"}
                               </div>
                             )}
                           </div>
@@ -338,15 +502,21 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                       {/* Contenido Central */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h4 className="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                            {notif.title}
-                          </h4>
+                          {isVipDeclined ? (
+                            <h4 className="font-display text-white text-base tracking-wide uppercase truncate">
+                              {notif.eventTitle || notif.title}
+                            </h4>
+                          ) : (
+                            <h4 className="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                              {notif.title}
+                            </h4>
+                          )}
                           <span className="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
                             {notif.timeAgo || 'Reciente'}
                           </span>
                         </div>
 
-                        <p className="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                        <p className={`font-sans text-xs mt-1 leading-relaxed ${isVipDeclined ? 'text-[#9CA3AF]' : 'text-neutral-300'}`}>
                           {notif.message}
                         </p>
 
@@ -461,9 +631,11 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         )}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
 
               {items.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12 text-center">

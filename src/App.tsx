@@ -81,46 +81,77 @@ export const App: React.FC = () => {
         const unsubDoc = onSnapshot(userDocRef, (snap) => {
           if (snap.exists()) {
             const data = snap.data();
-            if (data && data.name) {
-              setUserProfile((prev) => ({ ...prev, name: data.name }));
+            if (data) {
+              setUserProfile((prev) => ({
+                ...prev,
+                ...(data.name ? { name: data.name } : {}),
+                ...(data.photoUrl ? { avatarUrl: data.photoUrl } : {}),
+              }));
             }
           }
         }, (err) => {
           console.warn('[+1 App] Escucha de usuario:', err);
         });
 
-        // Escucha en tiempo real de los pases del usuario en la colección 'passes'
-        const passesQuery = query(collection(db, 'passes'), where('userId', '==', user.uid));
+        // Escucha en tiempo real de los pases del usuario en la colección 'passes' (estrictamente activos)
+        const passesQuery = query(
+          collection(db, 'passes'),
+          where('userId', '==', user.uid),
+          where('status', '==', 'active')
+        );
         const unsubPasses = onSnapshot(passesQuery, (snapshot) => {
-          const ticketsList: PassItem[] = snapshot.docs.map((d) => {
-            const data = d.data();
-            const isCapacityReached = data.status === 'capacity_reached' || data.status === 'rejected';
-            const isPending = data.status === 'pending';
-            const isUsed = data.status === 'used';
-            return {
-              id: d.id,
-              title: data.eventTitle || 'Evento +1',
-              emoji: isCapacityReached ? '⏳' : isPending ? '⏳' : '🎟️',
-              dateStr: data.dateStr || 'PRÓXIMAMENTE',
-              timeStr: data.timeStr || '22:00',
-              location: data.location || 'Acceso Oficial +1',
-              status: isCapacityReached ? 'capacity_reached' : (data.status as any) || 'confirmed',
-              statusText: isCapacityReached
-                ? 'AFORO COMPLETADO'
-                : isPending
-                ? 'SOLICITUD EN REVISIÓN'
-                : isUsed
-                ? 'INGRESADO'
-                : 'PASE ACTIVO',
-              companionsCount: data.withPlusOne ? 1 : 0,
-              accentBorderColor: isCapacityReached ? '#E87A72' : isPending ? '#FAB205' : '#12C061',
-              holderName: `${data.userName || user.displayName || 'INVITADO'} ${data.withPlusOne ? '· +1 INCLUIDO' : '· INDIVIDUAL'}`,
-              listType: isCapacityReached ? 'AFORO LLENO' : isPending ? 'EN REVISIÓN' : 'LISTA VIP',
-              ticketId: `#${d.id.slice(-4).toUpperCase()}`,
-              verifiedProvider: 'VERIFICADO CON GOOGLE',
-              feedbackMessage: data.feedbackMessage,
-            };
-          });
+          const ticketsList: PassItem[] = snapshot.docs
+            .map((d) => {
+              const data = d.data();
+              const rawHolderName = (
+                data.rawHolderName ||
+                data.userName ||
+                data.holderName ||
+                user.displayName ||
+                'INVITADO'
+              )
+                .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+                .trim();
+              const allowsPlusOne = Boolean(
+                data.allowsPlusOne ??
+                  data.withPlusOne ??
+                  data.allowPlusOne ??
+                  false
+              );
+              const eventImg =
+                data.eventImageUrl ||
+                data.imageUrl ||
+                data.artImage ||
+                data.flyerImage ||
+                '';
+              const eventName = data.eventTitle || data.title || 'Evento +1';
+
+              return {
+                id: d.id,
+                eventId: data.eventId,
+                eventTitle: eventName,
+                eventImageUrl: eventImg,
+                title: eventName,
+                emoji: '',
+                dateStr: data.eventDate || data.dateStr || 'PRÓXIMAMENTE',
+                timeStr: data.eventTime || data.timeStr || '22:00',
+                location: data.eventLocation || data.location || 'Acceso Oficial +1',
+                status: 'active' as const,
+                statusText: 'PASE ACTIVO',
+                companionsCount: allowsPlusOne ? 1 : 0,
+                allowsPlusOne,
+                withPlusOne: allowsPlusOne,
+                accentBorderColor: '#12C061',
+                holderName: rawHolderName,
+                listType: 'VIP',
+                ticketId: `#${d.id.slice(0, 5).toUpperCase()}`,
+                verifiedProvider: 'VERIFICADO CON GOOGLE',
+                feedbackMessage: data.feedbackMessage,
+                imageUrl: eventImg,
+                qrCodeValue: data.qrCodeValue || d.id,
+              };
+            })
+            .filter((p) => p.status === 'active');
           setUserTickets(ticketsList);
         }, (err) => {
           console.warn('[+1 App] Escucha de pases:', err);
@@ -138,6 +169,15 @@ export const App: React.FC = () => {
 
   const handleUpdateName = (newName: string) => {
     setUserProfile((prev) => ({ ...prev, name: newName }));
+  };
+
+  const handleUpdateAvatar = (newAvatarUrl: string) => {
+    setUserProfile((prev) => ({ ...prev, avatarUrl: newAvatarUrl }));
+    try {
+      localStorage.setItem('plus1_avatar_url', newAvatarUrl);
+    } catch {
+      // ignore
+    }
   };
 
   const handleNavigate = (route: string) => {
@@ -168,6 +208,7 @@ export const App: React.FC = () => {
         <ProfileScreen
           user={userProfile}
           onUpdateName={handleUpdateName}
+          onUpdateAvatar={handleUpdateAvatar}
           onBack={() => setCurrentRoute('/')}
           onNavigate={handleNavigate}
         />

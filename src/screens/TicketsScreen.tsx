@@ -4,7 +4,7 @@ import { PassItem } from '../types/home';
 import { TicketsCoverFlow } from '../components/TicketsCoverFlow';
 import { BottomNav } from '../components/BottomNav';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import '../styles/fonts.css';
 
 export interface TicketsScreenProps {
@@ -22,65 +22,146 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   onBack,
   onNavigate,
 }) => {
-  const [liveTickets, setLiveTickets] = useState<PassItem[]>(propTickets);
+  const [userPasses, setUserPasses] = useState<PassItem[]>(() => {
+    return (propTickets || []).filter((t) => t.status === 'active');
+  });
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sincronización reactiva con prop o directamente desde Firestore
+  // Consulta reactiva estricta a Firestore: Solo pases con status == 'active'
   useEffect(() => {
-    if (propTickets.length > 0) {
-      setLiveTickets(propTickets);
-      return;
-    }
-
     if (!auth.currentUser) return;
+
     const q = query(
       collection(db, 'passes'),
       where('userId', '==', auth.currentUser.uid),
-      where('status', 'in', ['active', 'confirmed'])
+      where('status', '==', 'active') // Solo pases aprobados
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const passesList = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          eventId: data.eventId,
-          title: data.eventTitle || 'EVENTO +1',
-          emoji: '🎟️',
-          dateStr: data.eventDate || 'PRÓXIMAMENTE',
-          timeStr: data.eventTime || '22:00',
-          location: data.eventLocation || 'CLUB OFICIAL +1',
-          status: 'active' as const,
-          statusText: 'PASE ACTIVO',
-          companionsCount: data.withPlusOne ? 1 : 0,
-          accentBorderColor: '#12C061',
-          holderName: (data.holderName || auth.currentUser?.displayName || 'INVITADO') + (data.withPlusOne ? ' · +1 INCLUIDO' : ' · INDIVIDUAL'),
-          listType: 'LISTA VIP',
-          ticketId: '#' + d.id.slice(-4).toUpperCase(),
-          verifiedProvider: 'VERIFICADO CON GOOGLE',
-          feedbackMessage: data.feedbackMessage,
-        };
-      });
-      setLiveTickets(passesList);
-    }, (err) => {
-      console.warn('Error escuchando pases en TicketsScreen:', err);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const activePasses: PassItem[] = snapshot.docs
+          .map((d) => {
+            const data = d.data();
+            const rawHolderName = (
+              data.rawHolderName ||
+              data.userName ||
+              data.holderName ||
+              auth.currentUser?.displayName ||
+              'INVITADO'
+            )
+              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+              .trim();
+
+            const allowsPlusOne = Boolean(
+              data.allowsPlusOne ??
+                data.withPlusOne ??
+                data.allowPlusOne ??
+                false
+            );
+
+            const eventImg =
+              data.eventImageUrl ||
+              data.imageUrl ||
+              data.artImage ||
+              data.flyerImage ||
+              '';
+
+            const eventName = data.eventTitle || data.title || 'EVENTO +1';
+
+            return {
+              id: d.id,
+              eventId: data.eventId,
+              eventTitle: eventName,
+              eventImageUrl: eventImg,
+              title: eventName,
+              emoji: '',
+              dateStr: data.eventDate || data.dateStr || 'PRÓXIMAMENTE',
+              timeStr: data.eventTime || data.timeStr || '22:00',
+              location: data.eventLocation || data.location || 'CLUB OFICIAL +1',
+              status: 'active' as const,
+              statusText: 'PASE ACTIVO',
+              companionsCount: allowsPlusOne ? 1 : 0,
+              allowsPlusOne,
+              withPlusOne: allowsPlusOne,
+              accentBorderColor: '#12C061',
+              holderName: rawHolderName,
+              listType: 'VIP',
+              ticketId: '#' + d.id.slice(0, 5).toUpperCase(),
+              verifiedProvider: 'VERIFICADO CON GOOGLE',
+              feedbackMessage: data.feedbackMessage,
+              imageUrl: eventImg,
+              qrCodeValue: data.qrCodeValue || d.id,
+            };
+          })
+          .filter((p) => p.status === 'active'); // Regla estricta: solo active
+
+        setUserPasses(activePasses);
+
+        // Auto-resolución en segundo plano si algún pase no tenía flyer guardado
+        activePasses.forEach(async (pass) => {
+          if (!pass.eventImageUrl && pass.eventId) {
+            try {
+              const evSnap = await getDoc(doc(db, 'events', pass.eventId));
+              if (evSnap.exists()) {
+                const evData = evSnap.data();
+                const flyerUrl =
+                  evData.imageUrl || evData.artImage || evData.flyerImage || '';
+                if (flyerUrl) {
+                  setUserPasses((prev) =>
+                    prev.map((p) =>
+                      p.id === pass.id
+                        ? { ...p, eventImageUrl: flyerUrl, imageUrl: flyerUrl }
+                        : p
+                    )
+                  );
+                }
+              }
+            } catch (e) {
+              console.warn('Error resolviendo flyer en TicketsScreen:', e);
+            }
+          }
+        });
+      },
+      (err) => {
+        console.warn('Error escuchando pases activos en TicketsScreen:', err);
+      }
+    );
 
     return () => unsubscribe();
-  }, [propTickets, auth.currentUser]);
+  }, [auth.currentUser]);
+
+  // Si propTickets cambia externamente, filtrar estrictamente activos
+  useEffect(() => {
+    if (propTickets && propTickets.length > 0) {
+      const filtered = propTickets.filter((t) => t.status === 'active');
+      if (filtered.length > 0) {
+        setUserPasses(filtered);
+      }
+    }
+  }, [propTickets]);
 
   // Si se pasa un passId específico, auto-enfocar ese ticket en el carrusel
   useEffect(() => {
-    if (initialPassId && liveTickets.length > 0) {
-      const idx = liveTickets.findIndex(t => t.id === initialPassId || t.eventId === initialPassId);
+    if (initialPassId && userPasses.length > 0) {
+      const idx = userPasses.findIndex(
+        (t) => t.id === initialPassId || t.eventId === initialPassId
+      );
       if (idx !== -1) {
         setCurrentIndex(idx);
       }
     }
-  }, [initialPassId, liveTickets]);
+  }, [initialPassId, userPasses]);
 
-  const tickets = liveTickets;
+  // Asegurar que el índice no supere el límite de pases disponibles
+  useEffect(() => {
+    if (currentIndex >= userPasses.length && userPasses.length > 0) {
+      setCurrentIndex(userPasses.length - 1);
+    }
+  }, [userPasses.length, currentIndex]);
+
+  const tickets = userPasses;
   const activeTicket = tickets[currentIndex] || tickets[0] || null;
 
   const showToast = (msg: string) => {
@@ -101,6 +182,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   };
 
   const handleDownloadCopy = () => {
+    if (!activeTicket) return;
     showToast(`Pase de "${activeTicket.title}" guardado en Fotos ✓`);
   };
 
@@ -136,18 +218,18 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
           <button
             onClick={handleBack}
             aria-label="Regresar a inicio"
-            className="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none"
+            className="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer"
           >
             <span className="text-xl font-bold leading-none">←</span>
           </button>
 
-          {/* Título central e indicador de cantidad de pases */}
+          {/* Título central e indicador de cantidad de pases activos */}
           <div className="flex flex-col items-center justify-center text-center">
             <h1 className="font-display text-white text-xl sm:text-2xl font-black tracking-wide uppercase leading-none">
               MIS TICKETS
             </h1>
             <span className="font-sans text-[11px] text-[#8E8E93] tracking-wider uppercase font-semibold mt-0.5">
-              {tickets.length} PASES ACTIVOS
+              {userPasses.length} {userPasses.length === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}
             </span>
           </div>
 
@@ -156,23 +238,27 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
         </header>
 
         {/* 2. CARRUSEL 3D COVER FLOW O ESTADO VACÍO */}
-        {tickets.length === 0 ? (
+        {userPasses.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-[340px] sm:max-w-[360px] h-[440px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto"
+            className="w-full max-w-[340px] sm:max-w-[360px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto"
           >
-            <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-[#1A1C22] border border-white/10 flex items-center justify-center text-3xl mb-4 shadow-inner">
               🎟️
             </div>
-            <p className="font-sans text-neutral-300 text-sm font-medium tracking-wide uppercase leading-relaxed max-w-[270px]">
-              AÚN NO TIENES PASES ACTIVOS · EXPLORA EVENTOS O SOLICITA TU ACCESO CON UN ENLACE DIRECTO
+            <h3 className="font-display text-white text-lg sm:text-xl font-bold uppercase tracking-wide leading-tight mb-2">
+              NO TIENES PASES ACTIVOS
+            </h3>
+            <p className="font-sans text-[#9CA3AF] text-xs sm:text-sm leading-relaxed max-w-[280px] mb-6">
+              Cuando un anfitrión apruebe tu solicitud VIP o confirmes asistencia a un evento, tu ticket QR aparecerá aquí listo para entrar.
             </p>
             <button
               onClick={() => (onNavigate ? onNavigate('/') : onBack?.())}
-              className="mt-6 py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer"
+              className="py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer flex items-center space-x-2"
             >
-              EXPLORAR EVENTOS
+              <span>EXPLORAR EVENTOS</span>
+              <span>🔍</span>
             </button>
           </motion.div>
         ) : (

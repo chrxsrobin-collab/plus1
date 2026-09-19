@@ -58,7 +58,6 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
 
             let rotateY = 0;
             let scale = 1;
-            let opacity = 1;
             let zIndex = 20;
             let translateX = 0;
             let translateZ = 0;
@@ -66,14 +65,12 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
             if (offset < 0) {
               rotateY = 50;
               scale = 0.86;
-              opacity = Math.max(0.3, 0.7 + offset * 0.2);
               zIndex = 10 + offset;
               translateX = -140 + (offset + 1) * 35;
               translateZ = -70;
             } else if (offset > 0) {
               rotateY = -50;
               scale = 0.86;
-              opacity = Math.max(0.3, 0.7 - offset * 0.2);
               zIndex = 10 - offset;
               translateX = 140 + (offset - 1) * 35;
               translateZ = -70;
@@ -103,7 +100,7 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                   z: translateZ,
                   rotateY,
                   scale,
-                  opacity,
+                  opacity: 1,
                   filter: isCenter ? 'blur(0px)' : 'blur(2.5px)',
                 }}
                 transition={{
@@ -113,9 +110,7 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                 }}
               >
                 {/* TARJETA COMPLETA ALARGADA CON BORDE FINO SALMÓN #E87A72 Y FONDO OSCURO #181A1E */}
-                <div className={`w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ${
-                  isCenter ? 'blur-0' : 'blur-[2px]'
-                }`}>
+                <div className="w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300">
                   
                   {/* 1. Miniatura Superior del Flyer: CASI CUADRADA (~1:1) */}
                   <div className="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden shadow-inner border border-neutral-800/80 flex-shrink-0">

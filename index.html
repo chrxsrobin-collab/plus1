@@ -157,7 +157,7 @@
 
           <!-- Avatar de Usuario interactivo (Dirige a /profile) -->
           <button class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-[#E87A72] bg-[#16171B] overflow-hidden focus:outline-none transition-transform duration-150 hover:scale-105 active:scale-95 cursor-pointer shadow-md flex items-center justify-center p-0" onclick="openProfileScreen()" aria-label="Perfil de usuario">
-            <img src="./assets/images/avatar_chris.png" alt="Chris G." class="w-full h-full rounded-full object-cover">
+            <img id="topHudUserAvatar" src="./assets/images/avatar_chris.png" alt="Chris G." class="w-full h-full rounded-full object-cover">
           </button>
         </div>
       </header>
@@ -953,8 +953,8 @@
             <h1 class="font-display text-white text-xl sm:text-2xl font-black tracking-wide uppercase leading-none">
               MIS TICKETS
             </h1>
-            <span class="font-sans text-[11px] text-[#8E8E93] tracking-wider uppercase font-semibold mt-0.5">
-              5 PASES ACTIVOS
+            <span id="passScreenTicketsCount" class="font-sans text-[11px] text-[#8E8E93] tracking-wider uppercase font-semibold mt-0.5">
+              0 PASES ACTIVOS
             </span>
           </div>
 
@@ -1102,21 +1102,29 @@
         </div>
       </main>
 
-      <!-- 4. INDICADOR INFERIOR Y BOTÓN DE PRUEBA (MOCKUP CHECK-IN) -->
-      <footer class="relative z-30 flex flex-col items-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] w-full max-w-md mx-auto space-y-4">
+      <!-- 4. INDICADOR INFERIOR Y BOTÓN DE PRUEBA -->
+      <footer class="relative z-30 flex flex-col items-center px-5 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] w-full max-w-md mx-auto space-y-3">
         
         <!-- Pastilla oscura de instrucción -->
         <div class="px-4 py-2 rounded-full bg-black/75 backdrop-blur-md border border-neutral-800 text-center shadow-lg">
-          <p class="font-sans text-xs text-neutral-300 font-medium tracking-wide">
-            Apunta al código QR del invitado para validar el pase
+          <p id="scannerInstructionText" class="font-sans text-xs text-neutral-300 font-medium tracking-wide">
+            Apunta al código QR del invitado o al QR Maestro de Puerta
           </p>
         </div>
 
-        <!-- Botón de simulación para validar entrada (Mockup Check-in) -->
-        <button onclick="triggerScannerSimulation()" class="w-full py-3.5 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse"></span>
-          <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
-        </button>
+        <div class="w-full flex flex-col gap-2">
+          <!-- Botón simular QR Maestro de Puerta -->
+          <button onclick="processScannerQrCode('plus1://pair-door?eventId=' + (currentScannerEventId || 'pepe-birthday') + '&token=door_key_' + Date.now())" class="w-full py-2.5 px-4 rounded-xl bg-[#16171B] hover:bg-neutral-900 border border-[#FAB205]/50 hover:border-[#FAB205] text-[#FAB205] font-display text-xs font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-md focus:outline-none cursor-pointer">
+            <span class="text-sm">🔑</span>
+            <span>SIMULAR ESCANEO DE QR MAESTRO (STAFF)</span>
+          </button>
+
+          <!-- Botón de simulación para validar entrada (Mockup Check-in) -->
+          <button onclick="triggerScannerSimulation()" class="w-full py-3 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse"></span>
+            <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
+          </button>
+        </div>
       </footer>
 
       <!-- 5. TOAST DE CONFIRMACIÓN FLOTANTE -->
@@ -1521,8 +1529,35 @@
           </button>
         </div>
 
+        <!-- BARRA DE BÚSQUEDA PREDICTIVA DE VENUES Y SALONES -->
+        <div class="relative px-5 py-2.5 bg-[#101114] border-b border-[#26282E]/80 z-30">
+          <div class="relative flex items-center">
+            <span class="absolute left-3 text-neutral-400 text-xs pointer-events-none">🔍</span>
+            <input
+              id="mapVenueSearchInput"
+              type="text"
+              oninput="handleMapVenueSearchInput(this.value)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault(); executeMapVenueSearch(this.value);}"
+              placeholder="Buscar salón, local o dirección..."
+              class="w-full h-9 pl-8 pr-8 bg-[#16171B] border border-[#26282E] focus:border-[#E87A72]/60 rounded-xl text-white font-sans text-xs placeholder-neutral-500 focus:outline-none transition-colors"
+            />
+            <button
+              id="mapVenueSearchClearBtn"
+              type="button"
+              onclick="clearMapVenueSearch()"
+              class="hidden absolute right-2.5 w-5 h-5 rounded-full bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Dropdown flotante de sugerencias predictivas -->
+          <div id="mapVenueSearchResultsDropdown" class="hidden absolute left-5 right-5 top-full mt-1.5 z-40 bg-[#16171B] border border-[#26282E] rounded-2xl shadow-2xl overflow-hidden divide-y divide-[#26282E]/70 max-h-52 overflow-y-auto">
+          </div>
+        </div>
+
         <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
-        <div class="px-5 py-2.5 bg-[#121316] border-b border-[#26282E]/60 flex items-center justify-between gap-2">
+        <div class="px-5 py-2 bg-[#121316] border-b border-[#26282E]/60 flex items-center justify-between gap-2">
           <button id="mapGeoLocationBtn" type="button" onclick="centerMapOnCurrentLocation()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1E2025] hover:bg-[#26282E] border border-[#26282E] hover:border-[#E87A72]/50 text-white font-sans text-xs font-semibold tracking-wide transition-all active:scale-95 cursor-pointer shrink-0">
             <span id="mapGeoLocationIcon">🎯</span>
             <span id="mapGeoLocationText">Mi ubicación actual</span>
@@ -1598,8 +1633,41 @@
 
         <!-- 2. AVATAR Y DATOS DE PERFIL -->
         <div class="flex flex-col items-center justify-center pt-3 pb-4 text-center">
-          <div class="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden">
-            <img src="./assets/images/avatar_chris.png" alt="Avatar Chris G." class="w-full h-full object-cover rounded-full" />
+          <div class="relative inline-block">
+            <div class="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden">
+              <img id="profileUserAvatarDisplay" src="./assets/images/avatar_chris.png" alt="Avatar Chris G." class="w-full h-full object-cover rounded-full" />
+              <div id="profileAvatarSpinner" class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center rounded-full">
+                <div class="w-5 h-5 border-2 border-[#E87A72] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+
+            <!-- Botón Lápiz Flotante -->
+            <button
+              type="button"
+              onclick="document.getElementById('profileAvatarFileInput').click()"
+              aria-label="Cambiar foto de perfil"
+              title="Cambiar foto de perfil"
+              class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#16171B] hover:bg-[#22252C] border border-white/20 hover:border-[#E87A72] flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer z-10"
+            >
+              <svg
+                class="w-3.5 h-3.5 text-[#E87A72] stroke-current fill-none"
+                viewBox="0 0 24 24"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            </button>
+
+            <!-- Input de archivo oculto -->
+            <input
+              type="file"
+              id="profileAvatarFileInput"
+              accept="image/*"
+              class="hidden"
+              onchange="handleProfileAvatarUpload(this)"
+            />
           </div>
 
           <div class="flex items-center justify-center space-x-2 mt-3 group">
@@ -1815,6 +1883,12 @@
           </div>
         </div>
 
+        <!-- Botón Vincular Staff de Puerta (QR Maestro) -->
+        <button type="button" onclick="openMasterDoorQrModal()" class="w-full py-2.5 px-4 rounded-xl bg-[#16171B] hover:bg-[#202227] border border-[#FAB205]/40 hover:border-[#FAB205]/70 text-[#FAB205] font-display text-xs font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-md mb-3 cursor-pointer">
+          <span class="text-sm">🔑</span>
+          <span>VINCULAR STAFF DE PUERTA</span>
+        </button>
+
         <!-- Tabs -->
         <div class="flex bg-[#121316] p-1 rounded-xl border border-[#26282E] mb-3">
           <button id="emTabPendingBtn" onclick="switchEmTab('pending')" class="flex-1 py-2 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-[#FAB205] text-black cursor-pointer">
@@ -1843,6 +1917,74 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- MODAL QR MAESTRO DE PUERTA (MasterDoorQrModal) -->
+    <div id="masterDoorQrModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div class="w-full max-w-sm bg-[#16171B] border border-[#26282E] rounded-3xl p-5 sm:p-6 text-center shadow-2xl relative flex flex-col items-center select-none anim-modal-zoom">
+        <button type="button" onclick="closeMasterDoorQrModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-sm font-bold active:scale-90 transition-all cursor-pointer">
+          ✕
+        </button>
+
+        <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FAB205]/15 border border-[#FAB205]/40 text-[#FAB205] text-[10px] font-display font-black tracking-widest uppercase mb-3">
+          <span>🔑</span>
+          <span>ROL DE PUERTA</span>
+        </div>
+
+        <h2 class="font-display text-white text-xl font-black tracking-wider uppercase mb-1.5 leading-tight">
+          ACCESO DE PUERTA (STAFF)
+        </h2>
+
+        <p class="font-sans text-xs text-neutral-400 leading-relaxed max-w-xs mb-5">
+          Pide a tu guardia o amigo que escanee este código desde su app +1 para habilitar el lector de entradas de este evento.
+        </p>
+
+        <!-- Contenedor QR Maestro -->
+        <div class="relative w-[210px] h-[210px] bg-white rounded-2xl p-3 shadow-2xl flex items-center justify-center mb-4 overflow-hidden border-2 border-white/20">
+          <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+            <rect width="100" height="100" fill="#FFFFFF" />
+            <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+            <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+            <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+            <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+            <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+            <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+            <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+            <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+            <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+            <rect x="40" y="8" width="8" height="8" fill="#000000" />
+            <rect x="52" y="8" width="6" height="14" fill="#000000" />
+            <rect x="40" y="24" width="14" height="6" fill="#000000" />
+            <rect x="8" y="40" width="8" height="16" fill="#000000" />
+            <rect x="22" y="40" width="6" height="8" fill="#000000" />
+            <rect x="20" y="52" width="14" height="6" fill="#000000" />
+            <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+            <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+            <rect x="48" y="48" width="4" height="4" fill="#000000" />
+            <rect x="68" y="40" width="12" height="6" fill="#000000" />
+            <rect x="84" y="40" width="8" height="16" fill="#000000" />
+            <rect x="66" y="52" width="10" height="8" fill="#000000" />
+            <rect x="40" y="68" width="6" height="18" fill="#000000" />
+            <rect x="52" y="66" width="10" height="8" fill="#000000" />
+            <rect x="48" y="80" width="14" height="10" fill="#000000" />
+            <rect x="68" y="68" width="10" height="10" fill="#000000" />
+            <rect x="82" y="66" width="10" height="24" fill="#000000" />
+          </svg>
+          <div class="absolute inset-0 m-auto w-10 h-10 rounded-xl bg-black border-2 border-white flex items-center justify-center shadow-lg">
+            <span class="text-base leading-none">🔑</span>
+          </div>
+        </div>
+
+        <button type="button" onclick="copyMasterDoorQrPayload()" class="text-neutral-400 hover:text-white font-sans text-[11px] font-semibold tracking-wide flex items-center space-x-1.5 mb-5 bg-neutral-900/60 hover:bg-neutral-800/80 px-3 py-1.5 rounded-xl border border-neutral-800 transition-all active:scale-95 cursor-pointer">
+          <span>📋</span>
+          <span>Copiar enlace de vinculación</span>
+        </button>
+
+        <button type="button" id="emRevokeDoorBtn" onclick="revokeMasterDoorAccess()" class="w-full py-3 px-4 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 hover:border-red-500 text-red-400 hover:text-red-300 font-display text-xs sm:text-sm font-black tracking-wider uppercase transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-2">
+          <span>⚠️</span>
+          <span>REVOCAR ACCESOS DE PUERTA</span>
+        </button>
       </div>
     </div>
 
@@ -2055,6 +2197,10 @@
             if (authView) authView.classList.add('hidden');
             const defaultName = user.displayName || (user.isAnonymous ? "INVITADO #" + user.uid.slice(-4).toUpperCase() : 'USUARIO VIP');
             
+            if (user.photoURL) {
+              updateUserAvatarDom(user.photoURL);
+            }
+
             // Escucha en tiempo real del perfil propio del usuario
             if (fbDb) {
               fbDb.collection('users').doc(user.uid).onSnapshot((docSnap) => {
@@ -2063,9 +2209,13 @@
                   if (data && data.name) {
                     updateUserNameDom(data.name);
                   }
+                  if (data && data.photoUrl) {
+                    updateUserAvatarDom(data.photoUrl);
+                  }
                   updatePartnerBadgeDom(Boolean(data && data.isPartner));
                 } else {
                   updateUserNameDom(defaultName);
+                  if (user.photoURL) updateUserAvatarDom(user.photoURL);
                   updatePartnerBadgeDom(false);
                 }
               }, (err) => console.warn('[+1 Firestore] Escucha usuario:', err));
@@ -2107,24 +2257,37 @@
                     const isPending = data.status === 'pending';
                     const isUsed = data.status === 'used';
                     const isActive = data.status === 'active' || data.status === 'confirmed';
-                    list.push({
-                      id: doc.id,
-                      eventId: data.eventId,
-                      title: data.eventTitle || 'EVENTO +1',
-                      emoji: isCapacityReached ? '⏳' : isPending ? '⏳' : '🎟️',
-                      dateStr: data.dateStr || data.eventDate || 'PRÓXIMAMENTE',
-                      timeStr: data.timeStr || data.eventTime || '22:00',
-                      location: data.location || data.eventLocation || 'ACCESO OFICIAL +1',
-                      status: isCapacityReached ? 'capacity_reached' : isPending ? 'pending' : isUsed ? 'used' : 'active',
-                      statusText: isCapacityReached ? 'AFORO COMPLETADO' : isPending ? 'SOLICITUD EN ESPERA' : isUsed ? 'INGRESADO' : 'PASE ACTIVO',
-                      companionsCount: data.withPlusOne ? 1 : 0,
-                      accentBorderColor: isCapacityReached ? '#E87A72' : isPending ? '#FAB205' : '#12C061',
-                      holderName: (data.holderName || data.userName || user.displayName || 'INVITADO') + (data.withPlusOne ? ' · +1 INCLUIDO' : ' · INDIVIDUAL'),
-                      listType: isCapacityReached ? 'AFORO LLENO' : isPending ? 'EN ESPERA' : 'LISTA VIP',
-                      ticketId: '#' + doc.id.slice(-4).toUpperCase(),
-                      verifiedProvider: 'VERIFICADO CON GOOGLE',
-                      feedbackMessage: data.feedbackMessage
-                    });
+
+                    // Estricto: la billetera solo incluye accesos reales activos
+                    if (isActive) {
+                      list.push({
+                        id: doc.id,
+                        eventId: data.eventId,
+                        title: data.eventTitle || 'EVENTO +1',
+                        emoji: '🎟️',
+                        dateStr: data.dateStr || data.eventDate || 'PRÓXIMAMENTE',
+                        timeStr: data.timeStr || data.eventTime || '22:00',
+                        location: data.location || data.eventLocation || 'ACCESO OFICIAL +1',
+                        status: 'active',
+                        statusText: 'PASE ACTIVO',
+                        companionsCount: data.withPlusOne ? 1 : 0,
+                        accentBorderColor: '#12C061',
+                        holderName: (data.holderName || data.userName || user.displayName || 'INVITADO') + (data.withPlusOne ? ' · +1 INCLUIDO' : ' · INDIVIDUAL'),
+                        listType: 'LISTA VIP',
+                        ticketId: '#' + doc.id.slice(-4).toUpperCase(),
+                        verifiedProvider: 'VERIFICADO CON GOOGLE',
+                        feedbackMessage: data.feedbackMessage,
+                        imageUrl: data.eventImageUrl || data.imageUrl || '',
+                        qrCodeValue: data.qrCodeValue || doc.id
+                      });
+
+                      activeApprovedList.push({
+                        id: doc.id,
+                        title: data.eventTitle || 'Evento +1',
+                        date: data.eventDate || data.dateStr || '',
+                        time: data.eventTime || data.timeStr || ''
+                      });
+                    }
 
                     if (isUsed) {
                       attendedList.push({
@@ -2133,15 +2296,6 @@
                         checkedInAt: data.checkedInAt || data.usedAt || data.updatedAt,
                         location: data.location || data.venue || 'Club / Recinto Oficial',
                         hostName: data.hostName || 'Anfitrión +1'
-                      });
-                    }
-
-                    if (isActive) {
-                      activeApprovedList.push({
-                        id: doc.id,
-                        title: data.eventTitle || 'Evento +1',
-                        date: data.eventDate || data.dateStr || '',
-                        time: data.eventTime || data.timeStr || ''
                       });
                     }
                   });
@@ -2389,21 +2543,19 @@
         if (offset < 0) {
           rotateY = 50;
           scale = 0.86;
-          opacity = Math.max(0.3, 0.7 + offset * 0.2);
           zIndex = 10 + offset;
           translateX = -140 + (offset + 1) * 35;
           translateZ = -70;
         } else if (offset > 0) {
           rotateY = -50;
           scale = 0.86;
-          opacity = Math.max(0.3, 0.7 - offset * 0.2);
           zIndex = 10 - offset;
           translateX = 140 + (offset - 1) * 35;
           translateZ = -70;
         }
 
         card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
-        card.style.opacity = opacity;
+        card.style.opacity = '1';
         card.style.zIndex = zIndex;
         card.style.filter = isCenter ? 'blur(0px)' : 'blur(2.5px)';
         card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-out, filter 0.3s ease-out';
@@ -2891,15 +3043,26 @@
 
       totalTickets = userTickets.length;
 
+      const countEl = document.getElementById('passScreenTicketsCount');
+      if (countEl) {
+        countEl.innerText = `${totalTickets} ${totalTickets === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}`;
+      }
+
       if (totalTickets === 0) {
         track.innerHTML = `
-          <div class="w-[300px] sm:w-[320px] p-6 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-2xl">
-            <span class="text-3xl filter drop-shadow">🎟️</span>
-            <p class="font-sans text-xs sm:text-sm font-semibold text-neutral-300 tracking-wider uppercase leading-relaxed">
-              AÚN NO TIENES PASES ACTIVOS · EXPLORA EVENTOS O SOLICITA TU ACCESO CON UN ENLACE DIRECTO
+          <div class="w-[320px] sm:w-[340px] p-6 sm:p-8 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto">
+            <div class="w-16 h-16 rounded-2xl bg-[#1A1C22] border border-white/10 flex items-center justify-center text-3xl mb-4 shadow-inner">
+              🎟️
+            </div>
+            <h3 class="font-display text-white text-lg sm:text-xl font-bold uppercase tracking-wide leading-tight mb-2">
+              NO TIENES PASES ACTIVOS
+            </h3>
+            <p class="font-sans text-[#9CA3AF] text-xs sm:text-sm leading-relaxed max-w-[280px] mb-6">
+              Cuando un anfitrión apruebe tu solicitud VIP o confirmes asistencia a un evento, tu ticket QR aparecerá aquí listo para entrar.
             </p>
-            <button onclick="closePassScreen(); handleNavigation('/home');" class="py-2.5 px-5 rounded-full bg-white text-black font-display text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-lg active:scale-95 transition-all">
+            <button onclick="closePassScreen(); handleNavigation('/home');" class="py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer flex items-center space-x-2">
               <span>EXPLORAR EVENTOS</span>
+              <span>🔍</span>
             </button>
           </div>
         `;
@@ -2943,6 +3106,18 @@
             </div>
           `;
         } else {
+          const qrCenterHtml = (t.eventImageUrl || t.imageUrl)
+            ? `<div class="absolute inset-0 m-auto w-[42px] h-[42px] rounded-lg overflow-hidden border-[1.5px] border-white shadow-md bg-[#16171B] flex items-center justify-center">
+                 <img src="${escapeHtmlAttr(t.eventImageUrl || t.imageUrl)}" alt="${escapeHtmlAttr(t.title)}" class="w-full h-full object-cover rounded-lg">
+               </div>`
+            : `<div class="absolute inset-0 m-auto w-[42px] h-[42px] rounded-lg overflow-hidden border-[1.5px] border-white shadow-md bg-[#16171B] flex items-center justify-center">
+                 <div class="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5">
+                   <span class="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">
+                     ${escapeHtmlAttr(t.title ? t.title.slice(0, 4) : '+1')}
+                   </span>
+                 </div>
+               </div>`;
+
           centerContentHtml = `
             <div class="relative w-[180px] h-[180px] flex items-center justify-center">
               <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
@@ -2957,13 +3132,17 @@
                   <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
                   <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
                 </svg>
-                <div class="absolute inset-0 m-auto w-6 h-6 rounded-md bg-[${strokeColor}] flex items-center justify-center shadow">
-                  <span class="font-display text-black text-[11px] font-black leading-none">+1</span>
-                </div>
+                ${qrCenterHtml}
               </div>
             </div>
           `;
         }
+
+        const cleanHolder = (t.holderName || 'INVITADO')
+          .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+          .trim();
+        const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
+        const passCode = (t.id || t.ticketId || '0000').replace(/^#/, '').slice(0, 5).toUpperCase();
 
         return `
           <div class="cf-ticket absolute origin-center will-change-transform w-[280px] h-[440px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
@@ -2975,11 +3154,10 @@
             </svg>
             <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
               <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border text-[${strokeColor}] border-[${strokeColor}]/40 bg-[${strokeColor}]/15">
-                    ${badgeLabel}
+                <div class="flex items-center justify-start">
+                  <span class="text-[10px] font-display font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full border text-[${strokeColor}] border-[${strokeColor}]/40 bg-[${strokeColor}]/15">
+                    VIP
                   </span>
-                  <span class="text-xs">${badgeEmoji}</span>
                 </div>
                 <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
                   ${t.title}
@@ -2998,13 +3176,13 @@
                 </div>
               </div>
               <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                <span class="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-                  ${t.holderName || 'INVITADO'}
-                </span>
+                <h3 class="font-display text-white text-lg tracking-wider uppercase truncate">
+                  ${cleanHolder || 'INVITADO'} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                </h3>
                 <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                  <span class="font-mono font-bold text-neutral-300">${t.ticketId || '#0000'}</span>
+                  <span class="font-mono font-bold text-neutral-300">#${passCode}</span>
                   <span>·</span>
-                  <span class="uppercase tracking-wider">${t.verifiedProvider || 'VERIFICADO'}</span>
+                  <span class="uppercase tracking-wider">${t.verifiedProvider || 'VERIFICADO CON GOOGLE'}</span>
                 </div>
               </div>
             </div>
@@ -3672,6 +3850,8 @@
       }
     }
 
+    let mapVenueSearchDebounce = null;
+
     async function reverseGeocodeMapCoords(lat, lng) {
       const loader = document.getElementById('mapAddressLoader');
       const loaderText = document.getElementById('mapAddressLoaderText');
@@ -3683,28 +3863,48 @@
       if (coordsDisplay) coordsDisplay.innerText = `Lat: ${lat.toFixed(5)} · Lng: ${lng.toFixed(5)}`;
 
       try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`, {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&namedetails=1&addressdetails=1`, {
           headers: { 'Accept-Language': 'es, en' }
         });
         if (!resp.ok) throw new Error('Error de conexión con Nominatim');
         const data = await resp.json();
-        if (data && data.display_name) {
+        if (data) {
           const addr = data.address || {};
-          const road = addr.road || addr.pedestrian || addr.street || '';
-          const neighborhood = addr.neighbourhood || addr.suburb || addr.quarter || addr.city_district || '';
+
+          // 1. Detectar si el punto corresponde a un local, salón, hotel o club registrado
+          const venueName =
+            data.name ||
+            (data.namedetails && (data.namedetails.name || data.namedetails['name:es'])) ||
+            addr.amenity ||
+            addr.leisure ||
+            addr.building ||
+            addr.tourism ||
+            addr.hotel ||
+            addr.club ||
+            null;
+
+          const streetAddress = [
+            addr.road || addr.pedestrian || addr.street,
+            addr.house_number,
+            addr.suburb || addr.neighbourhood || addr.city_district
+          ].filter(Boolean).join(', ');
+
           const city = addr.city || addr.town || addr.village || addr.county || '';
 
+          // 2. Si hay un salón o local reconocido, encabezar con su nombre
           let formatted = '';
-          if (road && neighborhood) {
-            formatted = `${road}, ${neighborhood}${city ? ` · ${city}` : ''}`;
-          } else if (road && city) {
-            formatted = `${road} · ${city}`;
-          } else if (neighborhood && city) {
-            formatted = `${neighborhood} · ${city}`;
-          } else {
+          if (venueName) {
+            const secondary = streetAddress || city;
+            formatted = secondary ? `${venueName} · ${secondary}` : venueName;
+          } else if (streetAddress) {
+            formatted = `${streetAddress}${city ? ` · ${city}` : ''}`;
+          } else if (data.display_name) {
             formatted = data.display_name.split(',').slice(0, 3).join(', ');
+          } else {
+            formatted = `Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
           }
-          tempPickerAddress = formatted.trim() || data.display_name;
+
+          tempPickerAddress = formatted.trim();
         } else {
           tempPickerAddress = `Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
@@ -3715,6 +3915,115 @@
         if (loader) loader.classList.add('hidden');
         if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
       }
+    }
+
+    function handleMapVenueSearchInput(val) {
+      const clearBtn = document.getElementById('mapVenueSearchClearBtn');
+      if (clearBtn) {
+        if (val && val.trim().length > 0) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+      }
+      if (mapVenueSearchDebounce) clearTimeout(mapVenueSearchDebounce);
+      if (!val || val.trim().length < 2) {
+        hideMapVenueSearchResults();
+        return;
+      }
+      mapVenueSearchDebounce = setTimeout(() => {
+        executeMapVenueSearch(val);
+      }, 380);
+    }
+
+    function clearMapVenueSearch() {
+      const input = document.getElementById('mapVenueSearchInput');
+      const clearBtn = document.getElementById('mapVenueSearchClearBtn');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+      hideMapVenueSearchResults();
+    }
+
+    function hideMapVenueSearchResults() {
+      const dropdown = document.getElementById('mapVenueSearchResultsDropdown');
+      if (dropdown) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+      }
+    }
+
+    async function executeMapVenueSearch(query) {
+      const q = (query || '').trim();
+      if (!q || q.length < 2) return;
+
+      const dropdown = document.getElementById('mapVenueSearchResultsDropdown');
+      if (dropdown) {
+        dropdown.classList.remove('hidden');
+        dropdown.innerHTML = `<div class="p-3 text-center text-xs text-neutral-400 font-sans">Buscando salones y recintos...</div>`;
+      }
+
+      try {
+        const resp = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=5`, {
+          headers: { 'Accept-Language': 'es, en' }
+        });
+        if (resp.ok) {
+          const results = await resp.json();
+          if (Array.isArray(results) && results.length > 0) {
+            if (dropdown) {
+              dropdown.innerHTML = results.map((res) => {
+                const aData = res.address || {};
+                const name = res.name || aData.amenity || aData.building || aData.tourism || res.display_name.split(',')[0];
+                const subtitle = res.display_name.split(',').slice(1, 4).join(', ');
+                const isVenue = Boolean(aData.amenity || aData.leisure || aData.building || aData.tourism);
+                const safeName = (name || '').replace(/'/g, "\\'");
+                const safeFull = (res.display_name || '').replace(/'/g, "\\'");
+
+                return `
+                  <button type="button" onclick="selectMapVenueSearchResult(${res.lat}, ${res.lon}, '${safeName}', '${safeFull}')" class="w-full p-2.5 text-left hover:bg-[#1E2025] transition-colors flex items-start gap-2.5 cursor-pointer focus:outline-none">
+                    <span class="text-sm mt-0.5 shrink-0">${isVenue ? '🏛️' : '📍'}</span>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-display font-black text-xs text-white uppercase tracking-wide truncate">
+                        ${escapeHtml(name)}
+                      </p>
+                      <p class="font-sans text-[11px] text-neutral-400 truncate mt-0.5">
+                        ${escapeHtml(subtitle || res.display_name)}
+                      </p>
+                    </div>
+                  </button>
+                `;
+              }).join('');
+            }
+          } else {
+            if (dropdown) dropdown.innerHTML = `<div class="p-3 text-center text-xs text-neutral-400 font-sans">No se encontraron recintos con ese nombre</div>`;
+          }
+        }
+      } catch (e) {
+        console.warn('Error en búsqueda de venues:', e);
+        if (dropdown) dropdown.innerHTML = `<div class="p-3 text-center text-xs text-red-400 font-sans">Error al conectar con el mapa</div>`;
+      }
+    }
+
+    function selectMapVenueSearchResult(lat, lng, name, fullName) {
+      tempPickerCoords = { lat: Number(lat), lng: Number(lng) };
+      if (locationPickerMap && locationPickerMarker) {
+        locationPickerMap.setView([lat, lng], 17);
+        locationPickerMarker.setLatLng([lat, lng]);
+      }
+      const coordsDisplay = document.getElementById('mapDetectedCoordsText');
+      const addrDisplay = document.getElementById('mapDetectedAddressText');
+      if (coordsDisplay) coordsDisplay.innerText = `Lat: ${Number(lat).toFixed(5)} · Lng: ${Number(lng).toFixed(5)}`;
+
+      let formatted = name;
+      if (fullName && fullName !== name) {
+        const parts = fullName.split(',').slice(1, 3).map(p => p.trim()).filter(Boolean);
+        if (parts.length > 0) {
+          formatted = `${name} · ${parts.join(', ')}`;
+        }
+      }
+      tempPickerAddress = formatted.trim();
+      if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
+
+      clearMapVenueSearch();
     }
 
     function centerMapOnCurrentLocation() {
@@ -4082,6 +4391,91 @@
       if (profileName) profileName.innerText = name.toUpperCase();
     }
 
+    function updateUserAvatarDom(avatarUrl) {
+      if (!avatarUrl) return;
+      const topAvatar = document.getElementById('topHudUserAvatar');
+      if (topAvatar) topAvatar.src = avatarUrl;
+      const profileAvatar = document.getElementById('profileUserAvatarDisplay');
+      if (profileAvatar) profileAvatar.src = avatarUrl;
+    }
+
+    async function handleProfileAvatarUpload(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Por favor selecciona una imagen válida');
+        return;
+      }
+
+      const spinner = document.getElementById('profileAvatarSpinner');
+      if (spinner) spinner.classList.remove('hidden');
+
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 400;
+
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              if (spinner) spinner.classList.add('hidden');
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+            if (!compressedBase64.startsWith('data:image/webp')) {
+              compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            }
+
+            // Feedback visual inmediato
+            updateUserAvatarDom(compressedBase64);
+
+            // Persistir en Firebase Auth & Firestore
+            if (fbCurrentUser) {
+              try {
+                await fbCurrentUser.updateProfile({ photoURL: compressedBase64 });
+                if (fbDb) {
+                  await fbDb.collection('users').doc(fbCurrentUser.uid).set({
+                    photoUrl: compressedBase64
+                  }, { merge: true });
+                }
+              } catch (err) {
+                console.warn('Error persistiendo avatar:', err);
+              }
+            }
+
+            if (spinner) spinner.classList.add('hidden');
+            showToast('✦ Foto de perfil actualizada');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Error procesando imagen:', err);
+        if (spinner) spinner.classList.add('hidden');
+        showToast('Error al actualizar foto');
+      }
+    }
+
     async function handleLogoutHtml() {
       try {
         if (fbAuth) {
@@ -4246,6 +4640,56 @@
         emPassesUnsubscribe = null;
       }
       openMyEventsModal();
+    }
+
+    function openMasterDoorQrModal() {
+      const modal = document.getElementById('masterDoorQrModal');
+      if (!modal) return;
+      if (!currentEmEventData || !currentEmEventData.doorSecretToken) {
+        const token = 'door_' + (currentEmEventId || 'ev').slice(-4) + '_' + Math.random().toString(36).substring(2, 8);
+        if (currentEmEventData) currentEmEventData.doorSecretToken = token;
+        if (fbDb && currentEmEventId) {
+          fbDb.collection('events').doc(currentEmEventId).update({ doorSecretToken: token }).catch(console.warn);
+        }
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeMasterDoorQrModal() {
+      const modal = document.getElementById('masterDoorQrModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function copyMasterDoorQrPayload() {
+      const token = (currentEmEventData && currentEmEventData.doorSecretToken) || 'door_token';
+      const payload = `plus1://pair-door?eventId=${currentEmEventId}&token=${token}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(payload);
+        showToast('📋 ENLACE DE VINCULACIÓN COPIADO');
+      }
+    }
+
+    async function revokeMasterDoorAccess() {
+      const btn = document.getElementById('emRevokeDoorBtn');
+      if (btn) btn.innerText = 'REVOCANDO...';
+      const newToken = 'door_' + (currentEmEventId || 'ev').slice(-4) + '_' + Math.random().toString(36).substring(2, 8);
+      if (currentEmEventData) currentEmEventData.doorSecretToken = newToken;
+
+      if (fbDb && currentEmEventId) {
+        try {
+          await fbDb.collection('events').doc(currentEmEventId).update({
+            doorSecretToken: newToken,
+            doorSecretRevokedAt: Date.now()
+          });
+          showToast('🔑 ACCESOS REVOCADOS · NUEVO CÓDIGO GENERADO');
+        } catch (e) {
+          console.warn('Error revocando door token:', e);
+          showToast('Error al revocar accesos en Firestore');
+        }
+      } else {
+        showToast('🔑 ACCESOS REVOCADOS · NUEVO CÓDIGO GENERADO');
+      }
+      if (btn) btn.innerText = 'REVOCAR ACCESOS DE PUERTA';
     }
 
     function switchEmTab(tab) {
@@ -4739,7 +5183,7 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    // Validación de eventos activos antes de abrir el escáner
+    // Validación de eventos activos antes de abrir el escáner (Anfitrión o Staff de Puerta)
     async function handleScanQrButtonClick() {
       if (!fbCurrentUser) {
         // Usuario no autenticado -> No intentar abrir cámara ni pedir permisos
@@ -4748,6 +5192,7 @@
       }
 
       try {
+        // 1. Eventos creados por el usuario (Anfitrión)
         const snap = await fbDb.collection('events').where('hostUserId', '==', fbCurrentUser.uid).get();
         const hostEvents = [];
         if (snap) {
@@ -4756,19 +5201,59 @@
           });
         }
 
-        if (hostEvents.length === 0) {
-          // CASO A: EL USUARIO NO TIENE EVENTOS
-          // No intentes abrir la cámara ni pidas permisos de video. Despliega modal
+        // 2. Eventos donde es Staff de Puerta (role: 'DOOR')
+        const staffEvents = [];
+        try {
+          const staffSnap = await fbDb.collectionGroup('staff')
+            .where('userId', '==', fbCurrentUser.uid)
+            .where('role', '==', 'DOOR')
+            .get();
+          if (staffSnap) {
+            for (const sDoc of staffSnap.docs) {
+              const evRef = sDoc.ref.parent.parent;
+              if (evRef) {
+                const evDoc = await evRef.get();
+                if (evDoc.exists) {
+                  staffEvents.push({ id: evDoc.id, ...evDoc.data() });
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Fallback checking staff door pairing in collectionGroup:', err);
+        }
+
+        // 3. Respaldo local de Staff de Puerta vinculado
+        const localDoorEventId = localStorage.getItem('plus1_active_door_event');
+        if (localDoorEventId && !staffEvents.some(se => se.id === localDoorEventId)) {
+          try {
+            const evDoc = await fbDb.collection('events').doc(localDoorEventId).get();
+            if (evDoc.exists) {
+              staffEvents.push({ id: evDoc.id, ...evDoc.data() });
+            }
+          } catch (e) {
+            console.warn('Local staff check error:', e);
+          }
+        }
+
+        // Combinar eventos únicos autorizados
+        const allAuthorizedEvents = [
+          ...hostEvents,
+          ...staffEvents.filter(se => !hostEvents.some(he => he.id === se.id))
+        ];
+
+        if (allAuthorizedEvents.length === 0) {
+          // CASO A: EL USUARIO NO TIENE EVENTOS COMO HOST NI COMO STAFF
           openDoorModal();
-        } else if (hostEvents.length === 1) {
+        } else if (allAuthorizedEvents.length === 1) {
           // CASO B: EL USUARIO TIENE EXACTAMENTE 1 EVENTO
-          openScannerScreen(hostEvents[0].id, hostEvents[0].title);
+          openScannerScreen(allAuthorizedEvents[0].id, allAuthorizedEvents[0].title);
         } else {
-          // CASO B: EL USUARIO TIENE MÁS DE 1 EVENTO
-          openSelectEventToScanModal(hostEvents);
+          // CASO C: EL USUARIO TIENE MÁS DE 1 EVENTO
+          openSelectEventToScanModal(allAuthorizedEvents);
         }
       } catch (err) {
-        console.warn('Error consultando eventos del anfitrión:', err);
+        console.warn('Error consultando eventos para escanear:', err);
         openDoorModal();
       }
     }
@@ -4776,8 +5261,24 @@
     // Funciones para Pantalla Escáner QR (ScannerScreen / /scanner)
     let scannerStream = null;
     let scannerTorchOn = false;
+    let currentScannerEventId = null;
+    let scannerDetectorInterval = null;
+
+    function showScannerToast(msg) {
+      const toast = document.getElementById('scannerToast');
+      if (toast) {
+        toast.innerHTML = `<span>${msg || '🟢 ACCESO AUTORIZADO · PASE VERIFICADO'}</span>`;
+        toast.classList.remove('hidden');
+        toast.classList.add('flex');
+        setTimeout(() => {
+          toast.classList.remove('flex');
+          toast.classList.add('hidden');
+        }, 3200);
+      }
+    }
 
     function openScannerScreen(eventId, eventTitle) {
+      currentScannerEventId = eventId || localStorage.getItem('plus1_active_door_event') || '';
       const screen = document.getElementById('scannerScreenView');
       if (screen) screen.classList.remove('hidden');
 
@@ -4787,7 +5288,12 @@
         titleElem.innerText = eventTitle ? eventTitle.toUpperCase() : 'ESCANEAR PASE QR';
       }
       if (subElem) {
-        subElem.innerText = eventTitle ? 'CONTROL DE PUERTA EN VIVO' : 'PUERTA +1 · CONTROL';
+        const localDoorEvent = localStorage.getItem('plus1_active_door_event');
+        if (localDoorEvent && localDoorEvent === currentScannerEventId) {
+          subElem.innerText = '🟢 MODO PUERTA ACTIVADO (STAFF)';
+        } else {
+          subElem.innerText = eventTitle ? 'CONTROL DE PUERTA EN VIVO' : 'PUERTA +1 · CONTROL';
+        }
       }
 
       const video = document.getElementById('scannerVideoFeed');
@@ -4804,10 +5310,12 @@
               video.classList.remove('opacity-0');
               video.classList.add('opacity-100');
               if (fallback) fallback.classList.add('hidden');
+              initLiveBarcodeDetector(video);
             }).catch(() => {
               video.classList.remove('opacity-0');
               video.classList.add('opacity-100');
               if (fallback) fallback.classList.add('hidden');
+              initLiveBarcodeDetector(video);
             });
           }
         }).catch((err) => {
@@ -4821,9 +5329,91 @@
       }
     }
 
+    function initLiveBarcodeDetector(videoEl) {
+      if (!('BarcodeDetector' in window)) return;
+      try {
+        const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+        if (scannerDetectorInterval) clearInterval(scannerDetectorInterval);
+        scannerDetectorInterval = setInterval(async () => {
+          if (videoEl && videoEl.readyState === 4) {
+            try {
+              const codes = await detector.detect(videoEl);
+              if (codes && codes.length > 0 && codes[0].rawValue) {
+                processScannerQrCode(codes[0].rawValue);
+              }
+            } catch (e) {}
+          }
+        }, 600);
+      } catch (err) {
+        console.warn('BarcodeDetector no inicializable:', err);
+      }
+    }
+
+    async function processScannerQrCode(rawCode) {
+      if (!rawCode) return;
+      const trimmed = rawCode.trim();
+
+      // 1. Manejar QR Maestro de Puerta: plus1://pair-door?eventId=...&token=...
+      if (trimmed.startsWith('plus1://pair-door')) {
+        let queryStr = trimmed.includes('?') ? trimmed.split('?')[1] : '';
+        const params = new URLSearchParams(queryStr);
+        const targetEventId = params.get('eventId');
+        const token = params.get('token');
+
+        if (!targetEventId) {
+          showScannerToast('⚠️ CÓDIGO QR NO VÁLIDO');
+          return;
+        }
+
+        const staffUid = fbCurrentUser ? fbCurrentUser.uid : ('staff_' + Math.random().toString(36).substring(2, 8));
+        const staffName = (fbCurrentUser && fbCurrentUser.displayName) || 'Staff Puerta';
+
+        if (fbDb) {
+          try {
+            await fbDb.collection('events').doc(targetEventId).collection('staff').doc(staffUid).set({
+              userId: staffUid,
+              userName: staffName,
+              role: 'DOOR',
+              token: token || '',
+              linkedAt: Date.now()
+            }, { merge: true });
+          } catch (e) {
+            console.warn('Error guardando staff en Firestore:', e);
+          }
+        }
+
+        localStorage.setItem('plus1_active_door_event', targetEventId);
+        currentScannerEventId = targetEventId;
+
+        const subElem = document.getElementById('scannerEventSubtitle');
+        if (subElem) subElem.innerText = '🟢 MODO PUERTA ACTIVADO (STAFF)';
+
+        if (fbDb) {
+          fbDb.collection('events').doc(targetEventId).get().then(snap => {
+            if (snap.exists) {
+              const d = snap.data();
+              const titleElem = document.getElementById('scannerEventTitle');
+              if (titleElem) titleElem.innerText = (d.title || 'EVENTO VINCULADO').toUpperCase();
+            }
+          }).catch(console.warn);
+        }
+
+        showScannerToast('🟢 MODO PUERTA ACTIVADO · EVENTO VINCULADO');
+        return;
+      }
+
+      // 2. Validación estándar de ticket
+      triggerScannerSimulation();
+    }
+
     function closeScannerScreen() {
       const screen = document.getElementById('scannerScreenView');
       if (screen) screen.classList.add('hidden');
+
+      if (scannerDetectorInterval) {
+        clearInterval(scannerDetectorInterval);
+        scannerDetectorInterval = null;
+      }
 
       if (scannerStream) {
         scannerStream.getTracks().forEach((track) => track.stop());
@@ -4868,15 +5458,11 @@
 
     function triggerScannerSimulation() {
       const viewfinder = document.getElementById('scannerViewfinder');
-      const toast = document.getElementById('scannerToast');
       if (viewfinder) {
         viewfinder.classList.remove('scale-100');
         viewfinder.classList.add('scale-105');
       }
-      if (toast) {
-        toast.classList.remove('hidden');
-        toast.classList.add('flex');
-      }
+      showScannerToast('🟢 ACCESO AUTORIZADO · PASE VERIFICADO');
 
       setTimeout(() => {
         if (viewfinder) {
@@ -4884,13 +5470,6 @@
           viewfinder.classList.add('scale-100');
         }
       }, 2000);
-
-      setTimeout(() => {
-        if (toast) {
-          toast.classList.remove('flex');
-          toast.classList.add('hidden');
-        }
-      }, 3200);
     }
 
     // ==========================================
@@ -5063,11 +5642,13 @@
 
         if (type === 'VIP_DECLINED' || type === 'CAPACITY_REACHED') {
           const flyerHtml = n.eventImageUrl
-            ? `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10">
+            ? `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
                  <img src="${escapeHtmlAttr(n.eventImageUrl)}" alt="${escapeHtmlAttr(n.eventTitle || 'Evento')}" class="w-full h-full object-cover">
                </div>`
-            : `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10 flex items-center justify-center font-display text-xs text-[#E87A72] uppercase font-bold">
-                 ${escapeHtmlAttr(n.eventTitle ? n.eventTitle.slice(0, 4) : '+1')}
+            : `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
+                 <div class="w-full h-full flex items-center justify-center bg-[#1E2025] text-white font-display text-[10px] text-center p-1 uppercase">
+                   ${escapeHtmlAttr(n.eventTitle ? n.eventTitle.slice(0, 5) : '+1')}
+                 </div>
                </div>`;
 
           return `
@@ -5078,14 +5659,14 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between">
-                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                      ${escapeHtmlAttr(n.title || 'CUPO COMPLETO · ACCESO LIMITADO')}
+                    <h4 class="font-display text-white text-base tracking-wide uppercase truncate">
+                      ${escapeHtmlAttr(n.eventTitle || n.title || 'Evento')}
                     </h4>
                     <span class="font-sans text-[11px] text-neutral-400 font-bold ml-2 flex-shrink-0">
                       ${timeAgo}
                     </span>
                   </div>
-                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  <p class="font-sans text-[#9CA3AF] text-xs mt-1 leading-relaxed">
                     ${escapeHtmlAttr(n.message || 'Cupos completados por el momento. ¡Atento a nuevas fechas!')}
                   </p>
                   <div class="mt-2.5">
@@ -5186,7 +5767,7 @@
           await fbDb.collection('notifications').add({
             userId: senderId,
             type: 'VIP_DECLINED',
-            title: 'CUPO COMPLETO · ACCESO LIMITADO',
+            title: eventTitle || 'CUPO COMPLETO · ACCESO LIMITADO',
             message: randomReason,
             eventTitle: eventTitle || '',
             eventImageUrl: eventImageUrl,
@@ -5224,6 +5805,27 @@
         showToast('Notificaciones marcadas como leídas');
       } catch (err) {
         console.error('Error marcando notificaciones:', err);
+      }
+    }
+
+    async function deleteNotification(id) {
+      try {
+        if (!id) return;
+        const cardEl = document.getElementById('notif-card-' + id);
+        if (cardEl) {
+          cardEl.style.transition = 'all 0.25s ease-in-out';
+          cardEl.style.transform = 'translateX(-100%)';
+          cardEl.style.opacity = '0';
+          cardEl.style.maxHeight = '0px';
+          cardEl.style.marginBottom = '0px';
+          cardEl.style.padding = '0px';
+          setTimeout(() => cardEl.remove(), 260);
+        }
+        if (fbDb && id && !id.startsWith('mock_')) {
+          await fbDb.collection('notifications').doc(id).delete();
+        }
+      } catch (err) {
+        console.warn('Error eliminando notificación:', err);
       }
     }
 

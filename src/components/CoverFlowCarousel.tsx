@@ -65,7 +65,6 @@ export const CoverFlowCarousel: React.FC<CoverFlowCarouselProps> = ({
               // Tarjetas a la izquierda: rotación 60° a 65°, translateZ(-80px)
               rotateY = 62;
               scale = 0.86;
-              opacity = Math.max(0.4, 0.75 + offset * 0.15);
               zIndex = 10 + offset;
               translateX = -140 + (offset + 1) * 38;
               translateZ = -80;
@@ -73,7 +72,6 @@ export const CoverFlowCarousel: React.FC<CoverFlowCarouselProps> = ({
               // Tarjetas a la derecha: rotación -60° a -65°, translateZ(-80px)
               rotateY = -62;
               scale = 0.86;
-              opacity = Math.max(0.4, 0.75 - offset * 0.15);
               zIndex = 10 - offset;
               translateX = 140 + (offset - 1) * 38;
               translateZ = -80;
@@ -93,7 +91,8 @@ export const CoverFlowCarousel: React.FC<CoverFlowCarouselProps> = ({
                   z: translateZ,
                   rotateY,
                   scale,
-                  opacity,
+                  opacity: 1,
+                  filter: isCenter ? 'blur(0px)' : 'blur(2.5px)',
                 }}
                 transition={{
                   type: 'spring',

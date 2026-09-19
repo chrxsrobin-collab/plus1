@@ -1,8 +1,10 @@
 export interface PassItem {
   id: string;
   eventId?: string;
+  eventTitle?: string;
+  eventImageUrl?: string;
   title: string;
-  emoji: string;
+  emoji?: string;
   badgeNumber?: number;
   dateStr: string;
   timeStr: string;
@@ -11,10 +13,12 @@ export interface PassItem {
   statusText: string;
   companionsCount: number; // e.g. 1 for 'Tú + 1'
   imageUrl?: string;
+  allowsPlusOne?: boolean;
+  withPlusOne?: boolean;
   accentBorderColor?: string;
   subHeader?: string;          // ej. "妈妈"
   holderName?: string;         // ej. "CRIS PÉREZ"
-  listType?: string;           // ej. "LISTA G."
+  listType?: string;           // ej. "VIP"
   ticketId?: string;           // ej. "#4092"
   verifiedProvider?: string;   // ej. "VERIFICADO CON GOOGLE"
   qrCodeValue?: string;

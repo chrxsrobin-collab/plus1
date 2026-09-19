@@ -40,7 +40,7 @@ export const TopHud: React.FC<TopHudProps> = ({
     return () => unsubscribe();
   }, [auth.currentUser]);
 
-  const displayCount = unreadNotifCount > 0 ? unreadNotifCount : (user.unreadNotifications || 0);
+  const displayCount = auth.currentUser ? unreadNotifCount : (user.unreadNotifications || 0);
   return (
     <motion.header
       initial={{ opacity: 0, y: -10 }}

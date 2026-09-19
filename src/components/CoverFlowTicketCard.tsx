@@ -90,22 +90,17 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
       <div className="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
         {/* CABECERA (Y: 0..105) */}
         <div className="h-[88px] flex flex-col justify-between text-center px-1">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-start">
             <span
-              className="text-[10px] font-sans font-black tracking-widest uppercase px-2 py-0.5 rounded-full border"
+              className="text-[10px] font-display font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full border"
               style={{
                 color: accent,
                 borderColor: `${accent}40`,
                 backgroundColor: `${accent}15`,
               }}
             >
-              {ticket.status === 'capacity_reached'
-                ? 'AFORO LLENO'
-                : ticket.status === 'pending'
-                ? 'SOLICITUD EN ESPERA'
-                : ticket.accessType || ticket.listType || 'PASE ACTIVO'}
+              VIP
             </span>
-            <span className="text-xs">{ticket.emoji || (ticket.status === 'capacity_reached' ? '⏳' : '🎟️')}</span>
           </div>
 
           <h3 className="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
@@ -210,14 +205,21 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
                   <rect x="68" y="80" width="12" height="12" fill="#000000" />
                 </svg>
 
-                {/* Logo central mini +1 */}
-                <div
-                  className="absolute inset-0 m-auto w-6 h-6 rounded-md flex items-center justify-center shadow"
-                  style={{ backgroundColor: accent }}
-                >
-                  <span className="font-display text-black text-[11px] font-black leading-none">
-                    +1
-                  </span>
+                {/* Miniatura cuadrada del flyer del evento al centro del QR */}
+                <div className="absolute inset-0 m-auto w-[42px] h-[42px] rounded-lg overflow-hidden border-[1.5px] border-white shadow-md bg-[#16171B] flex items-center justify-center">
+                  {(ticket.eventImageUrl || ticket.imageUrl) ? (
+                    <img
+                      src={ticket.eventImageUrl || ticket.imageUrl}
+                      alt={ticket.eventTitle || ticket.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5">
+                      <span className="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">
+                        {ticket.eventTitle ? ticket.eventTitle.slice(0, 4) : '+1'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -232,21 +234,37 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
 
         {/* PIE DEL TICKET (Y: 352..440) */}
         <div className="h-[68px] flex flex-col justify-center text-center px-2">
-          {/* Nombre del titular */}
-          <span className="font-display text-white text-sm font-black tracking-wide uppercase leading-tight">
-            {ticket.holderName || 'CHRIS G. · +1 INCLUIDO'}
-          </span>
+          {(() => {
+            const cleanHolder = (ticket.holderName || 'INVITADO')
+              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+              .trim();
+            const allowsPlusOne = Boolean(
+              ticket.allowsPlusOne ??
+                ticket.withPlusOne ??
+                (ticket.companionsCount && ticket.companionsCount > 0)
+            );
+            const passCode = (ticket.id || ticket.ticketId || '0000')
+              .replace(/^#/, '')
+              .slice(0, 5)
+              .toUpperCase();
 
-          {/* ID de verificación */}
-          <div className="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-            <span className="font-mono font-bold text-neutral-300">
-              {ticket.ticketId || '#4092'}
-            </span>
-            <span>·</span>
-            <span className="uppercase tracking-wider">
-              {ticket.verifiedProvider || 'VERIFICADO CON GOOGLE'}
-            </span>
-          </div>
+            return (
+              <>
+                <h3 className="font-display text-white text-lg tracking-wider uppercase truncate">
+                  {cleanHolder || 'INVITADO'} · {allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                </h3>
+                <div className="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
+                  <span className="font-mono font-bold text-neutral-300">
+                    #{passCode}
+                  </span>
+                  <span>·</span>
+                  <span className="uppercase tracking-wider">
+                    {ticket.verifiedProvider || 'VERIFICADO CON GOOGLE'}
+                  </span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>

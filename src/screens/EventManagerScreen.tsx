@@ -36,6 +36,8 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
     maxCapacity: number;
     type?: string;
     hostUserId?: string;
+    imageUrl?: string;
+    doorSecretToken?: string;
   } | null>(null);
 
   const [passes, setPasses] = useState<GuestPassItem[]>([]);
@@ -44,6 +46,8 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState<boolean>(false);
+  const [isRevokingToken, setIsRevokingToken] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -62,6 +66,11 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
         const snap = await getDoc(doc(db, 'events', eventId));
         if (snap.exists() && isMounted) {
           const d = snap.data();
+          let token = d.doorSecretToken;
+          if (!token) {
+            token = `door_${eventId.slice(-4)}_${Math.random().toString(36).substring(2, 8)}`;
+            updateDoc(doc(db, 'events', eventId), { doorSecretToken: token }).catch(console.warn);
+          }
           setEventData({
             title: d.title || 'Evento sin título',
             date: d.date || '',
@@ -70,7 +79,8 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
             maxCapacity: Number(d.maxCapacity || d.guestLimit || 150),
             type: d.type || 'public',
             hostUserId: d.hostUserId,
-            imageUrl: d.imageUrl || d.flyerImage || '',
+            imageUrl: d.imageUrl || d.artImage || d.flyerImage || '',
+            doorSecretToken: token,
           });
         }
       } catch (err) {
@@ -83,6 +93,25 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
       isMounted = false;
     };
   }, [eventId]);
+
+  // Revocación y regeneración de llaves de staff de puerta
+  const handleRevokeStaffAccess = async () => {
+    setIsRevokingToken(true);
+    try {
+      const newToken = `door_${eventId.slice(-4)}_${Math.random().toString(36).substring(2, 8)}`;
+      await updateDoc(doc(db, 'events', eventId), {
+        doorSecretToken: newToken,
+        doorSecretRevokedAt: Date.now(),
+      });
+      setEventData((prev) => (prev ? { ...prev, doorSecretToken: newToken } : null));
+      showToast('🔑 ACCESOS REVOCADOS · NUEVO CÓDIGO GENERADO');
+    } catch (err) {
+      console.error('Error al revocar accesos de puerta:', err);
+      showToast('Error al revocar accesos en Firestore');
+    } finally {
+      setIsRevokingToken(false);
+    }
+  };
 
   // 2. Escucha reactiva en tiempo real de todos los pases del evento
   useEffect(() => {
@@ -165,14 +194,29 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
       // DISPARADOR B: Notificación para el ASISTENTE
       const passItem = passes.find((p) => p.id === passId);
       if (passItem && passItem.userId) {
+        const currentTitle = eventData?.title || passItem.eventTitle || 'Evento +1';
+        let currentImageUrl = eventData?.imageUrl || passItem.eventImageUrl || '';
+
+        if (!currentImageUrl && (passItem.eventId || eventId)) {
+          try {
+            const evDoc = await getDoc(doc(db, 'events', passItem.eventId || eventId));
+            if (evDoc.exists()) {
+              const evData = evDoc.data();
+              currentImageUrl = evData.imageUrl || evData.artImage || evData.flyerImage || '';
+            }
+          } catch (e) {
+            console.warn('Fallback al consultar flyer de evento:', e);
+          }
+        }
+
         await addDoc(collection(db, 'notifications'), {
           userId: passItem.userId,
           type: 'VIP_APPROVED',
-          title: '¡PASE VIP APROBADO! 🎉',
-          message: `Tu acceso para ${passItem.eventTitle || eventData?.title || 'el evento'} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
+          title: currentTitle,
+          message: `Tu acceso para ${currentTitle} ya está activo. Toca para ver tu ticket QR en tu billetera.`,
           eventId: passItem.eventId || eventId,
-          eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
-          eventImageUrl: passItem.eventImageUrl || eventData?.imageUrl || '',
+          eventTitle: currentTitle,
+          eventImageUrl: currentImageUrl,
           passId: passId,
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -217,14 +261,29 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
       // DISPARADOR B: Notificación para el ASISTENTE
       const passItem = passes.find((p) => p.id === passId);
       if (passItem && passItem.userId) {
+        const currentTitle = eventData?.title || passItem.eventTitle || 'Evento +1';
+        let currentImageUrl = eventData?.imageUrl || passItem.eventImageUrl || '';
+
+        if (!currentImageUrl && (passItem.eventId || eventId)) {
+          try {
+            const evDoc = await getDoc(doc(db, 'events', passItem.eventId || eventId));
+            if (evDoc.exists()) {
+              const evData = evDoc.data();
+              currentImageUrl = evData.imageUrl || evData.artImage || evData.flyerImage || '';
+            }
+          } catch (e) {
+            console.warn('Fallback al consultar flyer de evento:', e);
+          }
+        }
+
         await addDoc(collection(db, 'notifications'), {
           userId: passItem.userId,
           type: 'VIP_DECLINED',
-          title: 'CUPO COMPLETO · ACCESO LIMITADO',
-          message: randomMessage,
           eventId: passItem.eventId || eventId,
-          eventTitle: passItem.eventTitle || eventData?.title || 'Evento +1',
-          eventImageUrl: passItem.eventImageUrl || eventData?.imageUrl || '',
+          eventTitle: currentTitle,
+          eventImageUrl: currentImageUrl,
+          title: currentTitle,
+          message: randomMessage,
           passId: passId,
           senderName: auth.currentUser?.displayName || 'Anfitrión',
           senderId: auth.currentUser?.uid || '',
@@ -396,6 +455,16 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
             <span className="text-[9px] text-neutral-400 font-medium">Admitidos</span>
           </div>
         </section>
+
+        {/* BOTÓN VINCULAR STAFF DE PUERTA (QR MAESTRO) */}
+        <button
+          type="button"
+          onClick={() => setIsStaffModalOpen(true)}
+          className="w-full py-3 px-4 rounded-2xl bg-[#16171B] hover:bg-[#202227] border border-[#FAB205]/40 hover:border-[#FAB205]/70 text-[#FAB205] font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-md mb-3 cursor-pointer"
+        >
+          <span className="text-base">🔑</span>
+          <span>VINCULAR STAFF DE PUERTA</span>
+        </button>
 
         {/* 3. PESTAÑAS SEGMENTADAS DE GESTIÓN (TABS) */}
         <div className="flex bg-[#16171B] p-1 rounded-2xl border border-[#26282E] mb-3 relative">
@@ -648,6 +717,107 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
         </div>
 
       </div>
+
+      {/* MODAL QR MAESTRO DE PUERTA (STAFF) */}
+      <AnimatePresence>
+        {isStaffModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="w-full max-w-sm bg-[#16171B] border border-[#26282E] rounded-3xl p-5 sm:p-6 text-center shadow-2xl relative flex flex-col items-center select-none"
+            >
+              {/* Botón cerrar */}
+              <button
+                type="button"
+                onClick={() => setIsStaffModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-sm font-bold active:scale-90 transition-all cursor-pointer"
+              >
+                ✕
+              </button>
+
+              {/* Badge superior */}
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FAB205]/15 border border-[#FAB205]/40 text-[#FAB205] text-[10px] font-display font-black tracking-widest uppercase mb-3">
+                <span>🔑</span>
+                <span>ROL DE PUERTA</span>
+              </div>
+
+              {/* Título */}
+              <h2 className="font-display text-white text-xl sm:text-2xl font-black tracking-wider uppercase mb-1.5 leading-tight">
+                ACCESO DE PUERTA (STAFF)
+              </h2>
+
+              {/* Subtexto */}
+              <p className="font-sans text-xs text-neutral-400 leading-relaxed max-w-xs mb-5">
+                Pide a tu guardia o amigo que escanee este código desde su app +1 para habilitar el lector de entradas de este evento.
+              </p>
+
+              {/* Contenedor QR Maestro */}
+              <div className="relative w-[210px] h-[210px] bg-white rounded-2xl p-3 shadow-2xl flex items-center justify-center mb-4 overflow-hidden border-2 border-white/20">
+                <svg className="w-full h-full text-black fill-current" viewBox="0 0 100 100">
+                  <rect width="100" height="100" fill="#FFFFFF" />
+                  <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
+                  <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                  <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
+                  <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
+                  <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                  <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
+                  <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
+                  <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
+                  <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
+                  <rect x="40" y="8" width="8" height="8" fill="#000000" />
+                  <rect x="52" y="8" width="6" height="14" fill="#000000" />
+                  <rect x="40" y="24" width="14" height="6" fill="#000000" />
+                  <rect x="8" y="40" width="8" height="16" fill="#000000" />
+                  <rect x="22" y="40" width="6" height="8" fill="#000000" />
+                  <rect x="20" y="52" width="14" height="6" fill="#000000" />
+                  <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
+                  <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
+                  <rect x="48" y="48" width="4" height="4" fill="#000000" />
+                  <rect x="68" y="40" width="12" height="6" fill="#000000" />
+                  <rect x="84" y="40" width="8" height="16" fill="#000000" />
+                  <rect x="66" y="52" width="10" height="8" fill="#000000" />
+                  <rect x="40" y="68" width="6" height="18" fill="#000000" />
+                  <rect x="52" y="66" width="10" height="8" fill="#000000" />
+                  <rect x="48" y="80" width="14" height="10" fill="#000000" />
+                  <rect x="68" y="68" width="10" height="10" fill="#000000" />
+                  <rect x="82" y="66" width="10" height="24" fill="#000000" />
+                </svg>
+                {/* Badge central con icono de llave */}
+                <div className="absolute inset-0 m-auto w-10 h-10 rounded-xl bg-black border-2 border-white flex items-center justify-center shadow-lg">
+                  <span className="text-base leading-none">🔑</span>
+                </div>
+              </div>
+
+              {/* Botón copiar payload de vinculación */}
+              <button
+                type="button"
+                onClick={() => {
+                  const payload = `plus1://pair-door?eventId=${eventId}&token=${eventData?.doorSecretToken || 'temp_key'}`;
+                  navigator.clipboard?.writeText(payload);
+                  showToast('📋 ENLACE DE VINCULACIÓN COPIADO');
+                }}
+                className="text-neutral-400 hover:text-white font-sans text-[11px] font-semibold tracking-wide flex items-center space-x-1.5 mb-5 bg-neutral-900/60 hover:bg-neutral-800/80 px-3 py-1.5 rounded-xl border border-neutral-800 transition-all active:scale-95 cursor-pointer"
+              >
+                <span>📋</span>
+                <span>Copiar enlace de vinculación</span>
+              </button>
+
+              {/* Botón Revocar accesos */}
+              <button
+                type="button"
+                disabled={isRevokingToken}
+                onClick={handleRevokeStaffAccess}
+                className="w-full py-3 px-4 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-500/40 hover:border-red-500 text-red-400 hover:text-red-300 font-display text-xs sm:text-sm font-black tracking-wider uppercase transition-all active:scale-95 cursor-pointer flex items-center justify-center space-x-2"
+              >
+                <span>⚠️</span>
+                <span>{isRevokingToken ? 'REVOCANDO...' : 'REVOCAR ACCESOS DE PUERTA'}</span>
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* TOAST FLOTANTE */}
       {toastMessage && (

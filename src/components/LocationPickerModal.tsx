@@ -42,12 +42,18 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [isMapReady, setIsMapReady] = useState<boolean>(false);
 
-  // Consulta gratuita de geocodificación inversa con Nominatim OpenStreetMap
+  // Estados para barra de búsqueda predictiva de recintos / salones
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const searchDebounceRef = useRef<any>(null);
+
+  // Consulta de geocodificación inversa con Nominatim OpenStreetMap priorizando salones, hoteles y recintos
   const reverseGeocode = async (lat: number, lng: number) => {
     setIsLoadingAddress(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&namedetails=1&addressdetails=1`,
         {
           headers: {
             'Accept-Language': 'es, en',
@@ -58,24 +64,45 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         throw new Error('Error al consultar Nominatim');
       }
       const data = await response.json();
-      if (data && data.display_name) {
-        const addr = data.address || {};
-        const road = addr.road || addr.pedestrian || addr.street || '';
-        const neighborhood = addr.neighbourhood || addr.suburb || addr.quarter || addr.city_district || '';
-        const city = addr.city || addr.town || addr.village || addr.county || '';
+      if (data) {
+        const addressData = data.address || {};
 
-        let formatted = '';
-        if (road && neighborhood) {
-          formatted = `${road}, ${neighborhood}${city ? ` · ${city}` : ''}`;
-        } else if (road && city) {
-          formatted = `${road} · ${city}`;
-        } else if (neighborhood && city) {
-          formatted = `${neighborhood} · ${city}`;
+        // 1. Detectar si el punto corresponde a un local, salón, hotel o club registrado:
+        const venueName =
+          data.name ||
+          (data.namedetails && (data.namedetails.name || data.namedetails['name:es'])) ||
+          addressData.amenity ||
+          addressData.leisure ||
+          addressData.building ||
+          addressData.tourism ||
+          addressData.hotel ||
+          addressData.club ||
+          null;
+
+        const streetAddress = [
+          addressData.road || addressData.pedestrian || addressData.street,
+          addressData.house_number,
+          addressData.suburb || addressData.neighbourhood || addressData.city_district,
+        ]
+          .filter(Boolean)
+          .join(', ');
+
+        const city = addressData.city || addressData.town || addressData.village || addressData.county || '';
+
+        // 2. Si hay un salón o local reconocido, encabezar con su nombre:
+        let formattedLocation = '';
+        if (venueName) {
+          const secondary = streetAddress || city;
+          formattedLocation = secondary ? `${venueName} · ${secondary}` : venueName;
+        } else if (streetAddress) {
+          formattedLocation = `${streetAddress}${city ? ` · ${city}` : ''}`;
+        } else if (data.display_name) {
+          formattedLocation = data.display_name.split(',').slice(0, 3).join(', ');
         } else {
-          // Tomar los 3 primeros componentes del display_name
-          formatted = data.display_name.split(',').slice(0, 3).join(', ');
+          formattedLocation = `Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
-        setDetectedAddress(formatted.trim() || data.display_name);
+
+        setDetectedAddress(formattedLocation.trim());
       } else {
         setDetectedAddress(`Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
@@ -85,6 +112,93 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
     } finally {
       setIsLoadingAddress(false);
     }
+  };
+
+  // Búsqueda directa y predictiva de recintos (Nominatim Search API)
+  const executeSearch = async (queryText: string) => {
+    const q = queryText.trim();
+    if (!q || q.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          q
+        )}&format=json&addressdetails=1&limit=5`,
+        {
+          headers: {
+            'Accept-Language': 'es, en',
+          },
+        }
+      );
+      if (resp.ok) {
+        const results = await resp.json();
+        setSearchResults(Array.isArray(results) ? results : []);
+      }
+    } catch (err) {
+      console.warn('Error en búsqueda de venues en Nominatim:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value);
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    if (!value.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      executeSearch(value);
+    }, 380);
+  };
+
+  const handleSelectSearchResult = (result: any) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const newCoords = { lat, lng };
+    setCoords(newCoords);
+
+    if (mapInstanceRef.current && markerInstanceRef.current) {
+      mapInstanceRef.current.setView([lat, lng], 17);
+      markerInstanceRef.current.setLatLng([lat, lng]);
+    }
+
+    const addressData = result.address || {};
+    const venueName =
+      result.name ||
+      addressData.amenity ||
+      addressData.leisure ||
+      addressData.building ||
+      addressData.tourism ||
+      result.display_name.split(',')[0];
+
+    const streetAddress = [
+      addressData.road || addressData.pedestrian || addressData.street,
+      addressData.house_number,
+      addressData.suburb || addressData.neighbourhood || addressData.city_district,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    const city = addressData.city || addressData.town || '';
+    const formatted = venueName
+      ? `${venueName} · ${streetAddress || city || ''}`
+      : streetAddress || result.display_name;
+
+    setDetectedAddress(formatted.trim());
+    setSearchQuery('');
+    setSearchResults([]);
   };
 
   // 1. Cargar biblioteca y estilos de Leaflet si no están presentes
@@ -275,14 +389,90 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Cerrar modal de mapa"
-            className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95"
+            className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer"
           >
             ✕
           </button>
         </div>
 
+        {/* BARRA DE BÚSQUEDA PREDICTIVA DE VENUES Y SALONES */}
+        <div className="relative px-5 py-2.5 bg-[#101114] border-b border-[#26282E]/80 z-30">
+          <div className="relative flex items-center">
+            <span className="absolute left-3 text-neutral-400 text-xs pointer-events-none">🔍</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  executeSearch(searchQuery);
+                }
+              }}
+              placeholder="Buscar salón, local o dirección..."
+              className="w-full h-9 pl-8 pr-8 bg-[#16171B] border border-[#26282E] focus:border-[#E87A72]/60 rounded-xl text-white font-sans text-xs placeholder-neutral-500 focus:outline-none transition-colors"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                }}
+                className="absolute right-2.5 w-5 h-5 rounded-full bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Menú flotante de resultados predictivos */}
+          {isSearching && (
+            <div className="absolute left-5 right-5 top-full mt-1.5 z-40 bg-[#16171B] border border-[#26282E] rounded-2xl shadow-2xl p-2.5 text-center text-xs text-neutral-400 font-sans animate-[fadeIn_0.15s_ease-out]">
+              Buscando salones y recintos...
+            </div>
+          )}
+
+          {!isSearching && searchResults.length > 0 && (
+            <div className="absolute left-5 right-5 top-full mt-1.5 z-40 bg-[#16171B] border border-[#26282E] rounded-2xl shadow-2xl overflow-hidden divide-y divide-[#26282E]/70 max-h-52 overflow-y-auto animate-[fadeIn_0.15s_ease-out]">
+              {searchResults.map((res, i) => {
+                const aData = res.address || {};
+                const name =
+                  res.name ||
+                  aData.amenity ||
+                  aData.building ||
+                  aData.tourism ||
+                  res.display_name.split(',')[0];
+                const subtitle = res.display_name.split(',').slice(1, 4).join(', ');
+                const isVenue = Boolean(
+                  aData.amenity || aData.leisure || aData.building || aData.tourism
+                );
+
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleSelectSearchResult(res)}
+                    className="w-full p-2.5 text-left hover:bg-[#1E2025] transition-colors flex items-start gap-2.5 cursor-pointer focus:outline-none"
+                  >
+                    <span className="text-sm mt-0.5 shrink-0">{isVenue ? '🏛️' : '📍'}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-black text-xs text-white uppercase tracking-wide truncate">
+                        {name}
+                      </p>
+                      <p className="font-sans text-[11px] text-neutral-400 truncate mt-0.5">
+                        {subtitle || res.display_name}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {/* BARRA SUPERIOR DE HERRAMIENTAS */}
-        <div className="px-5 py-2.5 bg-[#121316] border-b border-[#26282E]/60 flex items-center justify-between gap-2">
+        <div className="px-5 py-2 bg-[#121316] border-b border-[#26282E]/60 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={handleCurrentLocation}

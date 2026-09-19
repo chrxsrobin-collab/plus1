@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile, CreatedEventItem } from '../types/home';
 import { mockUserProfile, mockSouvenirs } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { signOut, updateProfile } from 'firebase/auth';
 import BottomNav from '../components/BottomNav';
 import '../styles/fonts.css';
@@ -13,6 +13,7 @@ export interface ProfileScreenProps {
   onBack?: () => void;
   onNavigate?: (route: string) => void;
   onUpdateName?: (newName: string) => void;
+  onUpdateAvatar?: (newAvatarUrl: string) => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -20,6 +21,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onBack,
   onNavigate,
   onUpdateName,
+  onUpdateAvatar,
 }) => {
   const [activeModal, setActiveModal] = useState<
     'events' | 'created_events' | 'streak' | 'store' | 'subscription' | null
@@ -48,6 +50,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [editNameValue, setEditNameValue] = useState(displayName);
   const [isSavingName, setIsSavingName] = useState(false);
 
+  // Estado del Avatar y Uploader con Lápiz flotante
+  const [avatarUrl, setAvatarUrl] = useState<string>(() => {
+    return (
+      auth.currentUser?.photoURL ||
+      user.avatarUrl ||
+      './assets/images/foto_perfil.webp'
+    );
+  });
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
   // Escucha en tiempo real del documento propio del usuario conectado
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -60,10 +73,99 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           setDisplayName(data.name);
           setEditNameValue(data.name);
         }
+        if (data.photoUrl) {
+          setAvatarUrl(data.photoUrl);
+        } else if (auth.currentUser?.photoURL) {
+          setAvatarUrl(auth.currentUser.photoURL);
+        }
       }
     });
     return () => unsubscribe();
   }, [auth.currentUser]);
+
+  // Carga y compresión de la nueva foto de perfil (Canvas 400x400 max, calidad 0.8)
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Por favor selecciona una imagen válida');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 400;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            setIsUploadingAvatar(false);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+          if (!compressedBase64.startsWith('data:image/webp')) {
+            compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          }
+
+          // Feedback inmediato local
+          setAvatarUrl(compressedBase64);
+          if (onUpdateAvatar) {
+            onUpdateAvatar(compressedBase64);
+          }
+
+          // Persistir en Firebase Auth & Firestore
+          if (auth.currentUser) {
+            try {
+              await updateProfile(auth.currentUser, { photoURL: compressedBase64 });
+              await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+                photoUrl: compressedBase64,
+              });
+            } catch (fbErr) {
+              console.warn('Fallback setDoc para avatar:', fbErr);
+              await setDoc(
+                doc(db, 'users', auth.currentUser.uid),
+                { photoUrl: compressedBase64 },
+                { merge: true }
+              );
+            }
+          }
+
+          setIsUploadingAvatar(false);
+          showToast('✦ Foto de perfil actualizada');
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error al procesar la imagen de perfil:', err);
+      setIsUploadingAvatar(false);
+      showToast('Error al actualizar la foto');
+    }
+  };
 
   const handleSaveName = async () => {
     const trimmed = editNameValue.trim();
@@ -331,19 +433,54 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         {/* 2. AVATAR Y DATOS DE PERFIL */}
         <div className="flex flex-col items-center justify-center pt-3 pb-4 text-center">
-          {/* Avatar circular con aro salmón #E87A72 */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.35, ease: 'backOut' }}
-            className="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden"
-          >
-            <img
-              src={user.avatarUrl}
-              alt={user.name || 'Chris G.'}
-              className="w-full h-full object-cover rounded-full"
+          {/* Avatar circular con aro salmón #E87A72 y botón flotante de edición */}
+          <div className="relative inline-block">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: 'backOut' }}
+              className="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden"
+            >
+              <img
+                src={avatarUrl || user.avatarUrl || './assets/images/foto_perfil.webp'}
+                alt={user.name || 'Chris G.'}
+                className="w-full h-full object-cover rounded-full"
+              />
+              {isUploadingAvatar && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center rounded-full">
+                  <div className="w-5 h-5 border-2 border-[#E87A72] border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </motion.div>
+
+            {/* Botón Lápiz Flotante */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Cambiar foto de perfil"
+              title="Cambiar foto de perfil"
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#16171B] hover:bg-[#22252C] border border-white/20 hover:border-[#E87A72] flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer z-10"
+            >
+              <svg
+                className="w-3.5 h-3.5 text-[#E87A72] stroke-current fill-none"
+                viewBox="0 0 24 24"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            </button>
+
+            {/* Input de archivo oculto */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleAvatarChange}
             />
-          </motion.div>
+          </div>
 
           {/* Nombre de usuario con botón de edición (lápiz) */}
           {!isEditingName ? (

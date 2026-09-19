@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
 import '../styles/fonts.css';
 
 export interface ScannerScreenProps {
@@ -24,13 +24,17 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [eventTitle, setEventTitle] = useState<string>('');
+  const [activeEventId, setActiveEventId] = useState<string>(() => {
+    return eventId || (typeof window !== 'undefined' ? localStorage.getItem('plus1_active_door_event') || '' : '');
+  });
+  const [isStaffPaired, setIsStaffPaired] = useState<boolean>(false);
 
-  // Consulta los detalles del evento configurado si se pasa eventId
+  // Consulta los detalles del evento configurado si se pasa activeEventId
   useEffect(() => {
-    if (!eventId) return;
+    if (!activeEventId) return;
     const fetchEventData = async () => {
       try {
-        const snap = await getDoc(doc(db, 'events', eventId));
+        const snap = await getDoc(doc(db, 'events', activeEventId));
         if (snap.exists()) {
           const data = snap.data();
           if (data && data.title) {
@@ -42,7 +46,7 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
       }
     };
     fetchEventData();
-  }, [eventId]);
+  }, [activeEventId]);
 
   // Solicitar acceso a la cámara trasera al montar
   useEffect(() => {
@@ -109,13 +113,113 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
     }
   };
 
-  const triggerVerification = () => {
+  // Procesar datos escaneados (QR de tickets o QR Maestro de Puerta)
+  const handleProcessQrData = async (rawCode: string) => {
+    if (!rawCode) return;
+    const trimmed = rawCode.trim();
+
+    // 1. Manejar QR Maestro de Puerta: plus1://pair-door?eventId=...&token=...
+    if (trimmed.startsWith('plus1://pair-door')) {
+      try {
+        let queryStr = '';
+        if (trimmed.includes('?')) {
+          queryStr = trimmed.split('?')[1];
+        }
+        const params = new URLSearchParams(queryStr);
+        const targetEventId = params.get('eventId');
+        const token = params.get('token');
+
+        if (!targetEventId) {
+          setToastMessage('⚠️ CÓDIGO QR NO VÁLIDO: FALTA EVENT ID');
+          setTimeout(() => setToastMessage(null), 3000);
+          return;
+        }
+
+        const user = auth.currentUser;
+        const staffUid = user?.uid || `staff_${Math.random().toString(36).substring(2, 8)}`;
+        const staffName = user?.displayName || (user?.isAnonymous ? 'Staff Puerta (Invitado)' : 'Staff Puerta');
+
+        // Persistir en Firestore: events/{eventId}/staff/{auth.currentUser.uid}
+        await setDoc(
+          doc(db, 'events', targetEventId, 'staff', staffUid),
+          {
+            userId: staffUid,
+            userName: staffName,
+            role: 'DOOR',
+            token: token || '',
+            linkedAt: Date.now(),
+          },
+          { merge: true }
+        );
+
+        // Guardar fallback local
+        localStorage.setItem('plus1_active_door_event', targetEventId);
+        setActiveEventId(targetEventId);
+        setIsStaffPaired(true);
+
+        // Consultar título del evento para mostrar en el encabezado
+        const evSnap = await getDoc(doc(db, 'events', targetEventId));
+        if (evSnap.exists()) {
+          const d = evSnap.data();
+          setEventTitle(d.title || 'EVENTO VINCULADO');
+        }
+
+        setToastMessage('🟢 MODO PUERTA ACTIVADO · EVENTO VINCULADO');
+        setTimeout(() => setToastMessage(null), 3200);
+        return;
+      } catch (err) {
+        console.error('Error al vincular staff en Firestore:', err);
+        setToastMessage('⚠️ ERROR AL VINCULAR CON EL SERVIDOR');
+        setTimeout(() => setToastMessage(null), 3000);
+        return;
+      }
+    }
+
+    // 2. Validación estándar de ticket de invitado
+    triggerVerification(trimmed);
+  };
+
+  // Escaneo continuo con BarcodeDetector si está disponible en el navegador
+  useEffect(() => {
+    if (!('BarcodeDetector' in window)) return;
+
+    let intervalId: any;
+    try {
+      const barcodeDetector = new (window as any).BarcodeDetector({
+        formats: ['qr_code'],
+      });
+
+      intervalId = setInterval(async () => {
+        if (videoRef.current && videoRef.current.readyState === 4 && cameraActive) {
+          try {
+            const barcodes = await barcodeDetector.detect(videoRef.current);
+            if (barcodes.length > 0) {
+              const rawValue = barcodes[0].rawValue;
+              if (rawValue) {
+                handleProcessQrData(rawValue);
+              }
+            }
+          } catch (e) {
+            // Frame detection skipped
+          }
+        }
+      }, 500);
+    } catch (err) {
+      console.warn('BarcodeDetector no inicializable:', err);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [cameraActive]);
+
+  const triggerVerification = (code?: string) => {
     setIsVerified(true);
     const msg = '🟢 ACCESO AUTORIZADO · PASE VERIFICADO';
     setToastMessage(msg);
 
     if (onScanSuccess) {
-      onScanSuccess('#4092-VIP-VALIDATED');
+      onScanSuccess(code || '#4092-VIP-VALIDATED');
     }
 
     setTimeout(() => {
@@ -195,7 +299,11 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
             {eventTitle || 'ESCANEAR PASE QR'}
           </h1>
           <span className="font-sans text-[10px] text-[#8E8E93] tracking-widest uppercase font-semibold mt-0.5 truncate w-full">
-            {eventTitle ? 'CONTROL DE PUERTA EN VIVO' : 'PUERTA +1 · CONTROL'}
+            {isStaffPaired
+              ? '🟢 MODO PUERTA ACTIVADO (STAFF)'
+              : eventTitle
+              ? 'CONTROL DE PUERTA EN VIVO'
+              : 'PUERTA +1 · CONTROL'}
           </span>
         </div>
 
@@ -273,24 +381,40 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
         </div>
       </main>
 
-      {/* 4. INDICADOR INFERIOR Y BOTÓN DE PRUEBA (MOCKUP CHECK-IN) */}
-      <footer className="relative z-30 flex flex-col items-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] w-full max-w-md mx-auto space-y-4">
-        
+      {/* 4. INDICADOR INFERIOR Y BOTONES DE PRUEBA */}
+      <footer className="relative z-30 flex flex-col items-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] w-full max-w-md mx-auto space-y-3">
         {/* Pastilla oscura de instrucción */}
         <div className="px-4 py-2 rounded-full bg-black/75 backdrop-blur-md border border-neutral-800 text-center shadow-lg">
           <p className="font-sans text-xs text-neutral-300 font-medium tracking-wide">
-            Apunta al código QR del invitado para validar el pase
+            {isStaffPaired
+              ? 'Modo Puerta activo · Escanea tickets o pases de invitados'
+              : 'Apunta al código QR del invitado o al QR Maestro de Puerta'}
           </p>
         </div>
 
-        {/* Botón de simulación para validar entrada (Mockup Check-in) */}
-        <button
-          onClick={triggerVerification}
-          className="w-full py-3.5 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none"
-        >
-          <span className="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse" />
-          <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
-        </button>
+        {/* Acciones de simulación en vivo */}
+        <div className="w-full flex flex-col gap-2">
+          {/* Botón simular lectura de QR Maestro de Puerta */}
+          <button
+            onClick={() => {
+              const testEventId = activeEventId || 'pepe-birthday';
+              handleProcessQrData(`plus1://pair-door?eventId=${testEventId}&token=door_key_${Date.now()}`);
+            }}
+            className="w-full py-2.5 px-4 rounded-xl bg-[#16171B] hover:bg-neutral-900 border border-[#FAB205]/50 hover:border-[#FAB205] text-[#FAB205] font-display text-xs font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-md focus:outline-none cursor-pointer"
+          >
+            <span className="text-sm">🔑</span>
+            <span>SIMULAR ESCANEO DE QR MAESTRO (STAFF)</span>
+          </button>
+
+          {/* Botón de simulación para validar entrada (Mockup Check-in) */}
+          <button
+            onClick={() => triggerVerification()}
+            className="w-full py-3 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse" />
+            <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
+          </button>
+        </div>
       </footer>
 
       {/* 5. TOAST DE CONFIRMACIÓN */}

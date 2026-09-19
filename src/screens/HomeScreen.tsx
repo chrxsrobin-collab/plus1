@@ -10,7 +10,17 @@ import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
 import { NotificationsModal } from '../components/NotificationsModal';
 import { db, auth } from '../lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDocs, addDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  collectionGroup,
+} from 'firebase/firestore';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
 import { TabType, VipFlyerItem, NotificationItem, AppNotification } from '../types/home';
 import '../styles/fonts.css';
@@ -340,6 +350,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
 
     try {
       setIsCheckingScannerEvents(true);
+
+      // 1. Eventos donde es anfitrión
       const q = query(collection(db, 'events'), where('hostUserId', '==', currentUserId));
       const snapshot = await getDocs(q);
       const hostEvents = snapshot.docs.map((d) => ({
@@ -347,20 +359,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         ...d.data(),
       })) as HostScanEventItem[];
 
-      if (hostEvents.length === 0) {
-        // CASO A: EL USUARIO NO TIENE EVENTOS
+      // 2. Eventos donde tiene rol DOOR como Staff de Puerta
+      let staffEvents: HostScanEventItem[] = [];
+      try {
+        const staffQuery = query(
+          collectionGroup(db, 'staff'),
+          where('userId', '==', currentUserId),
+          where('role', '==', 'DOOR')
+        );
+        const staffSnapshot = await getDocs(staffQuery);
+        for (const staffDoc of staffSnapshot.docs) {
+          const evRef = staffDoc.ref.parent.parent;
+          if (evRef) {
+            const evSnap = await getDoc(evRef);
+            if (evSnap.exists()) {
+              staffEvents.push({ id: evSnap.id, ...evSnap.data() } as HostScanEventItem);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Fallback checking staff door pairing:', err);
+      }
+
+      // 3. Respaldo local de Staff de Puerta vinculado
+      const localDoorEventId = typeof window !== 'undefined' ? localStorage.getItem('plus1_active_door_event') : null;
+      if (localDoorEventId && !staffEvents.some((se) => se.id === localDoorEventId)) {
+        try {
+          const evSnap = await getDoc(doc(db, 'events', localDoorEventId));
+          if (evSnap.exists()) {
+            staffEvents.push({ id: evSnap.id, ...evSnap.data() } as HostScanEventItem);
+          }
+        } catch (e) {
+          console.warn('Local staff doc check error:', e);
+        }
+      }
+
+      // Combinar eventos únicos autorizados
+      const allAuthorizedEvents = [
+        ...hostEvents,
+        ...staffEvents.filter((se) => !hostEvents.some((he) => he.id === se.id)),
+      ];
+
+      if (allAuthorizedEvents.length === 0) {
+        // CASO A: EL USUARIO NO TIENE EVENTOS COMO HOST NI COMO STAFF
         // No intentes abrir la cámara ni pidas permisos de video
         setIsModalOpen(true);
-      } else if (hostEvents.length === 1) {
-        // CASO B: EL USUARIO ES ANFITRIÓN CON EXACTAMENTE 1 EVENTO
-        handleNavigate(`/scanner?eventId=${hostEvents[0].id}`);
+      } else if (allAuthorizedEvents.length === 1) {
+        // CASO B: EL USUARIO TIENE EXACTAMENTE 1 EVENTO HABILITADO
+        handleNavigate(`/scanner?eventId=${allAuthorizedEvents[0].id}`);
       } else {
-        // CASO B: EL USUARIO TIENE MÁS DE 1 EVENTO
-        setHostEventsToScan(hostEvents);
+        // CASO C: TIENE MÁS DE 1 EVENTO
+        setHostEventsToScan(allAuthorizedEvents);
         setIsSelectEventSheetOpen(true);
       }
     } catch (error) {
-      console.warn('Error consultando eventos del anfitrión para escanear:', error);
+      console.warn('Error consultando eventos para escanear:', error);
       setIsModalOpen(true);
     } finally {
       setIsCheckingScannerEvents(false);
@@ -413,7 +466,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           user={{ ...user, unreadNotifications: unreadCount }}
           onNotificationsClick={() => {
             setIsNotificationsOpen(true);
-            setUnreadCount(0);
           }}
           onProfileClick={() => handleNavigate('/profile')}
         />
@@ -543,9 +595,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       <NotificationsModal
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
-        notifications={realtimeNotifications.length > 0 ? realtimeNotifications : mockNotifications}
+        notifications={auth.currentUser ? realtimeNotifications : (realtimeNotifications.length > 0 ? realtimeNotifications : mockNotifications)}
         onViewPass={() => handleNavigate('/tickets')}
         onNavigate={handleNavigate}
+        onMarkAllAsRead={() => {
+          setUnreadCount(0);
+          setUnreadNotifCount(0);
+        }}
       />
 
       {/* TOAST FLOTANTE DE CONFIRMACIÓN */}
