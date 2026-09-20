@@ -3,9 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { CreateEventFormData } from '../types/home';
+import { CreateEventFormData, AVAILABLE_EVENT_TAGS } from '../types/home';
 import { LocationPickerModal, Coordinates } from '../components/LocationPickerModal';
+import { ShareEventModal } from '../components/ShareEventModal';
+import { computeEventEndTimestamp } from '../lib/dateUtils';
 import '../styles/fonts.css';
+
+export { AVAILABLE_EVENT_TAGS };
 
 export interface CreateEventScreenProps {
   eventId?: string;
@@ -36,6 +40,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     maxCapacity: 150,
   });
 
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isLoadingEvent, setIsLoadingEvent] = useState(isEditMode);
   const [eventHostUserId, setEventHostUserId] = useState<string | null>(null);
 
@@ -75,6 +80,14 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             allowPlusOne: d.allowsPlusOne !== undefined ? Boolean(d.allowsPlusOne) : true,
             maxCapacity: d.guestLimit || d.maxCapacity || 150,
           });
+
+          if (d.tags && Array.isArray(d.tags)) {
+            const normalized = d.tags.map((t: string) => {
+              const found = AVAILABLE_EVENT_TAGS.find((at) => at.id === t || at.label === t);
+              return found ? found.id : t;
+            });
+            setSelectedTags(normalized);
+          }
         }
       } catch (err) {
         console.error('Error al cargar datos del evento para editar:', err);
@@ -114,6 +127,21 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     setTimeout(() => {
       setToastMessage(null);
     }, 2500);
+  };
+
+  const handleToggleTag = (tagId: string) => {
+    if (selectedTags.includes(tagId)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tagId));
+    } else {
+      if (selectedTags.length >= 3) {
+        showToast('Máximo 3 etiquetas permitidas');
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+        return;
+      }
+      setSelectedTags([...selectedTags, tagId]);
+    }
   };
 
   const handleBack = () => {
@@ -238,15 +266,19 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
     setIsSaving(true);
 
+    const calculatedEndTimestamp = computeEventEndTimestamp(formData.startDate, formData.endTime, formData.startTime);
+
     try {
       if (isEditMode && eventId) {
         // Actualización atómica en Firestore
         await updateDoc(doc(db, 'events', eventId), {
           title: eventTitle,
           type: formData.privacy,
+          tags: selectedTags.length > 0 ? selectedTags : ['previas'],
           date: formData.startDate,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          endTimestamp: calculatedEndTimestamp,
           location: formData.location || 'Por definir',
           coordinates: formData.coordinates || null,
           allowsPlusOne: formData.allowPlusOne,
@@ -289,13 +321,15 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           }
         }
 
-        // Inserción directa en Firestore garantizando sellado con UID del autor
+        // Inserción directa en Firestore garantizando sellado con UID del autor y timestamp de finalización
         const docRef = await addDoc(collection(db, 'events'), {
           title: eventTitle,
           type: formData.privacy,
+          tags: selectedTags.length > 0 ? selectedTags : ['previas'],
           date: formData.startDate,
           startTime: formData.startTime,
           endTime: formData.endTime,
+          endTimestamp: calculatedEndTimestamp,
           location: formData.location || 'Por definir',
           coordinates: formData.coordinates || null,
           allowsPlusOne: formData.allowPlusOne,
@@ -682,6 +716,45 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             </p>
           </div>
 
+          {/* CAMPO 5.5: VIBE / GÉNERO DEL EVENTO (TAG AFFINITY SYSTEM) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                VIBE / GÉNERO DEL EVENTO
+              </label>
+              <span
+                className={`font-sans text-xs font-bold transition-colors ${
+                  selectedTags.length > 0 ? 'text-[#12C061]' : 'text-[#8E8E93]'
+                }`}
+              >
+                ({selectedTags.length}/3 elegidas)
+              </span>
+            </div>
+            <p className="font-sans text-xs text-[#8E8E93] px-1 leading-snug">
+              Elige hasta 3 etiquetas para recomendar tu evento a las personas indicadas
+            </p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {AVAILABLE_EVENT_TAGS.map((tag) => {
+                const isSelected = selectedTags.includes(tag.id);
+                return (
+                  <motion.button
+                    key={tag.id}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleToggleTag(tag.id)}
+                    className={`py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-[#E87A72]/20 border-[#E87A72] text-white font-bold shadow-[0_0_12px_rgba(232,122,114,0.22)]'
+                        : 'bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium'
+                    }`}
+                  >
+                    {tag.label}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* CAMPO 6: MECÁNICA +1 Y CAPACIDAD MÁXIMA */}
           <div className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] space-y-3.5">
             {/* Switch Permitir +1 */}
@@ -916,80 +989,20 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
         {/* MODAL DE EVENTO CREADO / COMPARTIR (ShareEventModal) */}
         {isShareModalOpen && createdEventData && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 15 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="bg-[#16171B] border border-[#E87A72] rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl relative"
-            >
-              {/* Badge superior */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2">
-                <span className="font-display text-[#12C061] text-xs font-black tracking-wider uppercase">
-                  ✦ EVENTO PUBLICADO CON ÉXITO
-                </span>
-              </div>
-
-              {/* Flyer del evento */}
-              {createdEventData.imageUrl ? (
-                <img
-                  src={createdEventData.imageUrl}
-                  alt={createdEventData.title}
-                  className="w-full h-44 object-cover rounded-2xl my-3 border border-white/10 shadow-lg"
-                />
-              ) : (
-                <div className="w-full h-44 rounded-2xl my-3 border border-white/10 bg-gradient-to-br from-[#1F2228] to-[#121316] flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-3xl mb-1">🎫</span>
-                  <span className="font-display text-lg text-white font-black tracking-wider uppercase">
-                    {createdEventData.title}
-                  </span>
-                </div>
-              )}
-
-              {/* Título del evento */}
-              <h3 className="font-display text-white text-2xl font-black tracking-wide uppercase mt-1 mb-1 line-clamp-2">
-                {createdEventData.title}
-              </h3>
-
-              {/* Metadatos breves */}
-              <p className="font-sans text-xs sm:text-sm text-[#9CA3AF] mb-6 flex items-center justify-center gap-1.5 flex-wrap">
-                <span>📅 {createdEventData.date || 'Próximamente'}</span>
-                <span>·</span>
-                <span>⏰ {createdEventData.startTime || '22:00'}</span>
-                <span>·</span>
-                <span className="truncate max-w-[140px]">📍 {createdEventData.location}</span>
-              </p>
-
-              {/* Botón Principal: Compartir */}
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleShareEvent(createdEventData)}
-                  className="w-full h-13 py-3.5 px-4 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display font-black text-sm tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
-                >
-                  <span className="text-base">📲</span>
-                  <span>COMPARTIR ENLACE (WHATSAPP / REDES)</span>
-                </button>
-
-                {/* Botón Secundario: Ir al Inicio */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsShareModalOpen(false);
-                    if (onNavigate) {
-                      onNavigate('/');
-                    } else if (onBack) {
-                      onBack();
-                    }
-                  }}
-                  className="w-full py-2.5 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer"
-                >
-                  IR AL INICIO
-                </button>
-              </div>
-            </motion.div>
-          </div>
+          <ShareEventModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            event={createdEventData}
+            isNewlyCreated={true}
+            onNavigateHome={() => {
+              setIsShareModalOpen(false);
+              if (onNavigate) {
+                onNavigate('/');
+              } else if (onBack) {
+                onBack();
+              }
+            }}
+          />
         )}
       </AnimatePresence>
 

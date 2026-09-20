@@ -80,6 +80,16 @@
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
+    @keyframes modalSlideDownExit {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(22px); }
+    }
+    .anim-modal-slide-exit { animation: modalSlideDownExit 0.22s ease-in forwards; }
+    @keyframes fadeOutModal {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .anim-modal-fade-out { animation: fadeOutModal 0.22s ease-in forwards; }
     @keyframes modalSlideDown {
       0% { opacity: 0; transform: translateY(-30px); }
       100% { opacity: 1; transform: translateY(0); }
@@ -121,12 +131,8 @@
 <body class="bg-black text-white min-h-[100dvh] w-full m-0 p-0 overflow-x-hidden font-sans select-none">
 
   <!-- Contenedor Raíz Nativo (100% Pantalla) -->
-  <div class="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden">
-    
-    <!-- Fondo de Pantalla: fondo_a.webp con textura abstracta oscura -->
-    <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none"
-         style="background-image: url('./assets/images/fondo_a.webp');">
-    </div>
+  <div class="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed"
+       style="background-image: url('./assets/images/fondo_a.webp'); background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed;">
     
     <!-- Sombra sutil degradada superior para HUD -->
     <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
@@ -334,6 +340,9 @@
             </div>
           </div>
 
+          <!-- FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") -->
+          <div id="modalSocialAttendees" class="mt-4 p-3 rounded-xl bg-[#121316] border border-neutral-800 flex items-center space-x-3"></div>
+
           <!-- 3. Sección "Detalles y Motivo" -->
           <div class="mt-4">
             <h4 class="font-display text-neutral-400 text-xs font-bold uppercase tracking-wider mb-1.5">
@@ -351,11 +360,23 @@
           </div>
         </div>
 
-        <!-- 5. Botón de Conversión Fijo al pie del modal: SOLICITAR VIP -->
-        <div class="pt-3 border-t border-neutral-800/80 mt-auto flex-shrink-0">
-          <button id="modalCtaBtn" class="w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-95 focus:outline-none">
-            SOLICITAR VIP
-          </button>
+        <!-- 5. Botón de Conversión y Compartir Fijo al pie del modal -->
+        <div class="pt-3 border-t border-neutral-800/80 mt-auto flex-shrink-0 flex flex-col gap-2">
+          <!-- Ticker de Actividad en Vivo -->
+          <p id="modalLiveTicker" class="font-sans text-[11px] text-zinc-400 text-center tracking-wide"></p>
+
+          <div class="flex items-center gap-2.5">
+            <button id="modalCtaBtn" class="flex-1 py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-95 focus:outline-none cursor-pointer">
+              SOLICITAR VIP
+            </button>
+            <button onclick="handleShareCurrentEvent(event)" aria-label="Compartir evento" title="Compartir evento" class="w-14 h-12 rounded-xl bg-[#16171B] hover:bg-[#22252C] border border-[#26282E] hover:border-[#E87A72] flex items-center justify-center text-white active:scale-95 transition-all shadow-md cursor-pointer flex-shrink-0">
+              <svg class="w-5 h-5 text-white stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -929,8 +950,266 @@
       </div>
     </div>
 
+    <!-- PANTALLA DE ONBOARDING DE PREFERENCIAS (COLD START): OnboardingScreen -->
+    <div id="onboardingScreenView" class="hidden fixed inset-0 z-[65] bg-black text-white flex flex-col justify-between overflow-hidden select-none">
+      
+      <!-- PASO 1: INTENCIÓN Y UBICACIÓN (fondo_c.webp) -->
+      <div id="onboardingStep1View" class="relative w-full h-full flex flex-col justify-between overflow-hidden">
+        <!-- Fondo con overlay -->
+        <div class="absolute inset-0 bg-cover bg-center pointer-events-none" style="background-image: url('./assets/images/fondo_c.webp');"></div>
+        <div class="absolute inset-0 bg-black/60 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black pointer-events-none"></div>
+
+        <!-- Cabecera -->
+        <header class="relative z-10 w-full max-w-md mx-auto px-6 pt-6 flex flex-col items-center text-center">
+          <div class="w-full flex items-center justify-between gap-2 mb-3">
+            <div class="h-1 flex-1 rounded-full bg-[#E87A72]"></div>
+            <div class="h-1 flex-1 rounded-full bg-white/20"></div>
+          </div>
+          <span class="font-sans text-xs uppercase tracking-[0.25em] text-[#8E8E93] font-bold">
+            PASO 1 DE 2
+          </span>
+          <h1 class="font-display text-3xl sm:text-4xl font-black tracking-wide text-white uppercase mt-2 leading-tight">
+            ¿QUÉ BUSCAS EN +1?
+          </h1>
+          <p class="font-sans text-xs sm:text-sm text-[#D1D5DB] mt-1.5 font-medium">
+            Personaliza tu cartelera desde el primer segundo.
+          </p>
+        </header>
+
+        <!-- Contenido Central -->
+        <main class="relative z-10 w-full max-w-md mx-auto px-6 py-2 flex-1 flex flex-col justify-center space-y-4 overflow-y-auto no-scrollbar">
+          <!-- Tarjetas de Intención -->
+          <div class="flex flex-col space-y-2.5">
+            <span class="font-sans text-[11px] uppercase tracking-wider text-[#8E8E93] font-bold ml-1">
+              TU ROL PRINCIPAL
+            </span>
+
+            <!-- Opción Attendee -->
+            <button type="button" onclick="selectOnboardingRoleHtml('attendee')" id="onboardingRoleBtn_attendee" class="w-full p-3.5 sm:p-4 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer shadow-lg bg-[#1F2228] border-[#E87A72] shadow-[0_0_20px_rgba(232,122,114,0.18)]">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 bg-[#E87A72]/20 border border-[#E87A72]/40 text-white">
+                  🎟️
+                </div>
+                <div>
+                  <h3 class="font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-[#E87A72]">
+                    Descubrir planes y eventos
+                  </h3>
+                  <p class="font-sans text-[11px] sm:text-xs text-[#8E8E93] mt-0.5 leading-snug">
+                    Accede a listas VIP, preventas y fiestas exclusivas.
+                  </p>
+                </div>
+              </div>
+              <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 border-[#E87A72] bg-[#E87A72]">
+                <div class="w-2 h-2 rounded-full bg-black"></div>
+              </div>
+            </button>
+
+            <!-- Opción Host -->
+            <button type="button" onclick="selectOnboardingRoleHtml('host')" id="onboardingRoleBtn_host" class="w-full p-3.5 sm:p-4 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer shadow-lg bg-[#16171B]/90 hover:bg-[#1C1E24] border-[#26282E]">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 bg-black/40 border border-white/5 text-neutral-300">
+                  ⚡
+                </div>
+                <div>
+                  <h3 class="font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-white">
+                    Armar mis propias previas y juntadas
+                  </h3>
+                  <p class="font-sans text-[11px] sm:text-xs text-[#8E8E93] mt-0.5 leading-snug">
+                    Crea eventos, gestiona puerta y pases +1 en segundos.
+                  </p>
+                </div>
+              </div>
+              <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 border-white/30 bg-transparent">
+              </div>
+            </button>
+
+            <!-- Opción Both -->
+            <button type="button" onclick="selectOnboardingRoleHtml('both')" id="onboardingRoleBtn_both" class="w-full p-3.5 sm:p-4 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer shadow-lg bg-[#16171B]/90 hover:bg-[#1C1E24] border-[#26282E]">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 bg-black/40 border border-white/5 text-neutral-300">
+                  🔥
+                </div>
+                <div>
+                  <h3 class="font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-white">
+                    Ambos
+                  </h3>
+                  <p class="font-sans text-[11px] sm:text-xs text-[#8E8E93] mt-0.5 leading-snug">
+                    Disfruta la noche como asistente y anfitrión.
+                  </p>
+                </div>
+              </div>
+              <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 border-white/30 bg-transparent">
+              </div>
+            </button>
+          </div>
+
+          <!-- Selector de Ciudad -->
+          <div class="flex flex-col space-y-1.5">
+            <label for="onboardingCitySelectHtml" class="font-sans text-[11px] uppercase tracking-wider text-[#8E8E93] font-bold ml-1 flex items-center justify-between">
+              <span>CIUDAD ACTUAL</span>
+              <span class="text-[10px] text-[#E87A72] font-semibold">📍 COBERTURA ACTIVA</span>
+            </label>
+            <div class="relative">
+              <select id="onboardingCitySelectHtml" class="w-full py-3.5 px-4 pr-10 rounded-2xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-sm font-semibold appearance-none outline-none transition-colors cursor-pointer">
+                <option value="La Paz, BO" selected>La Paz, BO</option>
+                <option value="Santa Cruz, BO">Santa Cruz, BO</option>
+                <option value="Cochabamba, BO">Cochabamba, BO</option>
+                <option value="Tarija, BO">Tarija, BO</option>
+                <option value="Sucre, BO">Sucre, BO</option>
+              </select>
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#8E8E93] text-xs">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          <!-- Checkbox +18 -->
+          <div id="onboardingAdultCheckContainer" onclick="toggleOnboardingAdultHtml()" class="p-3 rounded-2xl border transition-all flex items-center space-x-3 cursor-pointer select-none bg-[#16171B]/80 border-[#26282E] hover:border-white/20">
+            <div id="onboardingAdultCheckIcon" class="w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-all bg-black/40 border-white/30 text-transparent">
+              <svg class="w-4 h-4 stroke-current stroke-[3] fill-none" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <p class="font-sans text-xs sm:text-sm font-medium text-white leading-tight">
+                Confirmo que soy mayor de 18 años <span class="text-[#E87A72] font-bold">*</span>
+              </p>
+              <p class="font-sans text-[10px] text-[#8E8E93]">
+                Requerido para el acceso a listas VIP y eventos nocturnos.
+              </p>
+            </div>
+          </div>
+        </main>
+
+        <!-- Pie de Acción -->
+        <footer class="relative z-10 w-full max-w-md mx-auto px-6 pb-8 pt-2 flex flex-col items-center space-y-3">
+          <button type="button" id="onboardingStep1Btn" onclick="goToOnboardingStep(2)" disabled class="w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#26282E] text-[#8E8E93] opacity-60 cursor-not-allowed">
+            <span>CONTINUAR</span>
+            <span>→</span>
+          </button>
+          <button type="button" onclick="handleSkipOnboardingHtml()" class="font-sans text-xs text-[#8E8E93] hover:text-white transition-colors cursor-pointer py-1">
+            Omitir por ahora
+          </button>
+        </footer>
+      </div>
+
+      <!-- PASO 2: TUS VIBES / INTERESES (fondo_a.webp) -->
+      <div id="onboardingStep2View" class="hidden relative w-full h-full flex flex-col justify-between overflow-hidden">
+        <!-- Fondo con overlay -->
+        <div class="absolute inset-0 bg-cover bg-center pointer-events-none" style="background-image: url('./assets/images/fondo_a.webp');"></div>
+        <div class="absolute inset-0 bg-black/60 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/85 via-black/40 to-black pointer-events-none"></div>
+
+        <!-- Cabecera -->
+        <header class="relative z-10 w-full max-w-md mx-auto px-6 pt-6 flex flex-col items-center text-center">
+          <div class="w-full flex items-center justify-between gap-2 mb-3">
+            <div class="h-1 flex-1 rounded-full bg-[#E87A72]"></div>
+            <div class="h-1 flex-1 rounded-full bg-[#12C061]"></div>
+          </div>
+
+          <div class="w-full flex items-center justify-between">
+            <button type="button" onclick="goToOnboardingStep(1)" class="w-8 h-8 rounded-full bg-[#16171B]/80 hover:bg-[#1C1E24] border border-[#26282E] flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95 cursor-pointer" aria-label="Volver">
+              ←
+            </button>
+            <span class="font-sans text-xs uppercase tracking-[0.25em] text-[#8E8E93] font-bold">
+              PASO 2 DE 2
+            </span>
+            <div class="w-8"></div>
+          </div>
+
+          <h1 class="font-display text-3xl sm:text-4xl font-black tracking-wide text-white uppercase mt-2 leading-tight">
+            ELIGE TUS INTERESES
+          </h1>
+          <p class="font-sans text-xs sm:text-sm text-[#D1D5DB] mt-1.5 font-medium max-w-xs">
+            Selecciona al menos 3 para recomendarte los mejores eventos.
+          </p>
+
+          <!-- Contador reactivo -->
+          <div class="mt-2.5 px-3 py-1 rounded-full bg-[#16171B]/90 border border-[#26282E] inline-flex items-center space-x-1.5">
+            <span id="onboardingInterestsCounter" class="font-sans text-xs font-bold text-[#8E8E93] transition-colors">
+              (0/3 seleccionados)
+            </span>
+            <span id="onboardingInterestsCheck" class="hidden text-[#12C061] text-xs font-black">✓</span>
+          </div>
+        </header>
+
+        <!-- Nube de Tags -->
+        <main class="relative z-10 w-full max-w-md mx-auto px-6 py-4 flex-1 flex flex-col justify-center overflow-y-auto no-scrollbar">
+          <div class="grid grid-cols-2 gap-2.5 sm:gap-3" id="onboardingChipsContainer">
+            <!-- Chip 1 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Reggaetón')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🍑</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Reggaetón</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 2 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Electrónica / Techno')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🎧</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Electrónica / Techno</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 3 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Indie & Live Rock')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🎸</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Indie & Live Rock</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 4 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Previas & Juntadas')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🍻</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Previas & Juntadas</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 5 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Boliches & Clubs')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🪩</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Boliches & Clubs</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 6 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Cocktails & Lounges')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🍸</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Cocktails & Lounges</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 7 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Festivales & Open Air')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">⚡</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Festivales & Open Air</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+
+            <!-- Chip 8 -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'VIP & Rooftops')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🏙️</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">VIP & Rooftops</span>
+              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
+            </button>
+          </div>
+
+          <p id="onboardingHelperText" class="font-sans text-[11px] text-[#8E8E93] text-center mt-4">
+            Te faltan 3 para desbloquear tu cartelera personalizada
+          </p>
+        </main>
+
+        <!-- Pie de Acción -->
+        <footer class="relative z-10 w-full max-w-md mx-auto px-6 pb-8 pt-2 flex flex-col items-center space-y-2">
+          <button type="button" id="onboardingSubmitBtn" onclick="handleOnboardingSubmitHtml()" disabled class="w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#26282E] text-[#8E8E93] opacity-60 cursor-not-allowed">
+            <span>ENTRAR A +1 🚀</span>
+          </button>
+        </footer>
+      </div>
+    </div>
+
     <!-- PANTALLA DE BILLETERA DE TICKETS: /tickets /passes (TicketsScreen) -->
-    <div id="passScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden h-full no-scrollbar select-none pb-24">
+    <div id="passScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden h-full no-scrollbar select-none p-4 pb-8">
       
       <!-- Fondo abstracto con textura sutil fondo_iniciob.webp -->
       <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
@@ -944,7 +1223,7 @@
         <!-- 1. TOP NAVIGATION BAR -->
         <header class="flex items-center justify-between pb-1 w-full relative z-30">
           <!-- Botón de retroceso (←) -->
-          <button onclick="closePassScreen()" aria-label="Regresar a inicio" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white transition-all active:scale-90 focus:outline-none">
+          <button onclick="closePassScreen()" aria-label="Regresar a inicio" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white transition-all active:scale-90 focus:outline-none cursor-pointer">
             <span class="text-xl font-bold leading-none">←</span>
           </button>
 
@@ -979,37 +1258,11 @@
 
         <!-- 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS -->
         <div class="w-full pt-2 pb-2 flex justify-center">
-          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl active:scale-95 focus:outline-none cursor-pointer">
+          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl active:scale-95 focus:outline-none cursor-pointer mb-2">
             <span class="text-lg leading-none">⬇</span>
             <span>GUARDAR COPIA EN FOTOS</span>
           </button>
         </div>
-
-        <!-- 5. BOTTOM NAVIGATION BAR FIJA (Pases Activo) -->
-        <nav class="fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-          <div class="w-full max-w-md mx-auto flex items-center justify-between">
-            <!-- Home -->
-            <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen()" aria-label="Inicio">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </button>
-
-            <!-- Pases / Ticket (Activo) -->
-            <button class="p-1 text-white hover:scale-110 transition-transform focus:outline-none" aria-label="Billetera de pases">
-              <svg class="w-5 h-5 rotate-45 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-              </svg>
-            </button>
-
-            <!-- Buscar / Lupa -->
-            <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closePassScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-          </div>
-        </nav>
 
       </div>
     </div>
@@ -1308,6 +1561,50 @@
             </p>
           </div>
 
+          <!-- CAMPO 5.5: VIBE / GÉNERO DEL EVENTO (TAG AFFINITY SYSTEM) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                VIBE / GÉNERO DEL EVENTO
+              </label>
+              <span
+                id="createEventTagsCounter"
+                class="font-sans text-xs font-bold transition-colors text-[#8E8E93]"
+              >
+                (0/3 elegidas)
+              </span>
+            </div>
+            <p class="font-sans text-xs text-[#8E8E93] px-1 leading-snug">
+              Elige hasta 3 etiquetas para recomendar tu evento a las personas indicadas
+            </p>
+            <div class="flex flex-wrap gap-2 pt-2" id="createEventTagsContainer">
+              <button type="button" onclick="toggleCreateEventTagHtml('reggaeton')" id="createTag_reggaeton" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Reggaetón 🍑
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('techno')" id="createTag_techno" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Electrónica / Techno 🎧
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('indie')" id="createTag_indie" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Indie & Live Rock 🎸
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('previas')" id="createTag_previas" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Previas & Juntadas 🍻
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('boliches')" id="createTag_boliches" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Boliches & Clubs 🪩
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('cocktails')" id="createTag_cocktails" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Cocktails & Lounges 🍸
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('festivales')" id="createTag_festivales" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Festivales & Open Air ⚡
+              </button>
+              <button type="button" onclick="toggleCreateEventTagHtml('rooftops')" id="createTag_rooftops" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                VIP & Rooftops 🏙️
+              </button>
+            </div>
+          </div>
+
           <!-- CAMPO 6: MECÁNICA +1 Y CAPACIDAD MÁXIMA -->
           <div class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] space-y-3.5">
             <!-- Switch Permitir +1 -->
@@ -1470,10 +1767,15 @@
     <!-- MODAL DE EVENTO CREADO / COMPARTIR (ShareEventModal) -->
     <div id="shareEventModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
       <div class="bg-[#16171B] border border-[#E87A72] rounded-3xl max-w-sm w-full p-5 text-center shadow-2xl relative anim-modal-zoom">
+        <!-- Botón de Cierre Superior Derecho (✕) -->
+        <button type="button" onclick="closeShareEventModal()" aria-label="Cerrar modal" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 hover:bg-black/80 border border-white/10 text-white/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-sm font-bold z-10">
+          ✕
+        </button>
+
         <!-- Badge superior -->
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2">
-          <span class="font-display text-[#12C061] text-xs font-black tracking-wider uppercase">
-            ✦ EVENTO PUBLICADO CON ÉXITO
+        <div id="shareEventBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2">
+          <span id="shareEventBadgeText" class="font-display text-[#12C061] text-xs font-black tracking-wider uppercase">
+            ✦ DIFUNDIR EVENTO
           </span>
         </div>
 
@@ -1494,19 +1796,33 @@
         </h3>
 
         <!-- Metadatos breves -->
-        <p id="shareEventMeta" class="font-sans text-xs sm:text-sm text-[#9CA3AF] mb-6 flex items-center justify-center gap-1.5 flex-wrap">
+        <p id="shareEventMeta" class="font-sans text-xs sm:text-sm text-[#9CA3AF] mb-5 flex items-center justify-center gap-1.5 flex-wrap">
           <span>📅 SÁBADO</span> · <span>⏰ 22:00</span> · <span>📍 Sopocachi</span>
         </p>
 
-        <!-- Botones de Acción -->
-        <div class="flex flex-col gap-2">
-          <button id="shareEventActionBtn" type="button" onclick="executeShareEvent()" class="w-full py-3.5 px-4 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display font-black text-sm tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer">
-            <span class="text-base">📲</span>
-            <span>COMPARTIR ENLACE (WHATSAPP / REDES)</span>
+        <!-- Botones de Difusión -->
+        <div class="flex flex-col gap-2.5">
+          <!-- Botón 1: WhatsApp -->
+          <button id="shareEventWhatsAppBtn" type="button" onclick="shareToWhatsAppHtml()" class="w-full py-3.5 px-4 rounded-2xl bg-[#16171B] hover:bg-[#1f2228] border border-[#12C061] text-white font-sans text-xs sm:text-sm font-bold tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer">
+            <span class="text-base">💬</span>
+            <span>ENVIAR A GRUPO DE WHATSAPP</span>
           </button>
 
-          <button type="button" onclick="closeShareEventModalAndGoHome()" class="w-full py-2.5 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer">
-            IR AL INICIO
+          <!-- Botón 2: Instagram Stories -->
+          <button id="shareEventStoryBtn" type="button" onclick="generateStoryImageHtml()" class="w-full py-3.5 px-4 rounded-2xl bg-[#16171B] hover:bg-[#1f2228] border border-[#E87A72] text-white font-sans text-xs sm:text-sm font-bold tracking-wider uppercase transition-all shadow-lg flex items-center justify-center gap-2 active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+            <span id="shareEventStoryIcon" class="text-base">📸</span>
+            <span id="shareEventStoryBtnText">GENERAR HISTORIA PARA INSTAGRAM</span>
+          </button>
+
+          <!-- Botón 3: Copiar Link Directo -->
+          <button id="shareEventCopyBtn" type="button" onclick="copyShareDirectLinkHtml()" class="w-full py-2.5 px-4 rounded-2xl bg-[#26282E]/40 hover:bg-[#26282E] border border-white/5 hover:border-white/20 text-[#9CA3AF] hover:text-white font-sans text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer">
+            <span class="text-sm">🔗</span>
+            <span>COPIAR ENLACE DIRECTO</span>
+          </button>
+
+          <!-- Botón Inferior de Cierre -->
+          <button id="shareEventBottomBtn" type="button" onclick="closeShareEventModal()" class="w-full py-2 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer mt-0.5">
+            CERRAR
           </button>
         </div>
       </div>
@@ -1604,7 +1920,7 @@
     </div>
 
     <!-- PANTALLA DE PERFIL: /profile (ProfileScreen) -->
-    <div id="profileScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-28" style="background-image: url('./assets/images/fondo_b.webp'); background-size: cover; background-position: center;">
+    <div id="profileScreenView" class="hidden fixed inset-0 z-50 bg-[#000000] text-white flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar select-none pb-10" style="background-image: url('./assets/images/fondo_b.webp'); background-size: cover; background-position: center;">
       
       <!-- Degradado superior -->
       <div class="absolute top-0 inset-x-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10"></div>
@@ -1796,29 +2112,6 @@
         </div>
 
       </div>
-
-      <!-- BOTTOM NAVIGATION BAR FIJA -->
-      <nav class="fixed bottom-0 inset-x-0 w-full bg-black/95 backdrop-blur-md border-t border-neutral-800/90 px-8 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.8)]">
-        <div class="w-full max-w-md mx-auto flex items-center justify-between">
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen()">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          </button>
-
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openPassScreen();" aria-label="Ver pases">
-            <svg class="w-5 h-5 rotate-45" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M15.5 1h-7A2.5 2.5 0 0 0 6 3.5v17A2.5 2.5 0 0 0 8.5 23h7a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1zm1 19.5a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V17h1a1.5 1.5 0 0 0 0-3H7.5V10h1a1.5 1.5 0 0 0 0-3H7.5V3.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V7h-1a1.5 1.5 0 0 0 0 3h1v4h-1a1.5 1.5 0 0 0 0 3h1v3.5z"/>
-            </svg>
-          </button>
-
-          <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 transition-transform focus:outline-none" onclick="closeProfileScreen(); openSearchEventsModal();" aria-label="Buscar eventos">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
-        </div>
-      </nav>
     </div>
 
     <!-- MODAL 1: GESTIÓN DE EVENTOS -->
@@ -2213,10 +2506,16 @@
                     updateUserAvatarDom(data.photoUrl);
                   }
                   updatePartnerBadgeDom(Boolean(data && data.isPartner));
+                  if (data && data.onboardingCompleted === true) {
+                    closeOnboardingScreen();
+                  } else {
+                    openOnboardingScreen();
+                  }
                 } else {
                   updateUserNameDom(defaultName);
                   if (user.photoURL) updateUserAvatarDom(user.photoURL);
                   updatePartnerBadgeDom(false);
+                  openOnboardingScreen();
                 }
               }, (err) => console.warn('[+1 Firestore] Escucha usuario:', err));
 
@@ -2318,6 +2617,7 @@
             }
           } else {
             console.log('[+1 Firebase Auth] Desconectado');
+            closeOnboardingScreen();
             if (authView) authView.classList.remove('hidden');
             if (userNotifsUnsubscribe) {
               userNotifsUnsubscribe();
@@ -2359,12 +2659,76 @@
           console.warn('[+1 Firestore] Nota escucha invites:', err);
         });
 
-        // Sincronización en tiempo real de eventos públicos para Cover Flow
+        // Función para calcular timestamp de expiración / finalización del evento
+        function computeEventEndTimestamp(date, endTime, startTime) {
+          if (!date) return Date.now() + 24 * 60 * 60 * 1000;
+          try {
+            const trimmedDate = String(date).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
+              if (endTime && /^\d{1,2}:\d{2}$/.test(String(endTime).trim())) {
+                const formattedEndTime = String(endTime).trim().padStart(5, '0');
+                const endH = parseInt(formattedEndTime.split(':')[0], 10);
+
+                let isNextDay = false;
+                if (startTime && /^\d{1,2}:\d{2}$/.test(String(startTime).trim())) {
+                  const startH = parseInt(String(startTime).trim().padStart(5, '0').split(':')[0], 10);
+                  if (endH < startH) isNextDay = true;
+                } else if (endH < 12) {
+                  isNextDay = true;
+                }
+
+                if (isNextDay) {
+                  const d = new Date(trimmedDate + 'T00:00:00');
+                  d.setDate(d.getDate() + 1);
+                  const nextDayStr = d.toISOString().split('T')[0];
+                  const ts = new Date(nextDayStr + 'T' + formattedEndTime + ':00').getTime();
+                  if (!isNaN(ts)) return ts;
+                } else {
+                  const ts = new Date(trimmedDate + 'T' + formattedEndTime + ':00').getTime();
+                  if (!isNaN(ts)) return ts;
+                }
+              }
+
+              // Sin endTime: 06:00 AM del día siguiente a la fecha del evento
+              const d = new Date(trimmedDate + 'T00:00:00');
+              d.setDate(d.getDate() + 1);
+              const nextDayStr = d.toISOString().split('T')[0];
+              const defaultEnd = new Date(nextDayStr + 'T06:00:00').getTime();
+              if (!isNaN(defaultEnd)) return defaultEnd;
+            }
+
+            const fallbackDate = new Date(trimmedDate + 'T' + (endTime || '23:59')).getTime();
+            if (!isNaN(fallbackDate)) return fallbackDate;
+          } catch (e) {
+            console.warn('Error computing event end timestamp:', e);
+          }
+          return Date.now() + 24 * 60 * 60 * 1000;
+        }
+
+        // Función utilitaria para formatear fechas a DD.MM.YY
+        function formatCardDate(dateStr) {
+          if (!dateStr) return "";
+          const cleanDate = String(dateStr).split("T")[0].trim();
+          const parts = cleanDate.split("-");
+          if (parts.length === 3 && parts[0].length === 4) {
+            const year = parts[0].slice(-2);
+            return `${parts[2]}.${parts[1]}.${year}`;
+          }
+          return dateStr;
+        }
+
+        // Sincronización en tiempo real de eventos públicos para Cover Flow (con filtro estricto de expiración)
         fbDb.collection('events').where('type', '==', 'public').onSnapshot((querySnapshot) => {
           const liveEvents = [];
+          const now = Date.now();
           if (querySnapshot) {
             querySnapshot.forEach((doc) => {
               const d = doc.data();
+              const eventEnd = d.endTimestamp || computeEventEndTimestamp(d.date, d.endTime, d.startTime);
+              
+              // Filtro estricto: Solo eventos futuros o en curso
+              if (eventEnd <= now) return;
+
               liveEvents.push({
                 id: doc.id,
                 hostUserId: d.hostUserId || '',
@@ -2372,7 +2736,11 @@
                 hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
                 title: d.title || 'SIN TÍTULO',
                 subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
-                dateDisplay: d.date || 'PRÓXIMAMENTE',
+                dateDisplay: d.date ? formatCardDate(d.date) : 'PRÓXIMAMENTE',
+                date: d.date || '',
+                startTime: d.startTime || '',
+                endTime: d.endTime || '',
+                endTimestamp: eventEnd,
                 timeRange: d.startTime && d.endTime ? `${d.startTime} — ${d.endTime}` : (d.startTime || '22:00'),
                 location: d.location || 'Por confirmar',
                 availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
@@ -2393,26 +2761,35 @@
               });
             });
           }
+          isLoadingEvents = false;
           eventsData = liveEvents;
           renderCoverFlow();
-          console.log('[+1 Firestore] Eventos públicos actualizados:', eventsData.length);
+          console.log('[+1 Firestore] Eventos públicos activos actualizados:', eventsData.length);
         }, (err) => {
           console.warn('[+1 Firestore] Error al sincronizar eventos públicos:', err);
+          isLoadingEvents = false;
+          eventsData = [];
+          renderCoverFlow();
         });
 
-        // Sincronización de eventos creados por el usuario para "Mis Eventos"
+        // Sincronización de eventos creados por el usuario para "Mis Eventos" (con badges Activo vs Finalizado)
         fbDb.collection('events').onSnapshot((querySnapshot) => {
           const myEvts = [];
+          const now = Date.now();
           if (querySnapshot) {
             querySnapshot.forEach((doc) => {
               const d = doc.data();
               const isMine = fbCurrentUser ? (d.hostUserId === fbCurrentUser.uid) : false;
               if (isMine) {
+                const eventEnd = d.endTimestamp || computeEventEndTimestamp(d.date, d.endTime, d.startTime);
+                const isFinished = eventEnd <= now;
                 myEvts.push({
                   id: doc.id,
                   title: d.title || 'Evento sin título',
-                  dateStr: d.date ? `${d.date} · ${d.startTime || ''}` : 'Próximamente',
-                  status: 'Activo',
+                  dateStr: d.date ? `${formatCardDate(d.date)} · ${d.startTime || ''}` : 'Próximamente',
+                  status: isFinished ? 'Finalizado' : 'Activo',
+                  isFinished: isFinished,
+                  endTimestamp: eventEnd,
                   guestsCount: d.confirmedCount || 0,
                   maxCapacity: d.maxCapacity || 150
                 });
@@ -2427,20 +2804,78 @@
           console.warn('[+1 Firestore] Error al sincronizar mis eventos:', err);
         });
 
+        // Sincronización global de pases para Prueba Social y FOMO en tiempo real
+        fbDb.collection('passes').onSnapshot((querySnapshot) => {
+          const passesList = [];
+          if (querySnapshot) {
+            querySnapshot.forEach((doc) => {
+              passesList.push({ id: doc.id, ...doc.data() });
+            });
+          }
+          globalPassesList = passesList;
+          if (typeof renderCoverFlow === 'function') {
+            renderCoverFlow();
+          }
+          if (currentDetailModalEvent && document.getElementById('eventDetailModal') && !document.getElementById('eventDetailModal').classList.contains('hidden')) {
+            openEventDetail(currentDetailModalEvent);
+          }
+        }, (err) => {
+          console.warn('[+1 Firestore] Error al sincronizar pases globales:', err);
+        });
+
         console.log('[+1 Firebase] Sincronización en vivo activa (Proyecto: plus1vip)');
       } catch (e) {
         console.warn('[+1 Firebase] Inicialización fallback:', e);
       }
     }
 
+    let globalPassesList = [];
     let eventsData = [];
+    let isLoadingEvents = true;
     let currentCardIndex = 0;
     let totalCards = 0;
+
+    function getEventSocialData(event) {
+      if (!event) return { activeCount: 0, confirmedUsers: [], remainingSpots: 100, recentRequests: 12, guestLimit: 100 };
+      const eventPasses = globalPassesList.filter(p => p.eventId === event.id);
+      const active = eventPasses.filter(p => p.status === 'active' || p.status === 'confirmed' || p.status === 'used');
+      const activeCount = active.length;
+      const guestLimit = event.guestLimit || event.maxCapacity || 100;
+      const remainingSpots = Math.max(0, guestLimit - activeCount);
+      
+      const confirmedUsers = active
+        .sort((a, b) => (b.approvedAt || b.createdAt || 0) - (a.approvedAt || a.createdAt || 0))
+        .slice(0, 4)
+        .map(p => ({
+          name: (p.userName || p.holderName || 'Asistente').replace(/\s*·\s*(\+1|INDIVIDUAL).*$/i, '').trim(),
+          photoUrl: p.userAvatar || p.userPhotoUrl || p.photoURL || ''
+        }));
+
+      const now = Date.now();
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      const recent = eventPasses.filter(p => (p.createdAt || 0) > oneDayAgo || (p.requestedAt || 0) > oneDayAgo).length;
+      const recentRequests = recent > 0 ? recent : (activeCount > 0 ? activeCount + 3 : 12);
+
+      return { activeCount, confirmedUsers, remainingSpots, recentRequests, guestLimit };
+    }
 
     function renderCoverFlow() {
       const track = document.getElementById('coverFlowTrack');
       const dotsContainer = document.getElementById('coverFlowDotsContainer');
       if (!track) return;
+
+      if (isLoadingEvents) {
+        track.innerHTML = `
+          <div class="w-[300px] sm:w-[320px] h-[460px] sm:h-[480px] p-6 rounded-[28px] bg-[#16171B]/50 border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-xl select-none animate-pulse">
+            <div class="w-12 h-12 rounded-full border-2 border-[#E87A72] border-t-transparent animate-spin mb-2"></div>
+            <span class="font-display text-neutral-400 text-xs font-bold tracking-widest uppercase">
+              CARGANDO EVENTOS...
+            </span>
+          </div>
+        `;
+        if (dotsContainer) dotsContainer.innerHTML = '';
+        return;
+      }
 
       totalCards = eventsData.length;
 
@@ -2461,26 +2896,55 @@
         return;
       }
 
-      // Generar tarjetas Cover Flow con soporte 3D
+      // Generar tarjetas Cover Flow con soporte 3D y Prueba Social
       track.innerHTML = eventsData.map((event, idx) => {
         const borderCol = event.accentColor || '#E87A72';
         const userPass = (typeof userTickets !== 'undefined' && userTickets) ? userTickets.find(t => t.eventId === event.id) : null;
         const isPending = userPass && userPass.status === 'pending';
         const isActive = userPass && (userPass.status === 'active' || userPass.status === 'confirmed');
 
+        const social = getEventSocialData(event);
+        const isSoldOut = social.remainingSpots === 0;
+
         let btnMarkup = '';
         if (isPending) {
-          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-3 py-3 px-4 rounded-full bg-[#26282E] text-neutral-400 font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-700/60 cursor-default opacity-85 shadow-inner">⏳ PENDIENTE</button>`;
+          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#26282E] text-neutral-400 font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-700/60 cursor-default opacity-85 shadow-inner">⏳ PENDIENTE</button>`;
         } else if (isActive) {
-          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); goToSection('passesView')" class="w-full mt-3 py-3 px-4 rounded-full bg-[#12C061] text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm cursor-pointer">🎟️ PASE ACTIVO</button>`;
+          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); goToSection('passesView')" class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#12C061] text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm cursor-pointer">🎟️ PASE ACTIVO</button>`;
+        } else if (isSoldOut) {
+          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#26282E] text-neutral-500 font-display text-[17px] sm:text-[18px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-800 cursor-not-allowed opacity-75 shadow-inner">🔒 LISTA VIP COMPLETA</button>`;
         } else {
-          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); requestVipCoverFlow(${idx}, this)" class="w-full mt-3 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 cursor-pointer focus:outline-none">SOLICITAR VIP</button>`;
+          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); requestVipCoverFlow(${idx}, this)" class="w-full mt-2.5 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 cursor-pointer focus:outline-none">SOLICITAR VIP</button>`;
         }
+
+        let urgencyMarkup = '';
+        if (isSoldOut) {
+          urgencyMarkup = `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#121316] border border-[#DC2626] text-[#DC2626] font-display text-[11px] font-black tracking-wider uppercase">🔒 LISTA VIP COMPLETA</span>`;
+        } else if (social.remainingSpots <= 20 && social.remainingSpots > 0) {
+          urgencyMarkup = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#121316] border border-[#E87A72] text-[#E87A72] font-display text-[11px] font-black tracking-wider uppercase shadow-sm">⏳ ÚLTIMOS ${social.remainingSpots} CUPOS</span>`;
+        } else {
+          urgencyMarkup = `<p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">${event.availabilityText || 'CUPO MÁX. ' + social.guestLimit + ' ·'}</p>`;
+        }
+
+        let attendeesAvatars = '';
+        if (social.confirmedUsers && social.confirmedUsers.length > 0) {
+          attendeesAvatars = `<div class="flex -space-x-2 overflow-hidden shrink-0">` +
+            social.confirmedUsers.map(u => u.photoUrl ?
+              `<img src="${u.photoUrl}" alt="${u.name}" class="w-6 h-6 rounded-full border-2 border-[#16171B] object-cover shrink-0" />` :
+              `<div class="w-6 h-6 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0"><span class="text-white font-display text-[10px] font-black uppercase">${(u.name || 'A').slice(0, 1)}</span></div>`
+            ).join('') + `</div>`;
+        } else {
+          attendeesAvatars = `<div class="w-6 h-6 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0"><span class="text-[10px]">🎟️</span></div>`;
+        }
+
+        const attendeesText = social.activeCount > 0 ?
+          (social.activeCount === 1 ? `${social.confirmedUsers[0]?.name || '1 persona'} ya tiene su pase` : `${social.confirmedUsers[0]?.name || '1 persona'} y ${social.activeCount - 1} más ya tienen su pase`) :
+          'Sé el primero en anotarte en la lista VIP';
 
         return `
           <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
             <!-- Miniatura Superior -->
-            <div class="relative w-full h-[215px] sm:h-[225px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] flex-shrink-0">
+            <div class="relative w-full h-[195px] sm:h-[210px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] flex-shrink-0">
               ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${event.title}" class="w-full h-full object-cover rounded-xl" />` : `
                 <div class="w-full h-full bg-gradient-to-b from-[#1E2025] to-[#121316] rounded-xl flex items-center justify-center">
                   <span class="text-zinc-500 font-sans text-xs">SIN FLYER</span>
@@ -2489,25 +2953,35 @@
             </div>
 
             <!-- Bloque Descriptivo y Metadatos -->
-            <div class="w-full flex-1 flex flex-col justify-between pt-3 pb-1">
+            <div class="w-full flex-1 flex flex-col justify-between pt-2.5 pb-1">
               <div class="space-y-1">
                 <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
                   ${event.title}
                 </h4>
-                <div>
+                <div class="flex items-baseline space-x-2">
                   <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                    ${event.dateDisplay}
+                    ${formatCardDate(event.dateDisplay || event.date)}
                   </p>
-                  <p class="font-sans text-zinc-400 text-xs sm:text-sm font-medium mt-0.5">
-                    ${event.timeRange}
+                  <p class="font-sans text-zinc-400 text-xs font-medium">
+                    · ${event.timeRange}
                   </p>
                 </div>
                 <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
                   ${event.location}
                 </p>
-                <p class="font-sans text-[#E87A72] text-xs sm:text-sm font-bold tracking-wide">
-                  ${event.availabilityText || 'CUPO LIMITADO ·'}
-                </p>
+
+                <!-- BADGES DE URGENCIA Y ESCASEZ -->
+                <div class="pt-0.5">
+                  ${urgencyMarkup}
+                </div>
+
+                <!-- FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") -->
+                <div class="flex items-center space-x-2 pt-1 pb-0.5">
+                  ${attendeesAvatars}
+                  <span class="font-sans text-[#8E8E93] text-xs truncate leading-tight">
+                    ${attendeesText}
+                  </span>
+                </div>
               </div>
               ${btnMarkup}
             </div>
@@ -2641,6 +3115,14 @@
       }
     }
 
+    let currentDetailModalEvent = null;
+
+    function handleShareCurrentEvent(e) {
+      if (e) e.stopPropagation();
+      if (!currentDetailModalEvent) return;
+      openShareEventModal(currentDetailModalEvent, false);
+    }
+
     function openEventDetail(target) {
       let event;
       if (typeof target === 'number') {
@@ -2657,8 +3139,11 @@
                 hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
                 hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
                 title: d.title || 'SIN TÍTULO',
-                subtitle: d.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
-                dateDisplay: d.date ? d.date.toUpperCase() : 'PRÓXIMAMENTE',
+                subtitle: d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual',
+                dateDisplay: d.date ? formatCardDate(d.date) : 'PRÓXIMAMENTE',
+                date: d.date || '',
+                startTime: d.startTime || '',
+                endTime: d.endTime || '',
                 timeRange: `${d.startTime || '22:00'} — ${d.endTime || '04:00'}`,
                 location: d.location || 'Por definir',
                 availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
@@ -2676,6 +3161,10 @@
         event = target;
       }
       if (!event) return;
+      currentDetailModalEvent = event;
+
+      const social = getEventSocialData(event);
+      const isSoldOut = social.remainingSpots === 0;
 
       let bannerHtml = '';
       if (event.imageUrl) {
@@ -2700,11 +3189,15 @@
       }
 
       bannerHtml += `
-        <!-- Badge flotante de Cupos o Tipo de Evento en la esquina inferior -->
-        <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10">
-          <span class="text-xs font-sans text-[#E87A72] font-semibold">
-            CUPO MÁX. ${event.guestLimit || event.maxCapacity || 100}
-          </span>
+        <!-- Badge flotante de Cupos o Urgencia en la esquina inferior -->
+        <div class="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
+          ${isSoldOut ?
+            `<span class="text-xs font-display font-black text-[#DC2626] tracking-wider uppercase">🔒 LISTA VIP COMPLETA</span>` :
+            (social.remainingSpots <= 20 ?
+              `<span class="text-xs font-display font-black text-[#E87A72] tracking-wider uppercase">⏳ ÚLTIMOS ${social.remainingSpots} CUPOS</span>` :
+              `<span class="text-xs font-sans text-[#E87A72] font-semibold">CUPO MÁX. ${social.guestLimit}</span>`
+            )
+          }
         </div>
       `;
 
@@ -2730,9 +3223,40 @@
       }
 
       document.getElementById('modalSubtitle').innerText = event.subtitle || '';
-      document.getElementById('modalDate').innerText = event.dateDisplay;
+      document.getElementById('modalDate').innerText = formatCardDate(event.dateDisplay || event.date);
       document.getElementById('modalTime').innerText = event.timeRange;
       document.getElementById('modalAddress').innerText = event.exactAddress || event.location;
+
+      // FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?")
+      const attendeesContainer = document.getElementById('modalSocialAttendees');
+      if (attendeesContainer) {
+        let avatarsHtml = '';
+        if (social.confirmedUsers && social.confirmedUsers.length > 0) {
+          avatarsHtml = `<div class="flex -space-x-2 overflow-hidden shrink-0">` +
+            social.confirmedUsers.map(u => u.photoUrl ?
+              `<img src="${u.photoUrl}" alt="${u.name}" class="w-7 h-7 rounded-full border-2 border-[#16171B] object-cover shrink-0" />` :
+              `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-[11px] text-white font-display font-black uppercase">${(u.name || 'A').slice(0, 1)}</div>`
+            ).join('') + `</div>`;
+        } else {
+          avatarsHtml = `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-xs">🎟️</div>`;
+        }
+
+        const textHtml = social.activeCount > 0 ?
+          (social.activeCount === 1 ?
+            `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> ya tiene su pase` :
+            `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> y <strong class="text-white font-medium">${social.activeCount - 1} más</strong> ya tienen su pase`
+          ) :
+          'Sé el primero en anotarte en la lista VIP';
+
+        attendeesContainer.innerHTML = `${avatarsHtml}<p class="font-sans text-[#8E8E93] text-xs leading-tight">${textHtml}</p>`;
+      }
+
+      // TICKER DE ACTIVIDAD EN VIVO
+      const tickerEl = document.getElementById('modalLiveTicker');
+      if (tickerEl) {
+        tickerEl.innerText = `🔥 Alta demanda: ${social.recentRequests} solicitudes recibidas hoy`;
+      }
+
       document.getElementById('modalDescription').innerText = event.description;
 
       const promosUl = document.getElementById('modalPromotions');
@@ -2750,12 +3274,12 @@
       if (ctaBtn) {
         if (existingPass && existingPass.status === 'pending') {
           ctaBtn.innerText = 'SOLICITUD ENVIADA ⏳';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-full bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
           ctaBtn.disabled = true;
           ctaBtn.onclick = null;
         } else if (existingPass && (existingPass.status === 'active' || existingPass.status === 'confirmed')) {
           ctaBtn.innerText = 'VER MI PASE QR 🎟️';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-full bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => {
             closeEventDetail();
@@ -2763,12 +3287,17 @@
           };
         } else if (existingPass && existingPass.status === 'capacity_reached') {
           ctaBtn.innerText = 'AFORO COMPLETADO ⏳';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed';
+          ctaBtn.disabled = true;
+          ctaBtn.onclick = null;
+        } else if (isSoldOut) {
+          ctaBtn.innerText = 'LISTA VIP COMPLETA 🔒';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed';
           ctaBtn.disabled = true;
           ctaBtn.onclick = null;
         } else {
           ctaBtn.innerText = 'SOLICITAR VIP';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-98 focus:outline-none cursor-pointer';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-98 focus:outline-none cursor-pointer';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => handleRequestVipHtml(event);
         }
@@ -2792,7 +3321,7 @@
       const ctaBtn = document.getElementById('modalCtaBtn');
       if (ctaBtn) {
         ctaBtn.innerText = 'SOLICITUD ENVIADA ⏳';
-        ctaBtn.className = 'w-full py-3.5 px-4 rounded-full bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
+        ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
         ctaBtn.disabled = true;
       }
       try {
@@ -2802,11 +3331,14 @@
           eventTitle: cleanTitle,
           eventDate: event.dateDisplay || event.date || '',
           eventTime: event.timeRange ? event.timeRange.split('—')[0].trim() : (event.startTime || event.time || '22:00'),
-          eventLocation: event.location || event.exactAddress || '',
+          eventLocation: event.exactAddress || event.location || '',
           eventImageUrl: event.imageUrl || '',
           hostUserId: event.hostUserId || '',
           userId: fbCurrentUser.uid,
           holderName: fbCurrentUser.displayName || 'Invitado',
+          userName: fbCurrentUser.displayName || 'Invitado',
+          userPhotoUrl: fbCurrentUser.photoURL || '',
+          userAvatar: fbCurrentUser.photoURL || '',
           accessTier: 'VIP',
           status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
           createdAt: Date.now()
@@ -3328,10 +3860,63 @@
       }
     }
 
+    let createEventSelectedTags = [];
+
+    const CREATE_EVENT_AVAILABLE_TAGS = [
+      { id: "reggaeton", label: "Reggaetón 🍑" },
+      { id: "techno", label: "Electrónica / Techno 🎧" },
+      { id: "indie", label: "Indie & Live Rock 🎸" },
+      { id: "previas", label: "Previas & Juntadas 🍻" },
+      { id: "boliches", label: "Boliches & Clubs 🪩" },
+      { id: "cocktails", label: "Cocktails & Lounges 🍸" },
+      { id: "festivales", label: "Festivales & Open Air ⚡" },
+      { id: "rooftops", label: "VIP & Rooftops 🏙️" },
+    ];
+
+    function toggleCreateEventTagHtml(tagId) {
+      const idx = createEventSelectedTags.indexOf(tagId);
+      if (idx > -1) {
+        createEventSelectedTags.splice(idx, 1);
+      } else {
+        if (createEventSelectedTags.length >= 3) {
+          showToast('Máximo 3 etiquetas permitidas');
+          if (navigator && navigator.vibrate) navigator.vibrate(50);
+          return;
+        }
+        createEventSelectedTags.push(tagId);
+      }
+      renderCreateEventTagsHtml();
+    }
+
+    function renderCreateEventTagsHtml() {
+      const counter = document.getElementById('createEventTagsCounter');
+      if (counter) {
+        counter.innerText = `(${createEventSelectedTags.length}/3 elegidas)`;
+        if (createEventSelectedTags.length > 0) {
+          counter.className = "font-sans text-xs font-bold transition-colors text-[#12C061]";
+        } else {
+          counter.className = "font-sans text-xs font-bold transition-colors text-[#8E8E93]";
+        }
+      }
+
+      CREATE_EVENT_AVAILABLE_TAGS.forEach((tag) => {
+        const btn = document.getElementById(`createTag_${tag.id}`);
+        if (!btn) return;
+        const isSelected = createEventSelectedTags.includes(tag.id);
+        if (isSelected) {
+          btn.className = "py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#E87A72]/20 border-[#E87A72] text-white font-bold shadow-[0_0_12px_rgba(232,122,114,0.22)] active:scale-95";
+        } else {
+          btn.className = "py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95";
+        }
+      });
+    }
+
     function resetCreateEventForm() {
       editingEventId = null;
       isEventPublished = false;
       currentEventArtBase64 = null;
+      createEventSelectedTags = [];
+      renderCreateEventTagsHtml();
       removeCreateEventCoords();
       updateLocationUI('', null);
       const deleteContainer = document.getElementById('deleteEventBtnContainer');
@@ -3390,6 +3975,15 @@
         const display = document.getElementById('createCapacityDisplay');
         if (display) display.innerText = createCapacity;
       }
+      if (data.tags && Array.isArray(data.tags)) {
+        createEventSelectedTags = data.tags.map(t => {
+          const found = CREATE_EVENT_AVAILABLE_TAGS.find(at => at.id === t || at.label === t);
+          return found ? found.id : t;
+        });
+      } else {
+        createEventSelectedTags = [];
+      }
+      renderCreateEventTagsHtml();
       if (data.imageUrl || data.artImage) {
         currentEventArtBase64 = data.imageUrl || data.artImage;
         if (previewImg) previewImg.src = currentEventArtBase64;
@@ -3591,16 +4185,20 @@
         btn.setAttribute('disabled', 'true');
       }
 
+      const calculatedEndTimestamp = computeEventEndTimestamp(date, endTime, startTime);
+
       const eventPayload = {
         title: title,
         type: createPrivacyMode || 'public',
         date: date,
         startTime: startTime,
         endTime: endTime,
+        endTimestamp: calculatedEndTimestamp,
         location: location,
         coordinates: createEventCoordinates || null,
         allowsPlusOne: Boolean(createPlusOneEnabled),
         maxCapacity: createCapacity || 150,
+        tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
         hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
         hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
@@ -3615,9 +4213,11 @@
             await fbDb.collection('events').doc(editingEventId).update({
               title: eventPayload.title,
               type: eventPayload.type,
+              tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
               date: eventPayload.date,
               startTime: eventPayload.startTime,
               endTime: eventPayload.endTime,
+              endTimestamp: calculatedEndTimestamp,
               location: eventPayload.location,
               coordinates: eventPayload.coordinates,
               allowsPlusOne: eventPayload.allowsPlusOne,
@@ -4070,22 +4670,42 @@
     }
 
     let latestCreatedEvent = null;
+    let isNewlyCreatedShareModal = false;
 
-    function openShareEventModal(eventData) {
+    function openShareEventModal(eventData, isNewlyCreated = false) {
       latestCreatedEvent = eventData;
+      isNewlyCreatedShareModal = isNewlyCreated;
       const modal = document.getElementById('shareEventModal');
       const flyerImg = document.getElementById('shareEventFlyerImg');
       const flyerPlaceholder = document.getElementById('shareEventFlyerPlaceholder');
       const placeholderTitle = document.getElementById('shareEventPlaceholderTitle');
       const titleEl = document.getElementById('shareEventTitle');
       const metaEl = document.getElementById('shareEventMeta');
+      const badgeText = document.getElementById('shareEventBadgeText');
+      const badgeEl = document.getElementById('shareEventBadge');
+      const bottomBtn = document.getElementById('shareEventBottomBtn');
 
       if (titleEl) titleEl.innerText = eventData.title || 'EVENTO +1';
       if (placeholderTitle) placeholderTitle.innerText = eventData.title || 'EVENTO +1';
 
-      if (eventData.imageUrl) {
+      if (isNewlyCreated) {
+        if (badgeText) badgeText.innerText = '✦ EVENTO PUBLICADO CON ÉXITO';
+        if (badgeEl) {
+          badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2';
+        }
+        if (bottomBtn) bottomBtn.innerText = 'IR AL INICIO';
+      } else {
+        if (badgeText) badgeText.innerText = '✦ DIFUNDIR EVENTO';
+        if (badgeEl) {
+          badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 mb-2';
+        }
+        if (bottomBtn) bottomBtn.innerText = 'CERRAR';
+      }
+
+      const imgUrl = eventData.imageUrl || eventData.image || eventData.flyerUrl;
+      if (imgUrl) {
         if (flyerImg) {
-          flyerImg.src = eventData.imageUrl;
+          flyerImg.src = imgUrl;
           flyerImg.classList.remove('hidden');
         }
         if (flyerPlaceholder) flyerPlaceholder.classList.add('hidden');
@@ -4095,52 +4715,338 @@
       }
 
       if (metaEl) {
-        metaEl.innerHTML = `<span>📅 ${eventData.date || 'Próximamente'}</span> · <span>⏰ ${eventData.startTime || '22:00'}</span> · <span>📍 ${eventData.location || 'Por definir'}</span>`;
+        metaEl.innerHTML = `<span>📅 ${formatCardDate(eventData.date || eventData.dateDisplay) || 'Próximamente'}</span> · <span>⏰ ${eventData.startTime || eventData.time || '22:00'}</span> · <span>📍 ${eventData.location || eventData.exactAddress || 'Por definir'}</span>`;
       }
 
       if (modal) modal.classList.remove('hidden');
     }
 
-    function closeShareEventModalAndGoHome() {
+    function closeShareEventModal() {
       const modal = document.getElementById('shareEventModal');
       if (modal) modal.classList.add('hidden');
-      closeCreateEventScreen();
+      if (isNewlyCreatedShareModal) {
+        closeCreateEventScreen();
+      }
     }
 
-    function executeShareEvent() {
+    function shareToWhatsAppHtml() {
       if (!latestCreatedEvent) return;
-      const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${latestCreatedEvent.id}`;
-      const shareText = `¡Te invito a mi evento en +1!\n🔥 ${latestCreatedEvent.title}\n📅 ${latestCreatedEvent.date} · ${latestCreatedEvent.startTime}\n📍 ${latestCreatedEvent.location}\n\nObtén tu pase aquí: ${shareUrl}`;
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${latestCreatedEvent.id || ''}`;
+      const dateStr = formatCardDate(latestCreatedEvent.dateDisplay || latestCreatedEvent.date) || 'Próximamente';
+      const timeStr = latestCreatedEvent.timeRange || latestCreatedEvent.startTime || '22:00';
+      const locStr = latestCreatedEvent.location || latestCreatedEvent.exactAddress || 'Por confirmar';
+      const formattedText = `¡Mira este plan en +1!\n🔥 ${latestCreatedEvent.title}\n📅 ${dateStr} · ${timeStr}\n📍 ${locStr}\n\nRevisa los detalles y pide tu pase aquí:\n${shareUrl}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(formattedText)}`;
+      window.open(whatsappUrl, '_blank');
+    }
 
-      if (navigator.share) {
-        navigator.share({
-          title: latestCreatedEvent.title,
-          text: shareText,
-          url: shareUrl
-        }).catch(() => {});
+    function copyShareDirectLinkHtml() {
+      if (!latestCreatedEvent) return;
+      const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${latestCreatedEvent.id || ''}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('¡Enlace copiado al portapapeles!');
+        }).catch(() => {
+          showToast('Error al copiar enlace');
+        });
       } else {
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(shareText);
-        }
-        alert("Enlace copiado al portapapeles listo para enviar por WhatsApp.");
+        showToast('Portapapeles no disponible');
       }
     }
 
-    function handleShareEvent() {
-      if (!isEventPublished) return;
-      if (latestCreatedEvent) {
-        executeShareEvent();
-        return;
-      }
-      if (navigator.share) {
-        navigator.share({
-          title: document.getElementById('createEventNameInput')?.value || 'Nuevo Evento en +1',
-          text: '¡Únete a mi evento en +1!',
-          url: window.location.href
-        }).catch(() => showToast('Enlace copiado al portapapeles'));
+    function loadCanvasImageSafe(src) {
+      return new Promise(resolve => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          const img2 = new Image();
+          img2.onload = () => resolve(img2);
+          img2.onerror = () => resolve(null);
+          img2.src = src;
+        };
+        img.src = src;
+      });
+    }
+
+    function drawCanvasRoundRect(ctx, x, y, width, height, radius) {
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, radius);
       } else {
-        navigator.clipboard?.writeText(window.location.href);
-        showToast('Enlace copiado al portapapeles');
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      }
+    }
+
+    function wrapCanvasTextLines(ctx, text, maxWidth, maxLines = 2) {
+      const words = (text || '').split(' ');
+      const lines = [];
+      let currentLine = '';
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+          if (lines.length === maxLines - 1) break;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine && lines.length < maxLines) {
+        lines.push(currentLine);
+      }
+      return lines;
+    }
+
+    async function generateStoryImageHtml() {
+      if (!latestCreatedEvent) return;
+      const btn = document.getElementById('shareEventStoryBtn');
+      const btnText = document.getElementById('shareEventStoryBtnText');
+      const icon = document.getElementById('shareEventStoryIcon');
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerText = 'GENERANDO HISTORIA...';
+      if (icon) icon.innerText = '⏳';
+
+      try {
+        if (document.fonts && document.fonts.ready) {
+          try { await document.fonts.ready; } catch(e) {}
+        }
+
+        const canvasWidth = 1080;
+        const canvasHeight = 1920;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas 2D context not available');
+
+        // 1. Fondo base #0B0C0E
+        ctx.fillStyle = '#0B0C0E';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        const imgUrl = latestCreatedEvent.imageUrl || latestCreatedEvent.image || latestCreatedEvent.flyerUrl || null;
+        const eventImg = imgUrl ? await loadCanvasImageSafe(imgUrl) : null;
+
+        if (eventImg) {
+          try {
+            ctx.save();
+            const hRatio = canvasWidth / eventImg.width;
+            const vRatio = canvasHeight / eventImg.height;
+            const ratio = Math.max(hRatio, vRatio);
+            const centerShiftX = (canvasWidth - eventImg.width * ratio) / 2;
+            const centerShiftY = (canvasHeight - eventImg.height * ratio) / 2;
+
+            if ('filter' in ctx) {
+              ctx.filter = 'blur(35px) brightness(0.28)';
+              ctx.drawImage(eventImg, 0, 0, eventImg.width, eventImg.height, centerShiftX - 20, centerShiftY - 20, eventImg.width * ratio + 40, eventImg.height * ratio + 40);
+              ctx.filter = 'none';
+            } else {
+              ctx.drawImage(eventImg, 0, 0, eventImg.width, eventImg.height, centerShiftX, centerShiftY, eventImg.width * ratio, eventImg.height * ratio);
+              ctx.fillStyle = 'rgba(11, 12, 14, 0.78)';
+              ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            }
+            ctx.restore();
+          } catch (e) {
+            console.warn('Canvas blur background error:', e);
+          }
+        }
+
+        // Capa degradada cinematográfica
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+        bgGradient.addColorStop(0, 'rgba(11, 12, 14, 0.7)');
+        bgGradient.addColorStop(0.35, 'rgba(11, 12, 14, 0.35)');
+        bgGradient.addColorStop(0.7, 'rgba(11, 12, 14, 0.65)');
+        bgGradient.addColorStop(1, 'rgba(11, 12, 14, 0.95)');
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // 2. Branding Superior: Logotipo +1
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.fillStyle = '#E87A72';
+        ctx.font = '900 68px "Antonio", sans-serif';
+        ctx.fillText('+1', 540, 160);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '700 22px "Cabinet Grotesk", sans-serif';
+        ctx.fillText('PASE VIP · LISTA DE ACCESO', 540, 215);
+
+        // 3. Flyer Cuadrado Central (~780 x 780 px, 1:1)
+        const flyerSize = 780;
+        const flyerX = (canvasWidth - flyerSize) / 2;
+        const flyerY = 270;
+        const flyerRadius = 36;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetY = 20;
+        drawCanvasRoundRect(ctx, flyerX, flyerY, flyerSize, flyerSize, flyerRadius);
+        ctx.fillStyle = '#16171B';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        drawCanvasRoundRect(ctx, flyerX, flyerY, flyerSize, flyerSize, flyerRadius);
+        ctx.clip();
+
+        if (eventImg) {
+          try {
+            const minDim = Math.min(eventImg.width, eventImg.height);
+            const sx = (eventImg.width - minDim) / 2;
+            const sy = (eventImg.height - minDim) / 2;
+            ctx.drawImage(eventImg, sx, sy, minDim, minDim, flyerX, flyerY, flyerSize, flyerSize);
+          } catch {
+            ctx.fillStyle = '#1F2228';
+            ctx.fillRect(flyerX, flyerY, flyerSize, flyerSize);
+            ctx.fillStyle = '#E87A72';
+            ctx.font = '900 60px "Antonio", sans-serif';
+            ctx.fillText((latestCreatedEvent.title || 'EVENTO').slice(0, 16).toUpperCase(), 540, flyerY + flyerSize / 2);
+          }
+        } else {
+          const flyerGrad = ctx.createLinearGradient(flyerX, flyerY, flyerX + flyerSize, flyerY + flyerSize);
+          flyerGrad.addColorStop(0, '#2A1B28');
+          flyerGrad.addColorStop(0.5, '#16171B');
+          flyerGrad.addColorStop(1, '#1A2328');
+          ctx.fillStyle = flyerGrad;
+          ctx.fillRect(flyerX, flyerY, flyerSize, flyerSize);
+
+          ctx.fillStyle = '#E87A72';
+          ctx.font = '900 56px "Antonio", sans-serif';
+          ctx.fillText((latestCreatedEvent.title || 'EVENTO').toUpperCase(), 540, flyerY + flyerSize / 2 - 20);
+
+          ctx.fillStyle = '#9CA3AF';
+          ctx.font = '500 24px "Cabinet Grotesk", sans-serif';
+          ctx.fillText('EVENTO OFICIAL +1', 540, flyerY + flyerSize / 2 + 35);
+        }
+        ctx.restore();
+
+        // Borde fino en salmón #E87A72
+        drawCanvasRoundRect(ctx, flyerX, flyerY, flyerSize, flyerSize, flyerRadius);
+        ctx.strokeStyle = '#E87A72';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // 4. Datos del evento
+        const cleanTitle = (latestCreatedEvent.title || 'EVENTO EXCLUSIVO').replace(/^FLYER.*?:\s*/i, '').trim().toUpperCase();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '900 50px "Antonio", sans-serif';
+        const titleLines = wrapCanvasTextLines(ctx, cleanTitle, 860, 2);
+        let currentY = 1130;
+        titleLines.forEach(line => {
+          ctx.fillText(line, 540, currentY);
+          currentY += 56;
+        });
+
+        const dateStr = (formatCardDate(latestCreatedEvent.dateDisplay || latestCreatedEvent.date) || 'PRÓXIMAMENTE').toUpperCase();
+        const timeStr = latestCreatedEvent.timeRange || (latestCreatedEvent.startTime ? `${latestCreatedEvent.startTime} — ${latestCreatedEvent.endTime || 'CIERRE'}` : '22:00 — 04:00');
+        ctx.fillStyle = '#E5E7EB';
+        ctx.font = '700 30px "Cabinet Grotesk", sans-serif';
+        ctx.fillText(`${dateStr} · ${timeStr}`, 540, currentY + 15);
+
+        const locationStr = (latestCreatedEvent.location || latestCreatedEvent.exactAddress || 'POR DEFINIR').toUpperCase();
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '600 26px "Cabinet Grotesk", sans-serif';
+        ctx.fillText(`📍 ${locationStr}`, 540, currentY + 65);
+
+        // Pastilla de urgencia
+        const pillY = currentY + 115;
+        const pillWidth = 520;
+        const pillHeight = 54;
+        const pillX = (canvasWidth - pillWidth) / 2;
+
+        drawCanvasRoundRect(ctx, pillX, pillY, pillWidth, pillHeight, 27);
+        ctx.fillStyle = 'rgba(232, 122, 114, 0.15)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232, 122, 114, 0.45)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#E87A72';
+        ctx.font = '800 22px "Antonio", sans-serif';
+        ctx.fillText('🔥 ÚLTIMOS CUPOS VIP · ENLACE DIRECTO', 540, pillY + pillHeight / 2);
+
+        // 5. Zona de sticker de enlace
+        const stickerBoxWidth = 660;
+        const stickerBoxHeight = 110;
+        const stickerBoxX = (canvasWidth - stickerBoxWidth) / 2;
+        const stickerBoxY = 1600;
+        const stickerRadius = 24;
+
+        drawCanvasRoundRect(ctx, stickerBoxX, stickerBoxY, stickerBoxWidth, stickerBoxHeight, stickerRadius);
+        ctx.fillStyle = 'rgba(22, 23, 27, 0.9)';
+        ctx.fill();
+
+        ctx.save();
+        ctx.setLineDash([14, 10]);
+        ctx.strokeStyle = '#E87A72';
+        ctx.lineWidth = 3;
+        drawCanvasRoundRect(ctx, stickerBoxX, stickerBoxY, stickerBoxWidth, stickerBoxHeight, stickerRadius);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '700 24px "Cabinet Grotesk", sans-serif';
+        ctx.fillText('[ 🔗 COLOCA AQUÍ EL STICKER DE LINK ]', 540, stickerBoxY + stickerBoxHeight / 2);
+
+        // 6. Exportación nativa
+        const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${latestCreatedEvent.id || ''}`;
+        const filename = `${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-story.png`;
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            showToast('Error al generar la imagen');
+            return;
+          }
+
+          const file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: latestCreatedEvent.title,
+                text: `¡Te invito a mi evento en +1! 🔥 Pide tu pase aquí: ${shareUrl}`,
+              });
+              showToast('¡Historia compartida con éxito!');
+              return;
+            } catch (err) {
+              // Si cancela, no romper
+            }
+          }
+
+          // Fallback descarga
+          const downloadLink = document.createElement('a');
+          downloadLink.download = filename;
+          const objUrl = URL.createObjectURL(blob);
+          downloadLink.href = objUrl;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          setTimeout(() => URL.revokeObjectURL(objUrl), 3000);
+          showToast('¡Imagen guardada! Súbela a Instagram con tu link');
+        }, 'image/png');
+
+      } catch (err) {
+        console.error('Error al generar imagen de historia:', err);
+        showToast('Error al generar historia: ' + (err.message || 'Error'));
+      } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.innerText = 'GENERAR HISTORIA PARA INSTAGRAM';
+        if (icon) icon.innerText = '📸';
       }
     }
 
@@ -4177,8 +5083,10 @@
       const modal = document.getElementById('searchEventsModal');
       if (modal) {
         modal.classList.remove('hidden');
+        modal.classList.remove('anim-modal-fade-out');
         const container = document.getElementById('searchModalContainer');
         if (container) {
+          container.classList.remove('anim-modal-slide-exit');
           container.classList.remove('anim-modal-slide');
           void container.offsetWidth;
           container.classList.add('anim-modal-slide');
@@ -4193,7 +5101,21 @@
 
     function closeSearchEventsModal() {
       const modal = document.getElementById('searchEventsModal');
-      if (modal) modal.classList.add('hidden');
+      if (modal && !modal.classList.contains('hidden')) {
+        const container = document.getElementById('searchModalContainer');
+        if (container) {
+          container.classList.remove('anim-modal-slide');
+          container.classList.add('anim-modal-slide-exit');
+          modal.classList.add('anim-modal-fade-out');
+          setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('anim-modal-fade-out');
+            container.classList.remove('anim-modal-slide-exit');
+          }, 210);
+        } else {
+          modal.classList.add('hidden');
+        }
+      }
     }
 
     function setSearchFilter(filterName) {
@@ -4243,7 +5165,13 @@
     }
 
     function renderSearchResults() {
-      const filtered = eventsData.filter(evt => {
+      const now = Date.now();
+      const activeEvents = (eventsData || []).filter(evt => {
+        const eventEnd = evt.endTimestamp || computeEventEndTimestamp(evt.date, evt.endTime, evt.startTime);
+        return eventEnd > now;
+      });
+
+      const filtered = activeEvents.filter(evt => {
         // 1. Filtro por chip
         if (currentSearchFilter === 'Hoy / Esta Noche 🔥') {
           const match = evt.isTonight || /hoy|esta noche|sáb\. 14/i.test(evt.dateDisplay);
@@ -4330,7 +5258,7 @@
                     ${cleanTitle}
                   </h4>
                   <p class="font-sans text-neutral-300 text-xs font-medium mt-0.5 truncate">
-                    ${event.dateDisplay} · ${timeStart}
+                    ${formatCardDate(event.dateDisplay || event.date)} · ${timeStart}
                   </p>
                   <div class="flex items-center text-neutral-400 text-xs font-sans mt-0.5 truncate">
                     <span class="mr-1 text-[11px]">📍</span>
@@ -4535,6 +5463,205 @@
       }
     }
 
+    // Estado y Métodos del Flujo de Onboarding (Cold Start)
+    let onboardingState = {
+      role: 'attendee',
+      city: 'La Paz, BO',
+      isAdult: false,
+      interests: []
+    };
+
+    function openOnboardingScreen() {
+      const screen = document.getElementById('onboardingScreenView');
+      if (screen) {
+        screen.classList.remove('hidden');
+        goToOnboardingStep(1);
+      }
+    }
+
+    function closeOnboardingScreen() {
+      const screen = document.getElementById('onboardingScreenView');
+      if (screen) screen.classList.add('hidden');
+    }
+
+    function goToOnboardingStep(step) {
+      const step1 = document.getElementById('onboardingStep1View');
+      const step2 = document.getElementById('onboardingStep2View');
+      if (step === 1) {
+        if (step1) step1.classList.remove('hidden');
+        if (step2) step2.classList.add('hidden');
+      } else {
+        if (step1) step1.classList.add('hidden');
+        if (step2) step2.classList.remove('hidden');
+      }
+    }
+
+    function selectOnboardingRoleHtml(role) {
+      onboardingState.role = role;
+      ['attendee', 'host', 'both'].forEach((r) => {
+        const btn = document.getElementById(`onboardingRoleBtn_${r}`);
+        if (!btn) return;
+        const iconContainer = btn.querySelector('div > div');
+        const titleEl = btn.querySelector('h3');
+        const radioContainer = btn.lastElementChild;
+
+        if (r === role) {
+          btn.className = 'w-full p-3.5 sm:p-4 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer shadow-lg bg-[#1F2228] border-[#E87A72] shadow-[0_0_20px_rgba(232,122,114,0.18)]';
+          if (iconContainer) iconContainer.className = 'w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 bg-[#E87A72]/20 border border-[#E87A72]/40 text-white';
+          if (titleEl) titleEl.className = 'font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-[#E87A72]';
+          if (radioContainer) {
+            radioContainer.className = 'w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 border-[#E87A72] bg-[#E87A72]';
+            radioContainer.innerHTML = '<div class="w-2 h-2 rounded-full bg-black"></div>';
+          }
+        } else {
+          btn.className = 'w-full p-3.5 sm:p-4 rounded-2xl text-left flex items-center justify-between border transition-all cursor-pointer shadow-lg bg-[#16171B]/90 hover:bg-[#1C1E24] border-[#26282E]';
+          if (iconContainer) iconContainer.className = 'w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 bg-black/40 border border-white/5 text-neutral-300';
+          if (titleEl) titleEl.className = 'font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-white';
+          if (radioContainer) {
+            radioContainer.className = 'w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ml-3 border-white/30 bg-transparent';
+            radioContainer.innerHTML = '';
+          }
+        }
+      });
+    }
+
+    function toggleOnboardingAdultHtml() {
+      onboardingState.isAdult = !onboardingState.isAdult;
+      const container = document.getElementById('onboardingAdultCheckContainer');
+      const icon = document.getElementById('onboardingAdultCheckIcon');
+      const step1Btn = document.getElementById('onboardingStep1Btn');
+
+      if (onboardingState.isAdult) {
+        if (container) container.className = 'p-3 rounded-2xl border transition-all flex items-center space-x-3 cursor-pointer select-none bg-[#1F2228]/80 border-[#E87A72]/60';
+        if (icon) icon.className = 'w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-all bg-[#E87A72] border-[#E87A72] text-black';
+        if (step1Btn) {
+          step1Btn.removeAttribute('disabled');
+          step1Btn.className = 'w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#E87A72] hover:bg-[#d66e66] text-black shadow-[0_4px_25px_rgba(232,122,114,0.35)] cursor-pointer active:scale-98';
+        }
+      } else {
+        if (container) container.className = 'p-3 rounded-2xl border transition-all flex items-center space-x-3 cursor-pointer select-none bg-[#16171B]/80 border-[#26282E] hover:border-white/20';
+        if (icon) icon.className = 'w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-all bg-black/40 border-white/30 text-transparent';
+        if (step1Btn) {
+          step1Btn.setAttribute('disabled', 'true');
+          step1Btn.className = 'w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#26282E] text-[#8E8E93] opacity-60 cursor-not-allowed';
+        }
+      }
+    }
+
+    function toggleOnboardingInterestHtml(el, label) {
+      const idx = onboardingState.interests.indexOf(label);
+      const dot = el.querySelector('.interest-dot');
+
+      if (idx > -1) {
+        onboardingState.interests.splice(idx, 1);
+        el.className = 'py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300';
+        if (dot) dot.classList.add('hidden');
+      } else {
+        onboardingState.interests.push(label);
+        el.className = 'py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#E87A72]/20 border-[#E87A72] text-white shadow-[0_0_16px_rgba(232,122,114,0.22)]';
+        if (dot) dot.classList.remove('hidden');
+      }
+
+      updateOnboardingStep2Progress();
+    }
+
+    function updateOnboardingStep2Progress() {
+      const count = onboardingState.interests.length;
+      const counter = document.getElementById('onboardingInterestsCounter');
+      const check = document.getElementById('onboardingInterestsCheck');
+      const helper = document.getElementById('onboardingHelperText');
+      const submitBtn = document.getElementById('onboardingSubmitBtn');
+
+      if (counter) counter.innerText = `(${count}/3 seleccionados)`;
+
+      if (count >= 3) {
+        if (counter) {
+          counter.classList.remove('text-[#8E8E93]');
+          counter.classList.add('text-[#12C061]');
+        }
+        if (check) check.classList.remove('hidden');
+        if (helper) helper.classList.add('hidden');
+        if (submitBtn) {
+          submitBtn.removeAttribute('disabled');
+          submitBtn.className = 'w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#12C061] hover:bg-[#0fa653] text-black shadow-[0_4px_25px_rgba(18,192,97,0.35)] cursor-pointer active:scale-98';
+        }
+      } else {
+        if (counter) {
+          counter.classList.add('text-[#8E8E93]');
+          counter.classList.remove('text-[#12C061]');
+        }
+        if (check) check.classList.add('hidden');
+        if (helper) {
+          helper.classList.remove('hidden');
+          helper.innerText = `Te faltan ${3 - count} para desbloquear tu cartelera personalizada`;
+        }
+        if (submitBtn) {
+          submitBtn.setAttribute('disabled', 'true');
+          submitBtn.className = 'w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#26282E] text-[#8E8E93] opacity-60 cursor-not-allowed';
+        }
+      }
+    }
+
+    async function handleOnboardingSubmitHtml() {
+      const citySelect = document.getElementById('onboardingCitySelectHtml');
+      const selectedCity = citySelect ? citySelect.value : onboardingState.city;
+
+      const submitBtn = document.getElementById('onboardingSubmitBtn');
+      if (submitBtn) submitBtn.innerHTML = '<span>CONFIGURANDO...</span>';
+
+      try {
+        if (fbCurrentUser && fbDb) {
+          await fbDb.collection('users').doc(fbCurrentUser.uid).set({
+            rolePreference: onboardingState.role,
+            city: selectedCity,
+            isAdult: true,
+            interests: onboardingState.interests,
+            onboardingCompleted: true,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+        try {
+          localStorage.setItem('plus1_onboarding_completed', 'true');
+          localStorage.setItem('plus1_user_city', selectedCity);
+        } catch (e) {}
+
+        closeOnboardingScreen();
+        showToast('🚀 ¡BIENVENIDO A +1!');
+      } catch (err) {
+        console.error('Error guardando onboarding:', err);
+        closeOnboardingScreen();
+        showToast('¡Bienvenido a +1!');
+      }
+    }
+
+    async function handleSkipOnboardingHtml() {
+      const citySelect = document.getElementById('onboardingCitySelectHtml');
+      const selectedCity = citySelect ? citySelect.value : 'La Paz, BO';
+      const defaultInterests = ['Reggaetón', 'Boliches & Clubs', 'Previas & Juntadas'];
+
+      try {
+        if (fbCurrentUser && fbDb) {
+          await fbDb.collection('users').doc(fbCurrentUser.uid).set({
+            rolePreference: onboardingState.role || 'attendee',
+            city: selectedCity,
+            isAdult: true,
+            interests: defaultInterests,
+            onboardingCompleted: true,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+        try {
+          localStorage.setItem('plus1_onboarding_completed', 'true');
+        } catch (e) {}
+
+        closeOnboardingScreen();
+        showToast('¡Bienvenido a +1!');
+      } catch (err) {
+        console.error('Error en skip onboarding:', err);
+        closeOnboardingScreen();
+      }
+    }
+
     let userCreatedEvents = [];
 
     function renderMyEventsModal() {
@@ -4564,8 +5691,8 @@
                 ${evt.dateStr || evt.date || ''}
               </span>
             </div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40">
-              ${evt.status || 'Activo'}
+            <span class="text-[10px] font-display font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 ${evt.isFinished ? 'bg-neutral-800 text-neutral-400 border border-neutral-700' : 'bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40'}">
+              ${evt.isFinished ? '⚪ FINALIZADO' : '🟢 ACTIVO / PRÓXIMO'}
             </span>
           </div>
           <div class="flex items-center justify-between pt-1 border-t border-neutral-800/80 text-xs">

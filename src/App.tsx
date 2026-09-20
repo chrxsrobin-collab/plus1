@@ -11,6 +11,7 @@ import TicketsScreen from './screens/TicketsScreen';
 import ScannerScreen from './screens/ScannerScreen';
 import EventManagerScreen from './screens/EventManagerScreen';
 import ExploreScreen from './screens/ExploreScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
 import EventInviteModal from './components/EventInviteModal';
 import { PassItem, UserProfile } from './types/home';
 import { mockMamacitaPass, mockUserProfile } from './data/mockData';
@@ -18,6 +19,7 @@ import { mockMamacitaPass, mockUserProfile } from './data/mockData';
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => auth.currentUser);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
+  const [isOnboarding, setIsOnboarding] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const savedName = typeof window !== 'undefined' ? localStorage.getItem('plus1_display_name') : null;
     return {
@@ -74,9 +76,19 @@ export const App: React.FC = () => {
             if (!user.displayName && user.isAnonymous) {
               updateProfile(user, { displayName: defaultGuestName }).catch(console.warn);
             }
-            setDoc(userDocRef, { name: initialName, streak: 1, points: 0 }, { merge: true }).catch(console.warn);
+            setDoc(userDocRef, { name: initialName, streak: 1, points: 0, onboardingCompleted: false }, { merge: true }).catch(console.warn);
+            setIsOnboarding(true);
+          } else {
+            const data = snap.data();
+            if (data?.onboardingCompleted !== true) {
+              setIsOnboarding(true);
+            } else {
+              setIsOnboarding(false);
+            }
           }
-        }).catch(console.warn);
+        }).catch((err) => {
+          console.warn('[+1 App] Error verificando usuario:', err);
+        });
 
         const unsubDoc = onSnapshot(userDocRef, (snap) => {
           if (snap.exists()) {
@@ -86,7 +98,14 @@ export const App: React.FC = () => {
                 ...prev,
                 ...(data.name ? { name: data.name } : {}),
                 ...(data.photoUrl ? { avatarUrl: data.photoUrl } : {}),
+                rolePreference: data.rolePreference,
+                city: data.city,
+                interests: data.interests,
+                onboardingCompleted: data.onboardingCompleted,
               }));
+              if (data.onboardingCompleted === true) {
+                setIsOnboarding(false);
+              }
             }
           }
         }, (err) => {
@@ -304,6 +323,17 @@ export const App: React.FC = () => {
 
   if (!currentUser) {
     return <AuthScreen onSuccess={() => setCurrentRoute('/')} />;
+  }
+
+  if (isOnboarding) {
+    return (
+      <OnboardingScreen
+        onComplete={() => {
+          setIsOnboarding(false);
+          setCurrentRoute('/');
+        }}
+      />
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatCardDate } from '../lib/dateUtils';
 
 export interface HostScanEventItem {
   id: string;
@@ -102,7 +103,7 @@ export const SelectEventToScanSheet: React.FC<SelectEventToScanSheetProps> = ({
                         {event.title || 'SIN TÍTULO'}
                       </h4>
                       <div className="flex items-center space-x-2 text-[11px] text-neutral-400 font-sans mt-0.5 truncate">
-                        <span>📅 {event.date || 'Hoy'}</span>
+                        <span>📅 {formatCardDate(event.date) || 'Hoy'}</span>
                         <span>·</span>
                         <span>🕒 {event.startTime || '22:00'}</span>
                       </div>

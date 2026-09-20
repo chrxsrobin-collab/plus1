@@ -5,7 +5,7 @@ import { mockUserProfile, mockSouvenirs } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { signOut, updateProfile } from 'firebase/auth';
-import BottomNav from '../components/BottomNav';
+import { computeEventEndTimestamp } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
 export interface ProfileScreenProps {
@@ -271,13 +271,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        const now = Date.now();
         const myEvents: CreatedEventItem[] = snapshot.docs.map((doc) => {
           const d = doc.data();
+          const eventEnd = d.endTimestamp || computeEventEndTimestamp(d.date, d.endTime, d.startTime);
+          const isFinished = eventEnd <= now;
           return {
             id: doc.id,
             title: d.title || 'Evento sin título',
             dateStr: `${d.date || 'Próximamente'} · ${d.startTime || '22:00'}`,
-            status: d.type === 'private' ? 'Privado' : 'Activo',
+            status: isFinished ? 'Finalizado' : 'Activo',
+            isFinished: isFinished,
+            endTimestamp: eventEnd,
             guestsCount: d.confirmedCount || d.guestsCount || 0,
             maxCapacity: d.maxCapacity || d.guestLimit || 150,
           };
@@ -377,7 +382,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
+    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))]">
       {/* Fondo abstracto sutil fondo_b.webp */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
@@ -694,15 +699,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       </div>
 
-      {/* 5. BOTTOM NAVIGATION BAR FIJA */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto w-full">
-        <BottomNav activeTab="home" onTabSelect={(tab) => {
-          if (tab === 'home') onNavigate ? onNavigate('/') : handleBack();
-          else if (tab === 'passes') onNavigate ? onNavigate('/passes') : null;
-          else if (tab === 'search') onNavigate ? onNavigate('/explore') : null;
-        }} />
-      </div>
-
       {/* MODAL 1: GESTIÓN DE EVENTOS */}
       {/* MODAL 1: HISTORIAL DE EVENTOS ASISTIDOS */}
       <AnimatePresence>
@@ -825,15 +821,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                           </span>
                         </div>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                            evt.status === 'Activo'
-                              ? 'bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40'
-                              : evt.status === 'Finalizado'
-                              ? 'bg-neutral-800 text-neutral-400'
-                              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+                          className={`text-[10px] font-display font-black px-2 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0 ${
+                            evt.isFinished
+                              ? 'bg-neutral-800 text-neutral-400 border border-neutral-700'
+                              : 'bg-[#12C061]/20 text-[#12C061] border border-[#12C061]/40'
                           }`}
                         >
-                          {evt.status}
+                          {evt.isFinished ? '⚪ FINALIZADO' : '🟢 ACTIVO / PRÓXIMO'}
                         </span>
                       </div>
 
@@ -1082,29 +1076,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         )}
       </AnimatePresence>
 
-      {/* 6. BOTTOM NAVIGATION BAR FIJA AL FONDO */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto w-full">
-        <BottomNav
-          activeTab="home"
-          onTabSelect={(tab) => {
-            if (tab === 'home') {
-              handleBack();
-            } else if (tab === 'passes') {
-              if (onNavigate) onNavigate('/passes');
-            } else if (tab === 'search') {
-              if (onNavigate) onNavigate('/explore');
-            }
-          }}
-        />
-      </div>
-
       {/* TOAST FLOTANTE */}
       {toastMessage && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 15 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2.5 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2.5 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap"
         >
           {toastMessage}
         </motion.div>

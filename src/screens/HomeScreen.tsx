@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TopHud } from '../components/TopHud';
 import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
 import { ActionFooter } from '../components/ActionFooter';
@@ -22,8 +22,19 @@ import {
   collectionGroup,
 } from 'firebase/firestore';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
-import { TabType, VipFlyerItem, NotificationItem, AppNotification } from '../types/home';
+import { TabType, VipFlyerItem, NotificationItem, AppNotification, ConfirmedAttendee, EventSocialProof } from '../types/home';
+import { computeEventEndTimestamp } from '../lib/dateUtils';
 import '../styles/fonts.css';
+
+export const formatCardDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    const year = parts[0].slice(-2);
+    return `${parts[2]}.${parts[1]}.${year}`;
+  }
+  return dateStr;
+};
 
 // Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
 const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
@@ -34,8 +45,11 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
   subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
-  dateDisplay: data.date ? data.date.toString().toUpperCase() : 'PRÓXIMAMENTE',
+  dateDisplay: data.date ? formatCardDate(data.date.toString()) : 'PRÓXIMAMENTE',
+  date: data.date || '',
   timeRange: `${data.startTime || '22:00'} — ${data.endTime || '04:00'}`,
+  startTime: data.startTime || '',
+  endTime: data.endTime || '',
   location: data.location || 'Por definir',
   availabilityText: `CUPO MÁX. ${data.maxCapacity || 150} ·`,
   theme: data.theme || 'custom',
@@ -43,6 +57,8 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   imageUrl: data.imageUrl || data.artImage || undefined,
   description: `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
   isVipOrFree: true,
+  tags: data.tags || [],
+  endTimestamp: data.endTimestamp || computeEventEndTimestamp(data.date, data.endTime, data.startTime),
 });
 
 export interface HomeScreenProps {
@@ -66,14 +82,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const [events, setEvents] = useState<VipFlyerItem[]>([]);
   const [isEventsLoading, setIsEventsLoading] = useState<boolean>(true);
 
-  // Escucha reactiva en tiempo real de eventos públicos
+  // Escucha reactiva en tiempo real de eventos públicos con filtrado automático de expirados
   useEffect(() => {
     const q = query(collection(db, 'events'), where('type', '==', 'public'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const liveEvents = snapshot.docs.map((d) => mapDocToVipFlyer(d.id, d.data()));
-        setEvents(liveEvents);
+        const now = Date.now();
+        const activeEvents = snapshot.docs
+          .map((d) => mapDocToVipFlyer(d.id, d.data()))
+          .filter((event) => {
+            const eventEnd = event.endTimestamp || computeEventEndTimestamp(event.date, event.endTime, event.startTime);
+            return eventEnd > now; // Solo eventos activos (futuros o en curso)
+          });
+        setEvents(activeEvents);
         setIsEventsLoading(false);
       },
       (error) => {
@@ -145,6 +167,70 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   // Escucha reactiva en tiempo real de notificaciones dedicadas del usuario
   const [realtimeNotifications, setRealtimeNotifications] = useState<AppNotification[]>([]);
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
+
+  // Escucha reactiva en tiempo real de todos los pases para prueba social (asistentes, aforo restante, FOMO)
+  const [socialProofMap, setSocialProofMap] = useState<Record<string, EventSocialProof>>({});
+
+  useEffect(() => {
+    const q = collection(db, 'passes');
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const proofMap: Record<string, EventSocialProof> = {};
+        const now = Date.now();
+        const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+        // Agrupar pases por eventId
+        const passesByEvent: Record<string, any[]> = {};
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.eventId) {
+            if (!passesByEvent[data.eventId]) passesByEvent[data.eventId] = [];
+            passesByEvent[data.eventId].push({ id: doc.id, ...data });
+          }
+        });
+
+        // Procesar para cada evento registrado en passes
+        Object.keys(passesByEvent).forEach((evtId) => {
+          const eventPasses = passesByEvent[evtId];
+          const activePasses = eventPasses.filter(
+            (p) => p.status === 'active' || p.status === 'confirmed' || p.status === 'used'
+          );
+
+          const confirmedUsers: ConfirmedAttendee[] = activePasses
+            .sort((a, b) => (b.approvedAt || b.createdAt || 0) - (a.approvedAt || a.createdAt || 0))
+            .slice(0, 4)
+            .map((p) => ({
+              name: (p.userName || p.holderName || 'Asistente').replace(/\s*·\s*(\+1|INDIVIDUAL).*$/i, '').trim(),
+              photoUrl: p.userAvatar || p.userPhotoUrl || p.photoURL || undefined,
+            }));
+
+          const recentRequests = eventPasses.filter(
+            (p) => (p.createdAt || 0) > oneDayAgo || (p.requestedAt || 0) > oneDayAgo
+          ).length;
+
+          const targetEvt = events.find((e) => e.id === evtId);
+          const guestLimit = targetEvt?.guestLimit || targetEvt?.maxCapacity || 100;
+          const activePassesCount = activePasses.length;
+          const remainingSpots = Math.max(0, guestLimit - activePassesCount);
+
+          proofMap[evtId] = {
+            activePassesCount,
+            confirmedUsers,
+            remainingSpots,
+            recentRequestsCount: recentRequests > 0 ? recentRequests : (activePassesCount > 0 ? activePassesCount + 3 : 12),
+          };
+        });
+
+        setSocialProofMap(proofMap);
+      },
+      (error) => {
+        console.warn('Error escuchando pases globales para prueba social:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [events]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -269,8 +355,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     }
   };
 
+  // Combinar eventos con su prueba social y aforo restante en tiempo real
+  const eventsWithSocialProof: VipFlyerItem[] = events.map((event) => {
+    const proof = socialProofMap[event.id];
+    const guestLimit = event.guestLimit || event.maxCapacity || 100;
+    if (proof) {
+      return {
+        ...event,
+        ...proof,
+      };
+    }
+    return {
+      ...event,
+      activePassesCount: 0,
+      confirmedUsers: [],
+      remainingSpots: guestLimit,
+      recentRequestsCount: 12,
+    };
+  });
+
   const handleApplyVip = (flyerId: string) => {
-    const targetEvt = events.find((e) => e.id === flyerId);
+    const targetEvt = eventsWithSocialProof.find((e) => e.id === flyerId);
     if (targetEvt) {
       setSelectedEvent(targetEvt);
       setIsDetailModalOpen(true);
@@ -301,6 +406,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         hostUserId: flyer.hostUserId || '',
         userId: auth.currentUser.uid,
         holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+        userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+        userPhotoUrl: auth.currentUser.photoURL || '',
+        userAvatar: auth.currentUser.photoURL || '',
         accessTier: 'VIP',
         status: 'pending',
         createdAt: Date.now(),
@@ -442,19 +550,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onWheel={handleWheel}
-      className="w-full min-h-[100dvh] relative bg-[#000000] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none"
+      className="w-full min-h-[100dvh] relative bg-[#000000] flex flex-col justify-between overflow-y-auto overflow-x-hidden font-sans select-none bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{
+        backgroundImage: "url('./assets/images/fondo_a.webp')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+      }}
     >
-      {/* Fondo con textura/patrón fondo_a.webp */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('./assets/images/fondo_a.webp')",
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
-        }}
-      />
-
       {/* Degradado superior sutil para HUD */}
       <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10" />
 
@@ -501,7 +605,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
           className="flex-1 flex flex-col items-center justify-center my-auto py-1"
         >
-          {events.length === 0 ? (
+          {isEventsLoading ? (
+            <div className="w-full max-w-[340px] sm:max-w-[360px] h-[460px] sm:h-[480px] bg-[#16171B]/50 border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto animate-pulse">
+              <div className="w-12 h-12 rounded-full border-2 border-[#E87A72] border-t-transparent animate-spin mb-4" />
+              <span className="font-display text-neutral-400 text-xs font-bold tracking-widest uppercase">
+                CARGANDO EVENTOS...
+              </span>
+            </div>
+          ) : events.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -522,7 +633,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
             </motion.div>
           ) : (
             <FullCardCoverFlow
-              flyers={events}
+              flyers={eventsWithSocialProof}
               userPasses={userPasses}
               onRequestVip={handleRequestVipDirect}
               onApplyVipClick={handleApplyVip}
@@ -578,18 +689,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       />
 
       {/* MODAL DE BÚSQUEDA Y DESCUBRIMIENTO DE EVENTOS */}
-      <SearchEventsModal
-        isOpen={isSearchOpen}
-        onClose={() => {
-          setIsSearchOpen(false);
-          setActiveTab('home');
-        }}
-        events={events}
-        onSelectEvent={(event) => {
-          setSelectedEvent(event);
-          setIsDetailModalOpen(true);
-        }}
-      />
+      <AnimatePresence>
+        {isSearchOpen && (
+          <SearchEventsModal
+            isOpen={isSearchOpen}
+            onClose={() => {
+              setIsSearchOpen(false);
+              setActiveTab('home');
+            }}
+            events={eventsWithSocialProof}
+            onSelectEvent={(event) => {
+              setSelectedEvent(event);
+              setIsDetailModalOpen(true);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* MODAL DE NOTIFICACIONES DESLIZABLE */}
       <NotificationsModal

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PassItem } from '../types/home';
 import { TicketsCoverFlow } from '../components/TicketsCoverFlow';
-import { BottomNav } from '../components/BottomNav';
 import { db, auth } from '../lib/firebase';
 import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
 import '../styles/fonts.css';
@@ -186,16 +185,8 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
     showToast(`Pase de "${activeTicket.title}" guardado en Fotos ✓`);
   };
 
-  const handleTabSelect = (tab: 'home' | 'passes' | 'search') => {
-    if (tab === 'home') {
-      handleBack();
-    } else if (tab === 'search') {
-      if (onNavigate) onNavigate('/explore');
-    }
-  };
-
   return (
-    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
+    <div className="relative w-full min-h-[100dvh] bg-[#000000] text-white flex flex-col justify-between overflow-x-hidden font-sans select-none p-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
       {/* Fondo abstracto con textura sutil fondo_iniciob.webp */}
       <div
         className="fixed inset-0 pointer-events-none z-0 opacity-40 bg-cover bg-center"
@@ -295,7 +286,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDownloadCopy}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none"
+                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none cursor-pointer mb-2"
               >
                 <span className="text-lg leading-none">⬇</span>
                 <span>GUARDAR COPIA EN FOTOS</span>
@@ -305,18 +296,13 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
         )}
       </div>
 
-      {/* 5. BOTTOM NAVIGATION BAR FIJA (CON TAB TICKETS ACTIVO) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto w-full">
-        <BottomNav activeTab="passes" onTabSelect={handleTabSelect} />
-      </div>
-
       {/* TOAST FLOTANTE */}
       {toastMessage && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 15 }}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2.5 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2.5 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap"
         >
           {toastMessage}
         </motion.div>

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import { VipFlyerItem } from '../types/home';
+import { VipFlyerItem, ConfirmedAttendee } from '../types/home';
+import { ShareEventModal } from './ShareEventModal';
+import { formatCardDate } from '../lib/dateUtils';
 
 interface EventDetailModalProps {
   event?: any;
@@ -24,7 +26,33 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   const selectedEvent = propSelectedEvent || propEvent;
   const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'capacity_reached' | 'used'>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  // Estados reactivos de Prueba Social y FOMO
+  const [activePassesCount, setActivePassesCount] = useState<number>(selectedEvent?.activePassesCount || 0);
+  const [confirmedUsers, setConfirmedUsers] = useState<ConfirmedAttendee[]>(selectedEvent?.confirmedUsers || []);
+  const [recentRequestsCount, setRecentRequestsCount] = useState<number>(selectedEvent?.recentRequestsCount || 12);
+  const [remainingSpots, setRemainingSpots] = useState<number>(
+    typeof selectedEvent?.remainingSpots === 'number'
+      ? selectedEvent.remainingSpots
+      : Math.max(0, (selectedEvent?.guestLimit || selectedEvent?.maxCapacity || 100) - (selectedEvent?.activePassesCount || 0))
+  );
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  };
+
+  const handleShareEvent = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedEvent) return;
+    setIsShareModalOpen(true);
+  };
+
+  // Escucha del estado individual del pase del usuario
   useEffect(() => {
     if (!isOpen || !selectedEvent?.id || !auth.currentUser) {
       setPassStatus('none');
@@ -48,6 +76,48 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     return () => unsub();
   }, [isOpen, selectedEvent?.id]);
 
+  // Escucha reactiva en tiempo real de todos los pases del evento para Prueba Social
+  useEffect(() => {
+    if (!isOpen || !selectedEvent?.id) return;
+    const q = query(
+      collection(db, 'passes'),
+      where('eventId', '==', selectedEvent.id)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const now = Date.now();
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+      const allEvtPasses = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const active = allEvtPasses.filter((p: any) =>
+        p.status === 'active' || p.status === 'confirmed' || p.status === 'used'
+      );
+
+      const guestLimit = selectedEvent.guestLimit || selectedEvent.maxCapacity || 100;
+      const actCount = active.length;
+      setActivePassesCount(actCount);
+
+      const users: ConfirmedAttendee[] = active
+        .sort((a: any, b: any) => (b.approvedAt || b.createdAt || 0) - (a.approvedAt || a.createdAt || 0))
+        .slice(0, 4)
+        .map((p: any) => ({
+          name: (p.userName || p.holderName || 'Asistente').replace(/\s*·\s*(\+1|INDIVIDUAL).*$/i, '').trim(),
+          photoUrl: p.userAvatar || p.userPhotoUrl || p.photoURL || undefined,
+        }));
+      setConfirmedUsers(users);
+
+      const rem = Math.max(0, guestLimit - actCount);
+      setRemainingSpots(rem);
+
+      const recent = allEvtPasses.filter(
+        (p: any) => (p.createdAt || 0) > oneDayAgo || (p.requestedAt || 0) > oneDayAgo
+      ).length;
+      setRecentRequestsCount(recent > 0 ? recent : (actCount > 0 ? actCount + 3 : 12));
+    }, (err) => {
+      console.warn('Error escuchando pases del evento en modal:', err);
+    });
+    return () => unsub();
+  }, [isOpen, selectedEvent?.id, selectedEvent?.guestLimit, selectedEvent?.maxCapacity]);
+
   if (!selectedEvent) return null;
   const event = selectedEvent;
 
@@ -65,6 +135,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         hostUserId: event.hostUserId || '',
         userId: auth.currentUser.uid,
         holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+        userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+        userPhotoUrl: auth.currentUser.photoURL || '',
+        userAvatar: auth.currentUser.photoURL || '',
         accessTier: 'VIP',
         status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
         createdAt: Date.now(),
@@ -99,9 +172,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <div className="fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
           {/* Fondo con oscurecimiento y desenfoque intenso (Backdrop Blur) */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -150,11 +224,21 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   </div>
                 )}
 
-                {/* Badge flotante de Cupos o Tipo de Evento en la esquina inferior */}
-                <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10">
-                  <span className="text-xs font-sans text-[#E87A72] font-semibold">
-                    CUPO MÁX. {selectedEvent?.guestLimit || selectedEvent?.maxCapacity || 100}
-                  </span>
+                {/* Badge flotante de Cupos o Urgencia en la esquina inferior */}
+                <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
+                  {remainingSpots === 0 ? (
+                    <span className="text-xs font-display font-black text-[#DC2626] tracking-wider uppercase">
+                      🔒 LISTA VIP COMPLETA
+                    </span>
+                  ) : remainingSpots <= 20 ? (
+                    <span className="text-xs font-display font-black text-[#E87A72] tracking-wider uppercase">
+                      ⏳ ÚLTIMOS {remainingSpots} CUPOS
+                    </span>
+                  ) : (
+                    <span className="text-xs font-sans text-[#E87A72] font-semibold">
+                      CUPO MÁX. {selectedEvent?.guestLimit || selectedEvent?.maxCapacity || 100}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -192,7 +276,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 <div className="flex items-center text-white/90 text-xs sm:text-sm font-sans">
                   <span className="w-5 text-center mr-2 text-base">📅</span>
                   <span className="font-display uppercase tracking-wide font-bold">
-                    {event.dateDisplay || event.date || 'Próximamente'}
+                    {formatCardDate(event.dateDisplay || event.date) || 'Próximamente'}
                   </span>
                 </div>
                 <div className="flex items-center text-neutral-300 text-xs sm:text-sm font-sans">
@@ -205,6 +289,49 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   <span className="w-5 text-center mr-2 text-base text-neutral-500">•</span>
                   <span>{event.exactAddress || event.location || 'Ubicación por confirmar'}</span>
                 </div>
+              </div>
+
+              {/* FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") */}
+              <div className="mt-4 p-3 rounded-xl bg-[#121316] border border-neutral-800 flex items-center space-x-3">
+                {confirmedUsers && confirmedUsers.length > 0 ? (
+                  <div className="flex -space-x-2 overflow-hidden shrink-0">
+                    {confirmedUsers.slice(0, 4).map((u, i) => (
+                      <div
+                        key={i}
+                        className="w-7 h-7 rounded-full border-2 border-[#16171B] overflow-hidden bg-[#26282E] flex items-center justify-center shrink-0"
+                        title={u.name}
+                      >
+                        {u.photoUrl ? (
+                          <img src={u.photoUrl} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-white font-display text-[11px] font-black uppercase">
+                            {(u.name || 'A').slice(0, 1)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-xs">
+                    🎟️
+                  </div>
+                )}
+                <p className="font-sans text-[#8E8E93] text-xs leading-tight">
+                  {activePassesCount > 0 ? (
+                    activePassesCount === 1 ? (
+                      <>
+                        <strong className="text-white font-medium">{confirmedUsers[0]?.name || '1 persona'}</strong> ya tiene su pase
+                      </>
+                    ) : (
+                      <>
+                        <strong className="text-white font-medium">{confirmedUsers[0]?.name || '1 persona'}</strong> y{' '}
+                        <strong className="text-white font-medium">{activePassesCount - 1} más</strong> ya tienen su pase
+                      </>
+                    )
+                  ) : (
+                    'Sé el primero en anotarte en la lista VIP'
+                  )}
+                </p>
               </div>
 
               {/* 3. Sección "Detalles y Motivo" */}
@@ -238,50 +365,112 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
             </div>
 
-            {/* 5. Botón de Conversión Fijo al pie del modal: SOLICITAR VIP */}
-            <div className="pt-3 border-t border-neutral-800/80 mt-auto">
-              {passStatus === 'pending' || isSubmitting ? (
-                <button
-                  disabled
-                  className="w-full py-3.5 px-4 rounded-full bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
+            {/* 5. Barra Inferior de Acción y Conversión (Ticker de Actividad + Conversión + Compartir) */}
+            <div className="pt-3 border-t border-neutral-800/80 mt-auto flex flex-col gap-2 flex-shrink-0">
+              {/* Ticker de Actividad en Vivo */}
+              <p className="font-sans text-[11px] text-zinc-400 text-center tracking-wide">
+                🔥 Alta demanda: {recentRequestsCount > 0 ? recentRequestsCount : 12} solicitudes recibidas hoy
+              </p>
+
+              <div className="flex items-center gap-2.5">
+                {/* Botón principal de conversión flex-1 */}
+                <div className="flex-1">
+                  {passStatus === 'pending' || isSubmitting ? (
+                    <button
+                      disabled
+                      className="w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
+                    >
+                      SOLICITUD ENVIADA ⏳
+                    </button>
+                  ) : passStatus === 'active' ? (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        onClose();
+                        if (onNavigate) onNavigate('/tickets');
+                      }}
+                      className="w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98"
+                    >
+                      VER MI PASE QR 🎟️
+                    </motion.button>
+                  ) : passStatus === 'capacity_reached' || remainingSpots === 0 ? (
+                    <button
+                      disabled
+                      className="w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed"
+                    >
+                      {remainingSpots === 0 ? 'LISTA VIP COMPLETA 🔒' : 'AFORO COMPLETADO ⏳'}
+                    </button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleRequestVip}
+                      className="w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none cursor-pointer active:scale-98"
+                    >
+                      SOLICITAR VIP
+                    </motion.button>
+                  )}
+                </div>
+
+              {/* Botón de compartir: botón cuadrado #16171B con borde #26282E e icono de compartir */}
+              <button
+                type="button"
+                onClick={handleShareEvent}
+                aria-label="Compartir evento"
+                title="Compartir evento"
+                className="w-14 h-12 rounded-xl bg-[#16171B] hover:bg-[#22252C] border border-[#26282E] hover:border-[#E87A72] flex items-center justify-center text-white active:scale-95 transition-all shadow-md cursor-pointer flex-shrink-0"
+              >
+                <svg
+                  className="w-5 h-5 text-white stroke-current fill-none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  SOLICITUD ENVIADA ⏳
-                </button>
-              ) : passStatus === 'active' ? (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    onClose();
-                    if (onNavigate) onNavigate('/tickets');
-                  }}
-                  className="w-full py-3.5 px-4 rounded-full bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98"
-                >
-                  VER MI PASE QR 🎟️
-                </motion.button>
-              ) : passStatus === 'capacity_reached' ? (
-                <button
-                  disabled
-                  className="w-full py-3.5 px-4 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed"
-                >
-                  AFORO COMPLETADO ⏳
-                </button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleRequestVip}
-                  className="w-full py-3.5 px-4 rounded-full bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none cursor-pointer active:scale-98"
-                >
-                  SOLICITAR VIP
-                </motion.button>
-              )}
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              </button>
             </div>
+
+            {/* Toast flotante */}
+            {toastMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap pointer-events-none"
+              >
+                {toastMessage}
+              </motion.div>
+            )}
 
           </motion.div>
         </div>
       )}
     </AnimatePresence>
+
+    {selectedEvent && (
+      <ShareEventModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        event={{
+          id: selectedEvent.id,
+          title: selectedEvent.title || '',
+          date: selectedEvent.date || selectedEvent.dateDisplay || '',
+          dateDisplay: selectedEvent.dateDisplay || selectedEvent.date || '',
+          startTime: selectedEvent.startTime || selectedEvent.time || '',
+          timeRange: selectedEvent.timeRange || selectedEvent.startTime || '',
+          location: selectedEvent.location || selectedEvent.exactAddress || '',
+          exactAddress: selectedEvent.exactAddress || selectedEvent.location || '',
+          imageUrl: selectedEvent.imageUrl || selectedEvent.image || selectedEvent.flyerUrl || null,
+          guestLimit: selectedEvent.guestLimit || selectedEvent.maxCapacity || 100,
+        }}
+      />
+    )}
+  </>
   );
 };
 

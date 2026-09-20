@@ -5,6 +5,7 @@ import { db } from '../lib/firebase';
 import { VipFlyerItem } from '../types/home';
 import { EventDetailModal } from '../components/EventDetailModal';
 import { BottomNav } from '../components/BottomNav';
+import { formatCardDate } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
 export interface ExploreScreenProps {
@@ -39,7 +40,7 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
   subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
-  dateDisplay: data.date ? data.date.toString().toUpperCase() : 'PRÓXIMAMENTE',
+  dateDisplay: data.date ? formatCardDate(data.date.toString()) : 'PRÓXIMAMENTE',
   date: data.date,
   timeRange: `${data.startTime || '22:00'} — ${data.endTime || '04:00'}`,
   startTime: data.startTime,
@@ -229,7 +230,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({
                     {event.title}
                   </h4>
                   <p className="font-sans text-neutral-300 text-xs font-medium mt-0.5 truncate">
-                    {event.dateDisplay} · {event.timeRange.split('—')[0].trim()}
+                    {formatCardDate(event.dateDisplay || event.date)} · {event.timeRange.split('—')[0].trim()}
                   </p>
                   <div className="flex items-center text-neutral-400 text-xs font-sans mt-0.5 truncate">
                     <span className="mr-1 text-[11px]">📍</span>

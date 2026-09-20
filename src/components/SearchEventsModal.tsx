@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VipFlyerItem } from '../types/home';
+import { computeEventEndTimestamp, formatCardDate } from '../lib/dateUtils';
 
 export interface SearchEventsModalProps {
   isOpen: boolean;
@@ -59,8 +60,14 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Filtrado de eventos reactivo
-  const filteredEvents = events.filter((evt) => {
+  // Filtrado de eventos reactivo: primero excluir eventos ya finalizados
+  const now = Date.now();
+  const activeEvents = events.filter((evt) => {
+    const eventEnd = evt.endTimestamp || computeEventEndTimestamp(evt.date, evt.endTime, evt.startTime);
+    return eventEnd > now;
+  });
+
+  const filteredEvents = activeEvents.filter((evt) => {
     // 1. Filtro por chip
     if (activeFilter === 'Hoy / Esta Noche 🔥') {
       const match =
@@ -123,8 +130,16 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-start backdrop-blur-md bg-black/85 select-none">
+        <motion.div
+          key="search-modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 flex flex-col justify-start backdrop-blur-md bg-black/85 select-none"
+        >
           <motion.div
+            key="search-modal-container"
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 22 }}
@@ -261,7 +276,7 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
 
                       {/* Fecha y Horario */}
                       <p className="font-sans text-neutral-300 text-xs font-medium mt-0.5 truncate">
-                        {event.dateDisplay} · {event.timeRange.split('—')[0].trim()}
+                        {formatCardDate(event.dateDisplay || event.date)} · {event.timeRange.split('—')[0].trim()}
                       </p>
 
                       {/* Ubicación con icono de pin */}
@@ -335,7 +350,7 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
               )}
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

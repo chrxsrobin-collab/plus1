@@ -33,11 +33,12 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
   // Swipe-to-delete: Elimina la notificación optimísticamente y en Firestore
   const handleDeleteNotification = async (notifId: string) => {
-    setItems((prev) => prev.filter((it) => it.id !== notifId));
+    // 1. Filtra inmediatamente el array del estado local
+    setItems((prev) => prev.filter((n) => n.id !== notifId));
 
-    if (!auth.currentUser) return;
+    // 2. Ejecuta el borrado permanente en Firestore
     try {
-      if (notifId && !notifId.startsWith('mock_') && !notifId.startsWith('notif_0')) {
+      if (notifId && !notifId.startsWith('mock_')) {
         await deleteDoc(doc(db, 'notifications', notifId));
       }
     } catch (err) {
@@ -365,8 +366,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             </div>
 
             {/* 2. LISTA VERTICAL DE NOTIFICACIONES (SCROLL DESCENDENTE) */}
-            <div className="flex-1 overflow-y-auto space-y-3 p-4">
-              <AnimatePresence initial={false} mode="popLayout">
+            <div className="flex-1 overflow-y-auto p-4">
+              <AnimatePresence mode="popLayout">
                 {items.map((notif) => {
                   const feedback = actionFeedback[notif.id] || notif.actionTaken;
                   const isRead = notif.isRead || notif.read || feedback;
@@ -378,52 +379,32 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                     <motion.div
                       key={notif.id}
                       layout
-                      initial={{ opacity: 1, height: 'auto' }}
-                      exit={{
-                        opacity: 0,
-                        x: '-100%',
-                        height: 0,
-                        marginBottom: 0,
-                        transition: {
-                          duration: 0.25,
-                          ease: 'easeInOut',
-                        },
-                      }}
-                      className="relative overflow-hidden rounded-2xl select-none"
+                      initial={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="relative overflow-hidden rounded-2xl mb-3 select-none"
                     >
-                      {/* Fondo de acción revelado: capa roja mate #DC2626 con icono de papelera a la derecha */}
-                      <div className="absolute inset-0 bg-[#DC2626] rounded-2xl flex items-center justify-end pr-5 z-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNotification(notif.id);
-                          }}
-                          className="w-10 h-10 rounded-xl bg-black/15 hover:bg-black/25 flex items-center justify-center text-white transition-all active:scale-90 cursor-pointer focus:outline-none"
-                          title="Eliminar notificación"
-                          aria-label="Eliminar notificación"
-                        >
-                          <span className="text-xl leading-none">🗑️</span>
-                        </button>
+                      {/* CAPA DE FONDO: Acción de Borrar (Roja con Basurero) */}
+                      <div className="absolute inset-0 bg-[#DC2626] flex items-center justify-end px-5 rounded-2xl">
+                        <span className="text-white text-lg">🗑️</span>
                       </div>
 
-                      {/* Tarjeta deslizable hacia la izquierda */}
+                      {/* CAPA FRONTAL: Tarjeta que se mueve con el dedo */}
                       <motion.div
                         drag="x"
                         dragDirectionLock
-                        dragConstraints={{ left: -140, right: 0 }}
-                        dragElastic={{ left: 0.25, right: 0 }}
-                        onDragEnd={(_, info) => {
-                          if (info.offset.x < -100) {
+                        dragConstraints={{ left: -120, right: 0 }}
+                        dragElastic={0.15}
+                        onDragEnd={async (_, info) => {
+                          // Si deslizó más de 80px a la izquierda o con velocidad alta
+                          if (info.offset.x < -80 || info.velocity.x < -400) {
                             handleDeleteNotification(notif.id);
                           }
                         }}
-                        animate={{ x: 0 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                        className={`relative z-10 rounded-2xl p-3.5 border transition-colors touch-pan-y cursor-grab active:cursor-grabbing ${
+                        className={`relative bg-[#16171B] border border-[#26282E] p-4 rounded-2xl touch-pan-y select-none cursor-grab active:cursor-grabbing transition-colors ${
                           isRead
-                            ? 'bg-[#121316] border-[#22242A] opacity-85'
-                            : 'bg-[#1A1C22] border-[#2E313A] shadow-md'
+                            ? 'opacity-85'
+                            : 'shadow-md'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
