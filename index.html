@@ -77,6 +77,25 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .animate-shake {
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes flashFade {
+      0% { opacity: 0; transform: scale(1.01); }
+      12% { opacity: 1; transform: scale(1); }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .animate-flash-glow {
+      animation: flashFade 1.8s ease-out forwards;
+    }
+
     .anim-hud { animation: hudDown 0.35s ease-out forwards; }
     .anim-greeting { animation: slideUpFade 0.35s ease-out 0.1s both; }
     .anim-main-card { animation: cardEnterZoom 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
@@ -1291,23 +1310,26 @@
     </div>
 
     <!-- PANTALLA DE ESCÁNER QR: /scanner (ScannerScreen) -->
-    <div id="scannerScreenView" class="hidden fixed inset-0 z-50 bg-black text-white flex flex-col justify-between p-4 select-none font-sans">
+    <div id="scannerScreenView" class="hidden fixed inset-0 z-50 bg-[#0E0F12] text-white flex flex-col justify-between p-4 select-none font-sans">
+      <!-- Resplandor Completo de Pantalla (Flash Glow) -->
+      <div id="scannerFlashGlowOverlay" class="hidden fixed inset-0 pointer-events-none z-50 transition-all duration-300"></div>
+
       <!-- Top Bar -->
-      <div class="flex justify-between items-center text-white py-2">
-        <button onclick="closeScannerScreen()" class="font-bold cursor-pointer hover:opacity-80 transition-opacity">✕ CERRAR</button>
+      <div class="flex justify-between items-center text-white py-2 relative z-10">
+        <button onclick="closeScannerScreen()" class="font-bold cursor-pointer hover:opacity-80 transition-opacity focus:outline-none">✕ CERRAR</button>
         <span class="font-display tracking-widest text-lg">CONTROL DE PUERTA EN VIVO</span>
         <div class="w-8"></div>
       </div>
 
-      <!-- Visor real de la cámara con html5-qrcode -->
-      <div class="relative w-full max-w-sm mx-auto aspect-square rounded-3xl overflow-hidden border border-white/20 bg-black shadow-2xl">
+      <!-- Visor cuadrado amplio (1:1) de la cámara con html5-qrcode -->
+      <div class="aspect-square w-full max-w-[320px] mx-auto rounded-3xl overflow-hidden relative border border-white/20 bg-black shadow-2xl flex items-center justify-center">
         <div id="reader-camera-view" class="w-full h-full object-cover"></div>
       </div>
 
       <!-- Feedback -->
-      <div class="w-full max-w-sm mx-auto h-20 flex items-center justify-center">
+      <div class="w-full max-w-sm mx-auto h-24 flex items-center justify-center relative z-10">
         <div id="scannerFeedbackBox" class="w-full">
-          <p class="text-gray-400 text-sm text-center">Enfoca el código QR de otro celular</p>
+          <p class="text-gray-400 text-sm text-center font-sans">Apunta la cámara al código QR del pase</p>
         </div>
       </div>
     </div>
@@ -6486,17 +6508,56 @@
     let scannerScanTimeout = null;
     let currentScannerEventId = null;
 
+    function triggerScannerHaptic(type) {
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          if (type === 'success') {
+            navigator.vibrate(70);
+          } else {
+            navigator.vibrate([100, 60, 100]);
+          }
+        } catch (e) {
+          console.warn('Vibración no soportada o bloqueada:', e);
+        }
+      }
+    }
+
     function setScannerFeedback(status, attendeeName) {
       const fbBox = document.getElementById('scannerFeedbackBox');
-      if (!fbBox) return;
+      const glow = document.getElementById('scannerFlashGlowOverlay');
+
+      if (glow) {
+        glow.className = "hidden fixed inset-0 pointer-events-none z-50 transition-all duration-300";
+      }
+
       if (status === 'valid') {
-        fbBox.innerHTML = `<div class="w-full bg-[#12C061] text-black font-bold p-4 rounded-2xl text-center animate-bounce shadow-lg">🟢 ACCESO AUTORIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+        if (fbBox) {
+          fbBox.innerHTML = `<div class="w-full bg-[#12C061] text-black font-display font-bold p-4 rounded-2xl text-center text-xl animate-bounce shadow-lg">🟢 ACCESO AUTORIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+        }
+        if (glow) {
+          glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#12C061]/25 backdrop-blur-[2px] border-4 border-[#12C061] shadow-[inset_0_0_80px_rgba(18,192,97,0.6)] animate-flash-glow transition-all duration-300";
+        }
+        triggerScannerHaptic('success');
       } else if (status === 'used') {
-        fbBox.innerHTML = `<div class="w-full bg-red-600 text-white font-bold p-4 rounded-2xl text-center animate-shake shadow-lg">🔴 PASE YA UTILIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+        if (fbBox) {
+          fbBox.innerHTML = `<div class="w-full bg-[#DC2626] text-white font-display font-bold p-4 rounded-2xl text-center text-xl animate-shake shadow-lg">🔴 PASE YA UTILIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+        }
+        if (glow) {
+          glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
+        }
+        triggerScannerHaptic('error');
       } else if (status === 'invalid') {
-        fbBox.innerHTML = `<div class="w-full bg-yellow-500 text-black font-bold p-4 rounded-2xl text-center shadow-lg">⚠️ CÓDIGO NO VÁLIDO</div>`;
+        if (fbBox) {
+          fbBox.innerHTML = `<div class="w-full bg-[#FAB205] text-black font-display font-bold p-4 rounded-2xl text-center text-xl shadow-lg">⚠️ CÓDIGO NO VÁLIDO</div>`;
+        }
+        if (glow) {
+          glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
+        }
+        triggerScannerHaptic('error');
       } else {
-        fbBox.innerHTML = `<p class="text-gray-400 text-sm text-center">Enfoca el código QR de otro celular</p>`;
+        if (fbBox) {
+          fbBox.innerHTML = `<p class="text-gray-400 text-sm text-center font-sans">Apunta la cámara al código QR del pase</p>`;
+        }
       }
     }
 
@@ -6515,9 +6576,24 @@
           const qrId = "reader-camera-view";
           html5QrCodeScanner = new window.Html5Qrcode(qrId);
 
+          // Ocupa el 82% del área visible en formato 1:1 cuadrado amplio
+          const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+            const minEdgePercentage = 0.82;
+            const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+            return {
+              width: qrboxSize,
+              height: qrboxSize,
+            };
+          };
+
           html5QrCodeScanner.start(
             { facingMode: "environment" },
-            { fps: 20, qrbox: { width: 260, height: 260 } },
+            {
+              fps: 20,
+              qrbox: qrboxFunction,
+              aspectRatio: 1.0, // Fuerza relación de aspecto cuadrada limpia
+            },
             async (decodedText) => {
               try {
                 html5QrCodeScanner.pause();
@@ -6529,7 +6605,11 @@
             console.warn('[ScannerScreen] Error iniciando cámara trasera con facingMode environment:', err);
             html5QrCodeScanner.start(
               true,
-              { fps: 20, qrbox: { width: 260, height: 260 } },
+              {
+                fps: 20,
+                qrbox: qrboxFunction,
+                aspectRatio: 1.0,
+              },
               async (decodedText) => {
                 try {
                   html5QrCodeScanner.pause();
