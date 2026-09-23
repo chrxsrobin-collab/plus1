@@ -4,7 +4,7 @@ import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore
 import { db, auth } from '../lib/firebase';
 import { VipFlyerItem, ConfirmedAttendee } from '../types/home';
 import { ShareEventModal } from './ShareEventModal';
-import { formatCardDate } from '../lib/dateUtils';
+import { formatCardDate, formatVipCutoffDisplay } from '../lib/dateUtils';
 
 interface EventDetailModalProps {
   event?: any;
@@ -290,6 +290,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   <span>{event.exactAddress || event.location || 'Ubicación por confirmar'}</span>
                 </div>
               </div>
+
+              {/* Pastilla / Micro-badge de advertencia de Cierre de Lista VIP */}
+              {(event.vipCutoffTime || selectedEvent.vipCutoffTime) && (
+                <div className="mt-3 px-3.5 py-2 rounded-xl bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-2">
+                  <span className="text-sm">⏳</span>
+                  <span className="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase">
+                    LISTA VIP VÁLIDA HASTA: {formatVipCutoffDisplay(event.vipCutoffTime || selectedEvent.vipCutoffTime)}
+                  </span>
+                </div>
+              )}
 
               {/* FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") */}
               <div className="mt-4 p-3 rounded-xl bg-[#121316] border border-neutral-800 flex items-center space-x-3">

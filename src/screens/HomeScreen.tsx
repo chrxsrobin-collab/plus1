@@ -59,6 +59,7 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   isVipOrFree: true,
   tags: data.tags || [],
   endTimestamp: data.endTimestamp || computeEventEndTimestamp(data.date, data.endTime, data.startTime),
+  vipCutoffTime: data.vipCutoffTime || null,
 });
 
 export interface HomeScreenProps {

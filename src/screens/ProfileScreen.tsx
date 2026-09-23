@@ -553,8 +553,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           )}
         </div>
 
-        {/* 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN */}
-        <div className="grid grid-cols-3 gap-2.5 w-full mt-2">
+        {/* 2. CONTENEDOR "MIS EVENTOS CREADOS" (NUEVA UBICACIÓN PRIORITARIA) */}
+        <div className="w-full mt-3">
+          <motion.div
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveModal('created_events')}
+            className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex items-center justify-between cursor-pointer transition-colors shadow-md"
+          >
+            <div className="flex items-center space-x-3.5">
+              <div className="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xl shrink-0">
+                🎪
+              </div>
+              <div className="text-left">
+                <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                  MIS EVENTOS CREADOS
+                </span>
+                <span className="font-sans text-neutral-400 text-xs block mt-0.5">
+                  Gestiona listas y capacidad
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="font-display text-[#E87A72] text-sm font-black bg-neutral-900 border border-[#26282E] px-2.5 py-1 rounded-xl shadow-inner min-w-[28px] text-center">
+                {userEvents.length}
+              </span>
+              <span className="text-neutral-500 font-bold text-lg">›</span>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* 3. FILA DE 3 MÉTRICAS DE GAMIFICACIÓN (DEBAJO DE EVENTOS CREADOS) */}
+        <div className="grid grid-cols-3 gap-2.5 w-full mt-3">
           
           {/* Tarjeta 1: EVENTOS ASISTIDOS */}
           <motion.div
@@ -610,7 +640,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
 
         {/* 4. SECCIÓN CUENTA */}
-        <div className="w-full mt-7">
+        <div className="w-full mt-6">
           <h3 className="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1">
             CUENTA
           </h3>
@@ -633,29 +663,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </span>
                   <span className="font-sans text-neutral-400 text-xs block">
                     Diseñado para promotores, clubes y organizadores
-                  </span>
-                </div>
-              </div>
-              <span className="text-neutral-500 font-bold text-lg">›</span>
-            </motion.div>
-
-            {/* Botón Mis Eventos Creados (Anfitrión) */}
-            <motion.div
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveModal('created_events')}
-              className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md"
-            >
-              <div className="flex items-center space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
-                  🎪
-                </div>
-                <div className="text-left">
-                  <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                    MIS EVENTOS CREADOS
-                  </span>
-                  <span className="font-sans text-neutral-400 text-xs block">
-                    Gestiona listas y capacidad de tus eventos
                   </span>
                 </div>
               </div>
@@ -686,11 +693,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </motion.div>
           </div>
 
-          {/* Botón Cerrar Sesión */}
+          {/* 5. PIE DE PANTALLA: CERRAR SESIÓN */}
           <div className="mt-8 text-center pb-4">
             <button
               onClick={handleLogout}
-              className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer"
+              className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0"
             >
               CERRAR SESIÓN
             </button>

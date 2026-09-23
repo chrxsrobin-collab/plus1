@@ -18,6 +18,7 @@ export * from './components/NotificationsModal';
 export * from './screens/TicketsScreen';
 export * from './screens/ScannerScreen';
 export * from './components/CoverFlowTicketCard';
+export * from './components/TicketCard';
 export * from './components/TicketsCoverFlow';
 export * from './components/EventInviteModal';
 export * from './components/LocationPickerModal';

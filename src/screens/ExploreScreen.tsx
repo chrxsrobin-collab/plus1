@@ -52,6 +52,7 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   imageUrl: data.imageUrl || data.artImage || undefined,
   description: data.description || `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
   isVipOrFree: true,
+  vipCutoffTime: data.vipCutoffTime || null,
 });
 
 export const ExploreScreen: React.FC<ExploreScreenProps> = ({

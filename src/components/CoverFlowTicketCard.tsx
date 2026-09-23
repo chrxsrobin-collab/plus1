@@ -1,5 +1,7 @@
 import React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { PassItem } from '../types/home';
+import { formatVipCutoffDisplay } from '../lib/dateUtils';
 
 export interface CoverFlowTicketCardProps {
   ticket: PassItem;
@@ -160,53 +162,35 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
                 style={{ borderColor: accent }}
               />
 
-              {/* Recuadro QR blanco de alto contraste */}
+              {/* Recuadro QR blanco de alto contraste con qrcode.react (level="H", payload plus1://pass/${ticket.id}, includeMargin={false}) */}
               <div className="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                <svg
-                  className="w-full h-full text-black"
-                  viewBox="0 0 100 100"
-                  fill="currentColor"
+                <QRCodeSVG
+                  value={`plus1://pass/${ticket.id}`}
+                  size={142}
+                  level="H"
+                  bgColor="#FFFFFF"
+                  fgColor="#0E0F12"
+                  includeMargin={false}
+                  imageSettings={
+                    (ticket.eventImageUrl || ticket.imageUrl)
+                      ? {
+                          src: ticket.eventImageUrl || ticket.imageUrl || '',
+                          x: undefined,
+                          y: undefined,
+                          height: 34,
+                          width: 34,
+                          excavate: true,
+                        }
+                      : undefined
+                  }
+                  className="w-full h-full"
+                />
+
+                {/* Miniatura cuadrada del flyer del evento al centro del QR con bordes redondeados y marco protector */}
+                <div
+                  className="absolute w-[40px] h-[40px] rounded-lg overflow-hidden border-2 border-white shadow-md bg-[#16171B] flex items-center justify-center pointer-events-none select-none"
+                  style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
                 >
-                  {/* Patrón de QR de alta fidelidad con esquinas fijas */}
-                  <rect width="100" height="100" fill="#FFFFFF" />
-                  {/* Esquina superior izquierda */}
-                  <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="16" y="16" width="8" height="8" fill="#000000" rx="1" />
-
-                  {/* Esquina superior derecha */}
-                  <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="76" y="16" width="8" height="8" fill="#000000" rx="1" />
-
-                  {/* Esquina inferior izquierda */}
-                  <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="16" y="76" width="8" height="8" fill="#000000" rx="1" />
-
-                  {/* Patrón de datos sincronizado */}
-                  <rect x="40" y="8" width="8" height="8" fill="#000000" />
-                  <rect x="52" y="8" width="6" height="14" fill="#000000" />
-                  <rect x="40" y="24" width="14" height="6" fill="#000000" />
-                  <rect x="8" y="40" width="8" height="16" fill="#000000" />
-                  <rect x="22" y="40" width="6" height="8" fill="#000000" />
-                  <rect x="20" y="52" width="14" height="6" fill="#000000" />
-                  <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                  <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                  <rect x="48" y="48" width="4" height="4" fill="#000000" />
-                  <rect x="68" y="40" width="12" height="6" fill="#000000" />
-                  <rect x="84" y="40" width="8" height="16" fill="#000000" />
-                  <rect x="66" y="52" width="10" height="8" fill="#000000" />
-                  <rect x="40" y="68" width="6" height="18" fill="#000000" />
-                  <rect x="52" y="68" width="14" height="8" fill="#000000" />
-                  <rect x="52" y="80" width="8" height="12" fill="#000000" />
-                  <rect x="68" y="68" width="14" height="6" fill="#000000" />
-                  <rect x="86" y="68" width="6" height="16" fill="#000000" />
-                  <rect x="68" y="80" width="12" height="12" fill="#000000" />
-                </svg>
-
-                {/* Miniatura cuadrada del flyer del evento al centro del QR */}
-                <div className="absolute inset-0 m-auto w-[42px] h-[42px] rounded-lg overflow-hidden border-[1.5px] border-white shadow-md bg-[#16171B] flex items-center justify-center">
                   {(ticket.eventImageUrl || ticket.imageUrl) ? (
                     <img
                       src={ticket.eventImageUrl || ticket.imageUrl}
@@ -230,6 +214,14 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
             <span className="text-[11px]">📍</span>
             <span className="truncate max-w-[210px]">{ticket.venue || ticket.location}</span>
           </div>
+
+          {/* Micro-badge de Cierre de Lista VIP */}
+          {ticket.vipCutoffTime && (
+            <div className="mt-1 px-2.5 py-0.5 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-1 text-[9px] font-display font-black text-[#E87A72] uppercase tracking-wider">
+              <span>⏳</span>
+              <span>VIP VÁLIDO HASTA: {formatVipCutoffDisplay(ticket.vipCutoffTime)}</span>
+            </div>
+          )}
         </div>
 
         {/* PIE DEL TICKET (Y: 352..440) */}
@@ -272,3 +264,4 @@ export const CoverFlowTicketCard: React.FC<CoverFlowTicketCardProps> = ({
 };
 
 export default CoverFlowTicketCard;
+export { CoverFlowTicketCard as TicketCard };

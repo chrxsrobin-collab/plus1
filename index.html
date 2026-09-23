@@ -15,6 +15,8 @@
   <!-- Leaflet CSS & JS para selector de mapa interactivo -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- QRCode CDN estándar para generación de código QR con corrección de error nivel H -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     @font-face {
       font-family: 'Antonio';
@@ -338,6 +340,12 @@
               <span class="w-5 text-center mr-2 text-base text-neutral-500">•</span>
               <span id="modalAddress" class="font-sans"></span>
             </div>
+          </div>
+
+          <!-- Micro-badge de advertencia de Cierre de Lista VIP -->
+          <div id="modalVipCutoffBadge" class="hidden mt-3 px-3 py-2 rounded-xl bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-2">
+            <span class="text-sm">⏳</span>
+            <span id="modalVipCutoffText" class="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase"></span>
           </div>
 
           <!-- FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") -->
@@ -793,48 +801,60 @@
                   <div class="absolute bottom-0 left-0 w-7 h-7 border-b-[3px] border-l-[3px] border-[#12C061] rounded-bl-lg pointer-events-none"></div>
                   <div class="absolute bottom-0 right-0 w-7 h-7 border-b-[3px] border-r-[3px] border-[#12C061] rounded-br-lg pointer-events-none"></div>
 
-                  <div class="w-[150px] h-[150px] flex items-center justify-center p-1 rounded-md overflow-hidden bg-[#0A0C0E]">
-                    <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
-                      <rect x="5" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
-                      <rect x="67" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="71" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
-                      <rect x="5" y="67" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="71" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
-                      <rect x="38" y="6" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="6" width="12" height="6" fill="currentColor" />
-                      <rect x="38" y="16" width="6" height="12" fill="currentColor" />
-                      <rect x="54" y="16" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="26" width="12" height="6" fill="currentColor" />
-                      <rect x="6" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="22" y="38" width="6" height="6" fill="currentColor" />
-                      <rect x="32" y="38" width="18" height="6" fill="currentColor" />
-                      <rect x="56" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="74" y="38" width="6" height="12" fill="currentColor" />
-                      <rect x="86" y="38" width="8" height="6" fill="currentColor" />
-                      <rect x="16" y="48" width="12" height="6" fill="currentColor" />
-                      <rect x="34" y="48" width="6" height="18" fill="currentColor" />
-                      <rect x="46" y="48" width="14" height="6" fill="currentColor" />
-                      <rect x="66" y="48" width="8" height="6" fill="currentColor" />
-                      <rect x="80" y="48" width="14" height="6" fill="currentColor" />
-                      <rect x="6" y="58" width="6" height="6" fill="currentColor" />
-                      <rect x="16" y="58" width="12" height="6" fill="currentColor" />
-                      <rect x="46" y="58" width="6" height="12" fill="currentColor" />
-                      <rect x="58" y="58" width="16" height="6" fill="currentColor" />
-                      <rect x="86" y="58" width="8" height="12" fill="currentColor" />
-                      <rect x="38" y="70" width="8" height="6" fill="currentColor" />
-                      <rect x="52" y="70" width="12" height="6" fill="currentColor" />
-                      <rect x="70" y="70" width="6" height="12" fill="currentColor" />
-                      <rect x="82" y="70" width="12" height="6" fill="currentColor" />
-                      <rect x="38" y="80" width="18" height="6" fill="currentColor" />
-                      <rect x="62" y="80" width="8" height="14" fill="currentColor" />
-                      <rect x="76" y="86" width="18" height="8" fill="currentColor" />
-                      <rect x="44" y="90" width="12" height="5" fill="currentColor" />
-                    </svg>
+                  <div class="w-[150px] h-[150px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                    <div id="inviteTicketQrSvgWrapper" class="w-full h-full flex items-center justify-center">
+                      <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
+                        <rect width="100" height="100" fill="#FFFFFF" />
+                        <!-- OJO SUPERIOR IZQUIERDO -->
+                        <rect x="6" y="6" width="28" height="28" fill="#0E0F12" rx="4" />
+                        <rect x="11" y="11" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                        <rect x="15" y="15" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                        <!-- OJO SUPERIOR DERECHO -->
+                        <rect x="66" y="6" width="28" height="28" fill="#0E0F12" rx="4" />
+                        <rect x="71" y="11" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                        <rect x="75" y="15" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                        <!-- OJO INFERIOR IZQUIERDO -->
+                        <rect x="6" y="66" width="28" height="28" fill="#0E0F12" rx="4" />
+                        <rect x="11" y="71" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                        <rect x="15" y="75" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                        <!-- MÓDULOS: zona superior central -->
+                        <rect x="40" y="8"  width="6" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="50" y="8"  width="10" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="40" y="18" width="6" height="10" fill="#0E0F12" rx="1.2" />
+                        <rect x="52" y="18" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="46" y="28" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                        <!-- MÓDULOS: zona central izquierda -->
+                        <rect x="8"  y="40" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="22" y="40" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="30" y="40" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="8"  y="50" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="18" y="50" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="8"  y="60" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="22" y="58" width="6" height="8" fill="#0E0F12" rx="1.2" />
+                        <!-- MÓDULOS: zona central derecha -->
+                        <rect x="66" y="40" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="80" y="40" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="72" y="50" width="8" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="84" y="50" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="66" y="60" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="84" y="58" width="10" height="8" fill="#0E0F12" rx="1.2" />
+                        <!-- MÓDULOS: zona inferior -->
+                        <rect x="40" y="68" width="8" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="52" y="68" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="68" y="68" width="6" height="12" fill="#0E0F12" rx="1.2" />
+                        <rect x="78" y="68" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="40" y="78" width="18" height="6" fill="#0E0F12" rx="1.2" />
+                        <rect x="60" y="78" width="8" height="14" fill="#0E0F12" rx="1.2" />
+                        <rect x="74" y="82" width="18" height="8" fill="#0E0F12" rx="1.2" />
+                        <rect x="44" y="88" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                      </svg>
+                    </div>
+                    <!-- Isotipo central: miniatura del flyer o logo +1 -->
+                    <div id="inviteTicketQrCenter" class="absolute w-[38px] h-[38px] rounded-lg overflow-hidden border-2 border-white shadow-md bg-[#16171B] flex items-center justify-center pointer-events-none select-none" style="top:50%;left:50%;transform:translate(-50%,-50%)">
+                      <span class="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">+1</span>
+                    </div>
                   </div>
+
                 </div>
 
                 <!-- Titular -->
@@ -1490,6 +1510,53 @@
             </div>
           </div>
 
+          <!-- CONTROL: CIERRE DE LISTA VIP (OPCIONAL) -->
+          <div class="w-full">
+            <!-- ESTADO INACTIVO -->
+            <button
+              id="createVipCutoffEmptyBtn"
+              type="button"
+              onclick="activateCreateVipCutoff()"
+              class="w-full py-2.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] text-[#8E8E93] hover:text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+            >
+              <span>+ DEFINIR HORA DE CIERRE DE LISTA VIP (OPCIONAL)</span>
+            </button>
+
+            <!-- ESTADO ACTIVO -->
+            <div id="createVipCutoffActiveBox" class="hidden p-3 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-[#E87A72] text-base">⏳</span>
+                  <label id="createVipCutoffDisplayLabel" class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
+                    Cierre de Lista: 01:00 AM
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onclick="deactivateCreateVipCutoff()"
+                  title="Remover límite de lista VIP"
+                  class="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-xs font-bold transition-all active:scale-90 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  type="time"
+                  id="createEventVipCutoffInput"
+                  value="01:00"
+                  oninput="updateCreateVipCutoffLabel(this.value)"
+                  class="w-full h-11 px-3 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors"
+                />
+              </div>
+
+              <p class="font-sans text-[#8E8E93] text-xs leading-relaxed">
+                Los pases VIP solicitados solo serán válidos para ingresar hasta esta hora.
+              </p>
+            </div>
+          </div>
+
           <!-- CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) -->
           <div class="space-y-1.5">
             <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
@@ -2000,8 +2067,33 @@
           <div id="profilePartnerBadgeContainer" class="mt-2 flex items-center justify-center"></div>
         </div>
 
-        <!-- 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN -->
-        <div class="grid grid-cols-3 gap-2.5 w-full mt-2">
+        <!-- 2. SECCIÓN "MIS EVENTOS CREADOS" (NUEVA UBICACIÓN PRIORITARIA) -->
+        <div class="w-full mt-3">
+          <div onclick="openMyEventsModal()" class="p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xl shrink-0">
+                🎪
+              </div>
+              <div class="text-left">
+                <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight">
+                  MIS EVENTOS CREADOS
+                </h4>
+                <p class="font-sans text-neutral-400 text-xs mt-0.5">
+                  Gestiona listas y capacidad
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span id="profileEventsCount" class="font-display text-[#E87A72] text-sm font-black bg-neutral-900 border border-[#26282E] px-2.5 py-1 rounded-xl shadow-inner min-w-[28px] text-center">
+                0
+              </span>
+              <span class="text-neutral-500 font-bold text-lg">›</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN (DEBAJO DE EVENTOS CREADOS) -->
+        <div class="grid grid-cols-3 gap-2.5 w-full mt-3">
           <!-- Tarjeta 1: EVENTOS ASISTIDOS -->
           <div onclick="openAttendedEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
             <div class="text-xl mb-1">📅</div>
@@ -2039,29 +2131,9 @@
           </div>
         </div>
 
-        <!-- 4. SECCIÓN "MIS EVENTOS CREADOS" -->
-        <div class="w-full mt-4">
-          <div onclick="openMyEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
-            <div class="flex items-center space-x-3">
-              <span class="text-xl">🎪</span>
-              <div class="text-left">
-                <h4 class="font-display text-white text-sm font-black uppercase">
-                  MIS EVENTOS CREADOS
-                </h4>
-                <p class="font-sans text-neutral-400 text-xs">
-                  Gestiona listas y capacidad
-                </p>
-              </div>
-            </div>
-            <span id="profileEventsCount" class="font-display text-[#E87A72] text-sm font-black bg-[#E87A72]/10 border border-[#E87A72]/30 px-2.5 py-1 rounded-lg">
-              0
-            </span>
-          </div>
-        </div>
-
-        <!-- 5. OPCIONES DE CUENTA Y ACCIONES -->
-        <div class="w-full mt-4">
-          <h3 class="font-display text-neutral-400 text-xs font-bold tracking-widest uppercase mb-2 text-left">
+        <!-- 4. SECCIÓN CUENTA -->
+        <div class="w-full mt-6">
+          <h3 class="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
             CUENTA
           </h3>
 
@@ -2103,9 +2175,9 @@
             </div>
           </div>
 
-          <!-- Botón Cerrar Sesión -->
+          <!-- 5. PIE DE PANTALLA: CERRAR SESIÓN -->
           <div class="mt-8 text-center pb-4">
-            <button onclick="handleLogoutHtml()" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer">
+            <button onclick="handleLogoutHtml()" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0">
               CERRAR SESIÓN
             </button>
           </div>
@@ -2757,7 +2829,8 @@
                 isWeekend: true,
                 isVipOrFree: true,
                 categoryTag: 'club',
-                route: '/passes'
+                route: '/passes',
+                vipCutoffTime: d.vipCutoffTime || null
               });
             });
           }
@@ -3151,7 +3224,8 @@
                 description: `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
                 isTonight: true,
                 isWeekend: true,
-                isVipOrFree: true
+                isVipOrFree: true,
+                vipCutoffTime: d.vipCutoffTime || null
               });
             }
           }).catch(console.warn);
@@ -3226,6 +3300,18 @@
       document.getElementById('modalDate').innerText = formatCardDate(event.dateDisplay || event.date);
       document.getElementById('modalTime').innerText = event.timeRange;
       document.getElementById('modalAddress').innerText = event.exactAddress || event.location;
+
+      // Micro-badge de Cierre de Lista VIP (si aplica)
+      const vipCutoffEl = document.getElementById('modalVipCutoffBadge');
+      const vipCutoffText = document.getElementById('modalVipCutoffText');
+      if (vipCutoffEl && vipCutoffText) {
+        if (event.vipCutoffTime) {
+          vipCutoffText.innerText = 'LISTA VIP VÁLIDA HASTA: ' + formatVipCutoffDisplay(event.vipCutoffTime);
+          vipCutoffEl.classList.remove('hidden');
+        } else {
+          vipCutoffEl.classList.add('hidden');
+        }
+      }
 
       // FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?")
       const attendeesContainer = document.getElementById('modalSocialAttendees');
@@ -3650,20 +3736,57 @@
                  </div>
                </div>`;
 
+          const passPayload = t.qrCodeValue || ('plus1://pass/' + (t.id || 'pass_default'));
           centerContentHtml = `
             <div class="relative w-[180px] h-[180px] flex items-center justify-center">
               <div class="w-[158px] h-[158px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
-                <svg class="w-full h-full text-black fill-current" viewBox="0 0 100 100">
-                  <rect width="100" height="100" fill="#FFFFFF" />
-                  <rect x="6" y="6" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="12" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="66" y="6" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="72" y="12" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="6" y="66" width="28" height="28" fill="#000000" rx="3" />
-                  <rect x="12" y="72" width="16" height="16" fill="#FFFFFF" rx="1.5" />
-                  <rect x="40" y="40" width="20" height="20" fill="#000000" rx="2" />
-                  <rect x="44" y="44" width="12" height="12" fill="#FFFFFF" rx="1" />
-                </svg>
+                <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-full h-full flex items-center justify-center">
+                  <svg viewBox="0 0 100 100" class="w-full h-full" fill="none">
+                    <rect width="100" height="100" fill="#FFFFFF" />
+                    <!-- OJO SUPERIOR IZQUIERDO -->
+                    <rect x="6" y="6" width="28" height="28" fill="#0E0F12" rx="4" />
+                    <rect x="11" y="11" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                    <rect x="15" y="15" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                    <!-- OJO SUPERIOR DERECHO -->
+                    <rect x="66" y="6" width="28" height="28" fill="#0E0F12" rx="4" />
+                    <rect x="71" y="11" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                    <rect x="75" y="15" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                    <!-- OJO INFERIOR IZQUIERDO -->
+                    <rect x="6" y="66" width="28" height="28" fill="#0E0F12" rx="4" />
+                    <rect x="11" y="71" width="18" height="18" fill="#FFFFFF" rx="2.5" />
+                    <rect x="15" y="75" width="10" height="10" fill="#0E0F12" rx="1.5" />
+                    <!-- MÓDULOS: zona superior central -->
+                    <rect x="40" y="8"  width="6" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="50" y="8"  width="10" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="40" y="18" width="6" height="10" fill="#0E0F12" rx="1.2" />
+                    <rect x="52" y="18" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="46" y="28" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                    <!-- MÓDULOS: zona central izquierda -->
+                    <rect x="8"  y="40" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="22" y="40" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="30" y="40" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="8"  y="50" width="6" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="18" y="50" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="8"  y="60" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="22" y="58" width="6" height="8" fill="#0E0F12" rx="1.2" />
+                    <!-- MÓDULOS: zona central derecha -->
+                    <rect x="66" y="40" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="80" y="40" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="72" y="50" width="8" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="84" y="50" width="10" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="66" y="60" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="84" y="58" width="10" height="8" fill="#0E0F12" rx="1.2" />
+                    <!-- MÓDULOS: zona inferior -->
+                    <rect x="40" y="68" width="8" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="52" y="68" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="68" y="68" width="6" height="12" fill="#0E0F12" rx="1.2" />
+                    <rect x="78" y="68" width="14" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="40" y="78" width="18" height="6" fill="#0E0F12" rx="1.2" />
+                    <rect x="60" y="78" width="8" height="14" fill="#0E0F12" rx="1.2" />
+                    <rect x="74" y="82" width="18" height="8" fill="#0E0F12" rx="1.2" />
+                    <rect x="44" y="88" width="12" height="6" fill="#0E0F12" rx="1.2" />
+                  </svg>
+                </div>
                 ${qrCenterHtml}
               </div>
             </div>
@@ -3706,6 +3829,12 @@
                   <span class="text-[11px]">📍</span>
                   <span class="truncate max-w-[210px]">${t.location || t.venue}</span>
                 </div>
+                ${t.vipCutoffTime ? `
+                  <div class="mt-1 px-2.5 py-0.5 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-1 text-[9px] font-display font-black text-[#E87A72] uppercase tracking-wider">
+                    <span>⏳</span>
+                    <span>VIP VÁLIDO HASTA: ${formatVipCutoffDisplay(t.vipCutoffTime)}</span>
+                  </div>
+                ` : ''}
               </div>
               <div class="h-[68px] flex flex-col justify-center text-center px-2">
                 <h3 class="font-display text-white text-lg tracking-wider uppercase truncate">
@@ -3729,6 +3858,27 @@
       }
 
       setTicketCoverFlow(currentTicketIndex);
+      updateCoverFlowTicketQrs();
+    }
+
+    function updateCoverFlowTicketQrs() {
+      if (typeof window.QRCode === 'undefined' || typeof window.QRCode.toString !== 'function') return;
+      userTickets.forEach((t, idx) => {
+        if (t.status === 'capacity_reached' || t.status === 'pending') return;
+        const wrapper = document.getElementById(`ticketCoverFlowQrWrapper_${idx}`);
+        if (!wrapper) return;
+        const payload = t.qrCodeValue || ('plus1://pass/' + (t.id || 'pass_default'));
+        window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0 }, function(err, svg) {
+          if (!err && svg) {
+            wrapper.innerHTML = svg;
+            const svgEl = wrapper.querySelector('svg');
+            if (svgEl) {
+              svgEl.setAttribute('class', 'w-full h-full');
+              svgEl.setAttribute('viewBox', '0 0 ' + (svgEl.getAttribute('width') || 33) + ' ' + (svgEl.getAttribute('height') || 33));
+            }
+          }
+        });
+      });
     }
 
     function setTicketCoverFlow(targetIndex) {
@@ -3812,6 +3962,53 @@
     let createCapacity = 150;
     let createPrivacyMode = 'public';
     let editingEventId = null;
+    let createVipCutoffActive = false;
+    let createVipCutoffTime = null;
+
+    function formatVipCutoffDisplay(timeStr) {
+      if (!timeStr) return '';
+      const trimmed = timeStr.trim();
+      if (/[a-zA-Z]/.test(trimmed)) return trimmed;
+      const parts = trimmed.split(':');
+      if (parts.length < 2) return trimmed;
+      const h = parseInt(parts[0], 10);
+      if (isNaN(h)) return trimmed;
+      const period = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      const hDisplay = h12 < 10 ? '0' + h12 : '' + h12;
+      return hDisplay + ':' + parts[1].slice(0, 2) + ' ' + period;
+    }
+
+    function activateCreateVipCutoff(initialTime = '01:00') {
+      createVipCutoffActive = true;
+      createVipCutoffTime = initialTime;
+      const emptyBtn = document.getElementById('createVipCutoffEmptyBtn');
+      const activeBox = document.getElementById('createVipCutoffActiveBox');
+      const input = document.getElementById('createEventVipCutoffInput');
+      if (emptyBtn) emptyBtn.classList.add('hidden');
+      if (activeBox) activeBox.classList.remove('hidden');
+      if (input) input.value = initialTime;
+      updateCreateVipCutoffLabel(initialTime);
+    }
+
+    function deactivateCreateVipCutoff() {
+      createVipCutoffActive = false;
+      createVipCutoffTime = null;
+      const emptyBtn = document.getElementById('createVipCutoffEmptyBtn');
+      const activeBox = document.getElementById('createVipCutoffActiveBox');
+      const input = document.getElementById('createEventVipCutoffInput');
+      if (emptyBtn) emptyBtn.classList.remove('hidden');
+      if (activeBox) activeBox.classList.add('hidden');
+      if (input) input.value = '01:00';
+    }
+
+    function updateCreateVipCutoffLabel(val) {
+      createVipCutoffTime = val;
+      const label = document.getElementById('createVipCutoffDisplayLabel');
+      if (label) {
+        label.innerText = 'Cierre de Lista: ' + (val ? formatVipCutoffDisplay(val) : '01:00 AM');
+      }
+    }
 
     function openCreateEventScreen(editId = null) {
       editingEventId = editId;
@@ -3935,6 +4132,7 @@
       if (endTimeInput) endTimeInput.value = '';
       if (locationInput) locationInput.value = '';
       handleRemoveArtImage();
+      deactivateCreateVipCutoff();
       setCreatePrivacy('public');
       createCapacity = 150;
       const display = document.getElementById('createCapacityDisplay');
@@ -3970,6 +4168,11 @@
       }
       updateLocationUI(data.location || '', data.coordinates || null);
       if (data.type) setCreatePrivacy(data.type);
+      if (data.vipCutoffTime) {
+        activateCreateVipCutoff(data.vipCutoffTime);
+      } else {
+        deactivateCreateVipCutoff();
+      }
       if (data.maxCapacity || data.guestLimit) {
         createCapacity = Number(data.maxCapacity || data.guestLimit);
         const display = document.getElementById('createCapacityDisplay');
@@ -4199,6 +4402,7 @@
         allowsPlusOne: Boolean(createPlusOneEnabled),
         maxCapacity: createCapacity || 150,
         tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
+        vipCutoffTime: (createVipCutoffActive && createVipCutoffTime) ? createVipCutoffTime : null,
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
         hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
         hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
@@ -4225,6 +4429,7 @@
               maxCapacity: Number(eventPayload.maxCapacity),
               imageUrl: eventPayload.imageUrl,
               artImage: eventPayload.artImage,
+              vipCutoffTime: eventPayload.vipCutoffTime,
               updatedAt: Date.now()
             });
           }
@@ -7069,6 +7274,21 @@
       document.getElementById('inviteExactAddressText').innerText = currentInviteData.exactAddress;
       document.getElementById('ticketExactAddressDisplay').innerText = currentInviteData.exactAddress;
 
+      // Actualizar isotipo central del QR con la imagen del evento
+      const qrCenter = document.getElementById('inviteTicketQrCenter');
+      if (qrCenter) {
+        const imgUrl = currentInviteData.imageUrl || currentInviteData.eventImageUrl;
+        if (imgUrl) {
+          qrCenter.innerHTML = `<img src="${escapeHtmlAttr(imgUrl)}" alt="${escapeHtmlAttr(currentInviteData.title)}" class="w-full h-full object-cover rounded-lg">`;
+        } else {
+          const shortTitle = (currentInviteData.title || '+1').slice(0, 4);
+          qrCenter.innerHTML = `<div class="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5"><span class="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">${escapeHtmlAttr(shortTitle)}</span></div>`;
+        }
+      }
+
+      updateInviteTicketQr(currentInviteData.id);
+
+
       const badge = document.getElementById('invitePrivacyBadge');
       const badgeText = document.getElementById('invitePrivacyBadgeText');
       const hostBadge = document.getElementById('inviteHostBadge');
@@ -7108,6 +7328,23 @@
     function closeEventInviteModal() {
       const modal = document.getElementById('eventInviteModal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    function updateInviteTicketQr(passId) {
+      if (typeof window.QRCode === 'undefined' || typeof window.QRCode.toString !== 'function') return;
+      const wrapper = document.getElementById('inviteTicketQrSvgWrapper');
+      if (!wrapper) return;
+      const payload = `plus1://pass/${passId || (currentInviteData && currentInviteData.id) || 'pepe-birthday'}`;
+      window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0 }, function(err, svg) {
+        if (!err && svg) {
+          wrapper.innerHTML = svg;
+          const svgEl = wrapper.querySelector('svg');
+          if (svgEl) {
+            svgEl.setAttribute('class', 'w-full h-full');
+            svgEl.setAttribute('viewBox', '0 0 ' + (svgEl.getAttribute('width') || 33) + ' ' + (svgEl.getAttribute('height') || 33));
+          }
+        }
+      });
     }
 
     function setInvitePlusOne(isPlusOne) {
@@ -7160,6 +7397,7 @@
       document.getElementById('inviteLocationUnlocked').classList.remove('hidden');
       document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " amigos confirmados";
       switchInviteView('ticket');
+      updateInviteTicketQr(currentInviteData.id);
       showToast('¡Asistencia confirmada! Pase QR generado');
 
       // Sincronización en tiempo real con Firestore entre dispositivos

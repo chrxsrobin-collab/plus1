@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 import { TicketShape } from '../components/TicketShape';
 import { PassItem } from '../types/home';
 import { mockMamacitaPass } from '../data/mockData';
+import { formatVipCutoffDisplay } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
 export interface PassScreenProps {
@@ -95,7 +97,7 @@ export const PassScreen: React.FC<PassScreenProps> = ({
 
               {/* SECCIÓN 2: VISOR Y CÓDIGO QR CENTRAL */}
               <div className="flex-1 flex items-center justify-center my-3 relative">
-                {/* Marco de enfoque tipo visor de cámara */}
+                {/* Marco de enfoque tipo visor de cámara HUD */}
                 <div className="relative w-[210px] h-[210px] sm:w-[225px] sm:h-[225px] flex items-center justify-center p-3">
                   
                   {/* Esquina superior izquierda ┌ */}
@@ -107,63 +109,53 @@ export const PassScreen: React.FC<PassScreenProps> = ({
                   {/* Esquina inferior derecha ┘ */}
                   <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[3.5px] border-r-[3.5px] border-[#12c061] rounded-br-xl pointer-events-none" />
 
-                  {/* Código QR con alto contraste sobre fondo oscuro idéntico a la referencia */}
-                  <div className="w-[175px] h-[175px] sm:w-[190px] sm:h-[190px] flex items-center justify-center p-1 rounded-lg overflow-hidden bg-[#0A0C0E]">
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-white fill-current">
-                      {/* Ojo Superior Izquierdo */}
-                      <rect x="5" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="13" width="12" height="12" rx="1" fill="currentColor" />
+                  {/* QR generado con librería estándar qrcode.react: alta corrección de errores (level="H"), payload plus1://pass/${pass.id} e includeMargin={false} */}
+                  <div className="w-[175px] h-[175px] sm:w-[190px] sm:h-[190px] bg-white rounded-xl p-2.5 shadow-2xl flex items-center justify-center relative overflow-hidden">
+                    <QRCodeSVG
+                      value={`plus1://pass/${pass.id || pass.ticketId || 'pass_default'}`}
+                      size={160}
+                      level="H"
+                      bgColor="#FFFFFF"
+                      fgColor="#0E0F12"
+                      includeMargin={false}
+                      imageSettings={
+                        (pass.eventImageUrl || pass.imageUrl)
+                          ? {
+                              src: pass.eventImageUrl || pass.imageUrl || '',
+                              x: undefined,
+                              y: undefined,
+                              height: 38,
+                              width: 38,
+                              excavate: true,
+                            }
+                          : undefined
+                      }
+                      className="w-full h-full"
+                    />
 
-                      {/* Ojo Superior Derecho */}
-                      <rect x="67" y="5" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="71" y="9" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="75" y="13" width="12" height="12" rx="1" fill="currentColor" />
-
-                      {/* Ojo Inferior Izquierdo */}
-                      <rect x="5" y="67" width="28" height="28" rx="2" fill="currentColor" />
-                      <rect x="9" y="71" width="20" height="20" fill="#0A0C0E" />
-                      <rect x="13" y="75" width="12" height="12" rx="1" fill="currentColor" />
-
-                      {/* Módulos de datos estilo QR de alta densidad */}
-                      <rect x="38" y="6" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="6" width="12" height="6" fill="currentColor" />
-                      <rect x="38" y="16" width="6" height="12" fill="currentColor" />
-                      <rect x="54" y="16" width="6" height="6" fill="currentColor" />
-                      <rect x="48" y="26" width="12" height="6" fill="currentColor" />
-
-                      <rect x="6" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="22" y="38" width="6" height="6" fill="currentColor" />
-                      <rect x="32" y="38" width="18" height="6" fill="currentColor" />
-                      <rect x="56" y="38" width="12" height="6" fill="currentColor" />
-                      <rect x="74" y="38" width="6" height="12" fill="currentColor" />
-                      <rect x="86" y="38" width="8" height="6" fill="currentColor" />
-
-                      <rect x="16" y="48" width="12" height="6" fill="currentColor" />
-                      <rect x="34" y="48" width="6" height="18" fill="currentColor" />
-                      <rect x="46" y="48" width="14" height="6" fill="currentColor" />
-                      <rect x="66" y="48" width="8" height="6" fill="currentColor" />
-                      <rect x="80" y="48" width="14" height="6" fill="currentColor" />
-
-                      <rect x="6" y="58" width="6" height="6" fill="currentColor" />
-                      <rect x="16" y="58" width="12" height="6" fill="currentColor" />
-                      <rect x="46" y="58" width="6" height="12" fill="currentColor" />
-                      <rect x="58" y="58" width="16" height="6" fill="currentColor" />
-                      <rect x="86" y="58" width="8" height="12" fill="currentColor" />
-
-                      <rect x="38" y="70" width="8" height="6" fill="currentColor" />
-                      <rect x="52" y="70" width="12" height="6" fill="currentColor" />
-                      <rect x="70" y="70" width="6" height="12" fill="currentColor" />
-                      <rect x="82" y="70" width="12" height="6" fill="currentColor" />
-
-                      <rect x="38" y="80" width="18" height="6" fill="currentColor" />
-                      <rect x="62" y="80" width="8" height="14" fill="currentColor" />
-                      <rect x="76" y="86" width="18" height="8" fill="currentColor" />
-                      <rect x="44" y="90" width="12" height="5" fill="currentColor" />
-                    </svg>
+                    {/* Isotipo / flyer del evento al centro exacto del QR con bordes redondeados y marco protector */}
+                    <div
+                      className="absolute w-[44px] h-[44px] rounded-lg overflow-hidden border-2 border-white shadow-lg bg-[#16171B] flex items-center justify-center pointer-events-none select-none"
+                      style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                    >
+                      {(pass.eventImageUrl || pass.imageUrl) ? (
+                        <img
+                          src={pass.eventImageUrl || pass.imageUrl}
+                          alt={pass.eventTitle || pass.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5">
+                          <span className="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">
+                            {pass.eventTitle ? pass.eventTitle.slice(0, 4) : '+1'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
+
 
               {/* SECCIÓN 3: PIE DEL TICKET (TITULAR Y VERIFICACIÓN) */}
               <div className="flex flex-col items-center justify-center text-center pb-2">
@@ -175,6 +167,12 @@ export const PassScreen: React.FC<PassScreenProps> = ({
                 <p className="font-sans text-neutral-400 text-xs sm:text-sm font-semibold tracking-wider uppercase mt-1 leading-tight">
                   ID: {pass.ticketId || '#4092'} · {pass.verifiedProvider || 'VERIFICADO CON GOOGLE'}
                 </p>
+                {pass.vipCutoffTime && (
+                  <div className="mt-2 px-3 py-1 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 inline-flex items-center space-x-1.5 text-[10px] font-display font-black text-[#E87A72] uppercase tracking-wider">
+                    <span>⏳</span>
+                    <span>LISTA VIP VÁLIDA HASTA: {formatVipCutoffDisplay(pass.vipCutoffTime)}</span>
+                  </div>
+                )}
               </div>
 
             </TicketShape>

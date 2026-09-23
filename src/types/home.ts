@@ -25,6 +25,7 @@ export interface PassItem {
   accessType?: string;
   venue?: string;
   feedbackMessage?: string;
+  vipCutoffTime?: string | null;
 }
 
 export interface ConfirmedAttendee {
@@ -74,6 +75,7 @@ export interface VipFlyerItem {
   confirmedUsers?: ConfirmedAttendee[];
   remainingSpots?: number;
   recentRequestsCount?: number;
+  vipCutoffTime?: string | null;
 }
 
 export interface UserProfile {
@@ -105,6 +107,7 @@ export interface CreatedEventItem {
   maxCapacity: number;
   endTimestamp?: number;
   isFinished?: boolean;
+  vipCutoffTime?: string | null;
 }
 
 export interface SouvenirItem {
@@ -177,6 +180,7 @@ export interface CreateEventFormData {
   allowPlusOne: boolean;
   maxCapacity: number;
   tags?: string[];
+  vipCutoffTime?: string | null;
 }
 
 export const AVAILABLE_EVENT_TAGS = [
