@@ -3937,10 +3937,16 @@
       }
     }
 
-    function openPassScreen() {
+    function openPassScreen(targetPassId) {
       const passScreen = document.getElementById('passScreenView');
       if (passScreen) {
         passScreen.classList.remove('hidden');
+        if (targetPassId && Array.isArray(userTickets)) {
+          const idx = userTickets.findIndex(t => t.id === targetPassId);
+          if (idx !== -1) {
+            currentTicketIndex = idx;
+          }
+        }
         renderTicketCoverFlow();
       }
     }
@@ -6877,6 +6883,8 @@
         const timeAgo = formatTimeAgoHtml(n.createdAt);
         const unreadRing = !n.read ? 'border-[#E87A72]/40 ring-1 ring-[#E87A72]/30' : 'border-[#26282E] opacity-90';
 
+        let innerContent = '';
+
         if (type === 'VIP_REQUEST') {
           const actionTaken = n.actionTaken;
           const rawName = n.senderName || '';
@@ -6894,85 +6902,77 @@
                  <span class="font-display font-black text-white text-sm tracking-wider uppercase">${initials}</span>
                </div>`;
 
-          return `
-            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} shadow-md transition-all">
-              <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 mt-0.5">
-                  ${avatarHtml}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                      ${escapeHtmlAttr(n.title || 'SOLICITUD VIP ⚡')}
-                    </h4>
-                    <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
-                      ${timeAgo}
-                    </span>
-                  </div>
-                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
-                    <strong class="text-white">${escapeHtmlAttr(n.senderName || 'Un usuario')}</strong> ha solicitado pase VIP para <span class="text-[#E87A72] font-semibold">${escapeHtmlAttr(n.eventTitle || 'tu evento')}</span>.
-                  </p>
-
-                  ${actionTaken === 'approved' ? `
-                    <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-[#12C061]">
-                      <span>✓ SOLICITUD APROBADA</span>
-                    </div>
-                  ` : actionTaken === 'declined' ? `
-                    <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-neutral-400">
-                      <span>✕ CUPO LLENO INFORMADO</span>
-                    </div>
-                  ` : `
-                    <div class="flex items-center space-x-2 mt-3">
-                      <button onclick="approveNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 h-10 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer flex items-center justify-center">
-                        APROBAR ✓
-                      </button>
-                      <button onclick="declineNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" title="Aforo completo / Descartar" aria-label="Aforo completo / Descartar" class="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-[#26282E]/70 hover:bg-[#26282E] border border-neutral-700/50 text-[#9CA3AF] hover:text-white text-base transition-colors active:scale-95 cursor-pointer">
-                        ✕
-                      </button>
-                    </div>
-                  `}
-                </div>
+          innerContent = `
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                ${avatarHtml}
               </div>
-            </div>
-          `;
-        }
-
-        if (type === 'VIP_APPROVED') {
-          return `
-            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} border-[#12C061]/50 shadow-md transition-all">
-              <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 mt-0.5">
-                  <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                  </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    ${escapeHtmlAttr(n.title || 'SOLICITUD VIP ⚡')}
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#8E8E93] ml-2 flex-shrink-0">
+                    ${timeAgo}
+                  </span>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
-                      ${escapeHtmlAttr(n.title || '¡PASE VIP APROBADO! 🎉')}
-                    </h4>
-                    <span class="font-sans text-[11px] text-[#12C061] font-bold uppercase ml-2 flex-shrink-0">
-                      ACTIVO
-                    </span>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  <strong class="text-white">${escapeHtmlAttr(n.senderName || 'Un usuario')}</strong> ha solicitado pase VIP para <span class="text-[#E87A72] font-semibold">${escapeHtmlAttr(n.eventTitle || 'tu evento')}</span>.
+                </p>
+
+                ${actionTaken === 'approved' ? `
+                  <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-[#12C061]">
+                    <span>✓ SOLICITUD APROBADA</span>
                   </div>
-                  <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
-                    ${escapeHtmlAttr(n.message || `Tu pase VIP para ${n.eventTitle || 'el evento'} ha sido confirmado.`)}
-                  </p>
-                  <div class="mt-2.5">
-                    <button onclick="closeNotificationsModal(); openTicketsScreen();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#12C061]/20 border border-[#12C061]/50 hover:bg-[#12C061]/30 text-[#12C061] font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 cursor-pointer">
-                      <span>VER MI QR</span>
-                      <span>🎟️</span>
+                ` : actionTaken === 'declined' ? `
+                  <div class="mt-2.5 flex items-center space-x-1.5 text-xs font-display font-black text-neutral-400">
+                    <span>✕ CUPO LLENO INFORMADO</span>
+                  </div>
+                ` : `
+                  <div class="flex items-center space-x-2 mt-3">
+                    <button onclick="approveNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" class="flex-1 h-10 rounded-xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow cursor-pointer flex items-center justify-center">
+                      APROBAR ✓
+                    </button>
+                    <button onclick="declineNotificationVip('${n.id}', '${escapeHtmlAttr(n.passId || '')}', '${escapeHtmlAttr(n.senderId || '')}', '${escapeHtmlAttr(n.eventTitle || '')}')" title="Aforo completo / Descartar" aria-label="Aforo completo / Descartar" class="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-[#26282E]/70 hover:bg-[#26282E] border border-neutral-700/50 text-[#9CA3AF] hover:text-white text-base transition-colors active:scale-95 cursor-pointer">
+                      ✕
                     </button>
                   </div>
+                `}
+              </div>
+            </div>
+          `;
+        } else if (type === 'VIP_APPROVED') {
+          innerContent = `
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-sm font-bold uppercase tracking-wide leading-tight">
+                    ${escapeHtmlAttr(n.title || '¡PASE VIP APROBADO! 🎉')}
+                  </h4>
+                  <span class="font-sans text-[11px] text-[#12C061] font-bold uppercase ml-2 flex-shrink-0">
+                    ACTIVO
+                  </span>
+                </div>
+                <p class="font-sans text-neutral-300 text-xs mt-1 leading-relaxed">
+                  ${escapeHtmlAttr(n.message || `Tu pase VIP para ${n.eventTitle || 'el evento'} ha sido confirmado.`)}
+                </p>
+                <div class="mt-2.5">
+                  <button onclick="closeNotificationsModal(); openPassScreen('${escapeHtmlAttr(n.passId || '')}');" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 hover:bg-[#12C061]/25 text-[#12C061] font-display text-xs font-bold uppercase tracking-wider transition-all active:scale-95 focus:outline-none cursor-pointer shadow-sm">
+                    <span>VER MI QR</span>
+                    <span>🎟️</span>
+                  </button>
                 </div>
               </div>
             </div>
           `;
-        }
-
-        if (type === 'VIP_DECLINED' || type === 'CAPACITY_REACHED') {
+        } else if (type === 'VIP_DECLINED' || type === 'CAPACITY_REACHED') {
           const flyerHtml = n.eventImageUrl
             ? `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
                  <img src="${escapeHtmlAttr(n.eventImageUrl)}" alt="${escapeHtmlAttr(n.eventTitle || 'Evento')}" class="w-full h-full object-cover">
@@ -6983,39 +6983,35 @@
                  </div>
                </div>`;
 
-          return `
-            <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} border-[#26282E] shadow-md transition-all">
-              <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 mt-0.5">
-                  ${flyerHtml}
+          innerContent = `
+            <div class="flex items-start space-x-3">
+              <div class="flex-shrink-0 mt-0.5">
+                ${flyerHtml}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <h4 class="font-display text-white text-base tracking-wide uppercase truncate">
+                    ${escapeHtmlAttr(n.eventTitle || n.title || 'Evento')}
+                  </h4>
+                  <span class="font-sans text-[11px] text-neutral-400 font-bold ml-2 flex-shrink-0">
+                    ${timeAgo}
+                  </span>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-display text-white text-base tracking-wide uppercase truncate">
-                      ${escapeHtmlAttr(n.eventTitle || n.title || 'Evento')}
-                    </h4>
-                    <span class="font-sans text-[11px] text-neutral-400 font-bold ml-2 flex-shrink-0">
-                      ${timeAgo}
-                    </span>
-                  </div>
-                  <p class="font-sans text-[#9CA3AF] text-xs mt-1 leading-relaxed">
-                    ${escapeHtmlAttr(n.message || 'Cupos completados por el momento. ¡Atento a nuevas fechas!')}
-                  </p>
-                  <div class="mt-2.5">
-                    <button onclick="closeNotificationsModal();" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-neutral-300 font-sans text-xs font-bold uppercase tracking-wider transition-colors active:scale-95 cursor-pointer">
-                      <span>EXPLORAR EVENTOS</span>
-                      <span>🔍</span>
-                    </button>
-                  </div>
+                <p class="font-sans text-[#9CA3AF] text-xs mt-1 leading-relaxed">
+                  ${escapeHtmlAttr(n.message || 'Cupos completados por el momento. ¡Atento a nuevas fechas!')}
+                </p>
+                <div class="mt-2.5">
+                  <button onclick="closeNotificationsModal(); openSearchEventsModal();" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-[#E87A72]/15 border border-[#E87A72]/40 hover:bg-[#E87A72]/25 text-[#E87A72] font-display text-xs font-bold uppercase tracking-wider transition-all active:scale-95 focus:outline-none cursor-pointer shadow-sm">
+                    <span>EXPLORAR EVENTOS</span>
+                    <span>🔍</span>
+                  </button>
                 </div>
               </div>
             </div>
           `;
-        }
-
-        // Genérica / Invitación
-        return `
-          <div class="rounded-2xl p-3.5 border bg-[#1A1C22] ${unreadRing} shadow-md transition-all">
+        } else {
+          // Genérica / Invitación
+          innerContent = `
             <div class="flex items-start space-x-3">
               <div class="flex-shrink-0 mt-0.5">
                 <div class="w-9 h-9 rounded-xl bg-[#26282E] border border-[#E87A72]/40 flex items-center justify-center text-base">
@@ -7035,6 +7031,24 @@
                   ${escapeHtmlAttr(n.message || '')}
                 </p>
               </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div id="notif-card-${n.id}" class="relative overflow-hidden rounded-2xl mb-3 select-none" style="transition: opacity 0.2s ease-in-out, height 0.2s ease-in-out, margin 0.2s ease-in-out, padding 0.2s ease-in-out;">
+            <!-- CAPA DE FONDO: Acción de Borrar (Roja con Basurero) -->
+            <div class="absolute inset-0 bg-[#DC2626] rounded-2xl flex items-center justify-end pr-5 text-white select-none pointer-events-none">
+              <span class="text-xl">🗑️</span>
+            </div>
+
+            <!-- CAPA FRONTAL: Tarjeta que se desliza con touch-pan-y -->
+            <div id="notif-front-${n.id}"
+                 class="relative bg-[#16171B] border ${unreadRing} p-4 rounded-2xl touch-pan-y shadow-md cursor-grab active:cursor-grabbing transition-transform duration-100 ease-out"
+                 ontouchstart="handleNotifTouchStart(event, '${n.id}')"
+                 ontouchmove="handleNotifTouchMove(event, '${n.id}')"
+                 ontouchend="handleNotifTouchEnd(event, '${n.id}')">
+              ${innerContent}
             </div>
           </div>
         `;
@@ -7121,10 +7135,10 @@
       }
     }
 
-    async function markAllNotificationsAsRead() {
+    async function markAllNotificationsAsRead(silent = false) {
       try {
         if (realtimeNotifsList && realtimeNotifsList.length > 0) {
-          const unread = realtimeNotifsList.filter(n => !n.read);
+          const unread = realtimeNotifsList.filter(n => !n.read && n.id && !n.id.startsWith('mock_'));
           if (unread.length > 0) {
             const batch = fbDb.batch();
             unread.forEach(n => {
@@ -7134,10 +7148,69 @@
             await batch.commit();
           }
         }
-        showToast('Notificaciones marcadas como leídas');
+        if (!silent) {
+          showToast('Notificaciones marcadas como leídas');
+        }
       } catch (err) {
         console.error('Error marcando notificaciones:', err);
       }
+    }
+
+    let notifTouchStartX = 0;
+    let notifTouchStartY = 0;
+    let notifTouchCurrentX = 0;
+    let notifIsSwiping = false;
+
+    function handleNotifTouchStart(e, id) {
+      if (!e.touches || e.touches.length === 0) return;
+      notifTouchStartX = e.touches[0].clientX;
+      notifTouchStartY = e.touches[0].clientY;
+      notifTouchCurrentX = notifTouchStartX;
+      notifIsSwiping = false;
+    }
+
+    function handleNotifTouchMove(e, id) {
+      if (!e.touches || e.touches.length === 0) return;
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const diffX = currentX - notifTouchStartX;
+      const diffY = currentY - notifTouchStartY;
+
+      // Si el usuario desliza horizontalmente hacia la izquierda
+      if (Math.abs(diffX) > Math.abs(diffY) && diffX < 0) {
+        notifIsSwiping = true;
+        const front = document.getElementById('notif-front-' + id);
+        if (front) {
+          // Arrastre con resistencia elástica limitado a -140px
+          const clampedX = Math.max(-140, diffX * 0.9);
+          front.style.transform = `translateX(${clampedX}px)`;
+        }
+      }
+    }
+
+    function handleNotifTouchEnd(e, id) {
+      if (!notifIsSwiping) return;
+      const front = document.getElementById('notif-front-' + id);
+      if (!front) return;
+
+      const diffX = (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : notifTouchCurrentX) - notifTouchStartX;
+
+      if (diffX < -90) {
+        // Deslizado exitoso para borrar: animación de salida suave
+        front.style.transition = 'transform 0.15s ease-out';
+        front.style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+          deleteNotification(id);
+        }, 120);
+      } else {
+        // Retorno elástico a la posición de reposo
+        front.style.transition = 'transform 0.2s ease-out';
+        front.style.transform = 'translateX(0px)';
+        setTimeout(() => {
+          if (front) front.style.transition = '';
+        }, 200);
+      }
+      notifIsSwiping = false;
     }
 
     async function deleteNotification(id) {
@@ -7145,13 +7218,15 @@
         if (!id) return;
         const cardEl = document.getElementById('notif-card-' + id);
         if (cardEl) {
-          cardEl.style.transition = 'all 0.25s ease-in-out';
-          cardEl.style.transform = 'translateX(-100%)';
+          cardEl.style.transition = 'opacity 0.2s ease-in-out, height 0.2s ease-in-out, margin 0.2s ease-in-out, padding 0.2s ease-in-out';
           cardEl.style.opacity = '0';
+          cardEl.style.height = '0px';
           cardEl.style.maxHeight = '0px';
           cardEl.style.marginBottom = '0px';
           cardEl.style.padding = '0px';
-          setTimeout(() => cardEl.remove(), 260);
+          setTimeout(() => {
+            if (cardEl && cardEl.parentNode) cardEl.parentNode.removeChild(cardEl);
+          }, 210);
         }
         if (fbDb && id && !id.startsWith('mock_')) {
           await fbDb.collection('notifications').doc(id).delete();
@@ -7161,7 +7236,28 @@
       }
     }
 
+    function openTicketsScreen(passId) {
+      openPassScreen(passId);
+    }
+    window.openTicketsScreen = openTicketsScreen;
+
     function openNotificationsModal() {
+      // 1. Limpieza inmediata optimista del badge en la campana (0ms de latencia percibida)
+      const topBadge = document.getElementById('topNotifBadge');
+      if (topBadge) {
+        topBadge.classList.add('hidden');
+        topBadge.innerText = '0';
+      }
+      const notifBadgeCount = document.getElementById('notifBadgeCount');
+      if (notifBadgeCount) {
+        notifBadgeCount.innerText = 'Al día';
+        notifBadgeCount.className = "text-neutral-500 font-sans text-xs";
+      }
+
+      // 2. Limpieza en Firestore mediante writeBatch silencioso
+      markAllNotificationsAsRead(true);
+
+      // 3. Despliegue del modal con animación
       const modal = document.getElementById('notificationsModal');
       if (modal) {
         modal.classList.remove('hidden');
