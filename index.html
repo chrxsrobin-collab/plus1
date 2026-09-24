@@ -164,43 +164,46 @@
     <!-- Contenedor Interior Nativo (overflow-y-auto h-full con pb-28) -->
     <div id="mainHomeScrollContainer" class="relative z-20 flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden h-full no-scrollbar pb-28 w-full max-w-md mx-auto">
       
-      <!-- NUEVA BARRA NEGRA UNIFICADA (TOP HUD) -->
-      <header class="w-full bg-black rounded-none px-4 pt-3 pb-3 flex items-center justify-between z-20">
-        <!-- Lado Izquierdo: Logo + Saludo + Estado de Eventos -->
-        <div class="flex items-center gap-3">
-          <!-- Isotipo +1 -->
-          <span class="font-display text-2xl text-[#E87A72] font-bold tracking-tight">
+      <!-- REESTRUCTURACIÓN DEL HEADER (DOS NIVELES VERTICALES) -->
+      <header class="w-full z-20 flex flex-col">
+        <!-- NIVEL 1: TOP BAR (LOGO +1 INDEPENDIENTE) -->
+        <div class="w-full px-5 pt-3 pb-1 flex items-center justify-between">
+          <!-- Isotipo +1 en solitario a la izquierda -->
+          <span class="font-display text-3xl text-[#E87A72] font-bold tracking-tight">
             +1
           </span>
 
-          <!-- Columna con Saludo y Aviso de Eventos -->
-          <div class="flex flex-col justify-center">
-            <h1 id="homeGreetingTitle" class="font-display text-base sm:text-lg text-white tracking-wide uppercase leading-tight">
-              HEY, CHRIS G.
-            </h1>
-            <span class="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase">
-              TIENES EVENTOS CERCA
-            </span>
+          <!-- Lado derecho: Notificaciones y Avatar -->
+          <div class="flex items-center gap-3">
+            <button id="topBellBtn" onclick="openNotificationsModal()" class="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none cursor-pointer" aria-label="Notificaciones">
+              <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+              </svg>
+              <span id="topNotifBadge" class="hidden absolute -top-1 -right-1 bg-[#E87A72] text-[10px] text-white font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                0
+              </span>
+            </button>
+            <div 
+              onclick="openProfileScreen()" 
+              class="w-8 h-8 rounded-full overflow-hidden border border-white/20 cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 flex items-center justify-center p-0"
+              aria-label="Perfil de usuario"
+            >
+              <img id="topHudUserAvatar" src="./assets/images/avatar_chris.png" alt="Chris G." class="w-full h-full object-cover">
+            </div>
           </div>
         </div>
 
-        <!-- Lado Derecho: Notificaciones y Avatar -->
-        <div class="flex items-center gap-3">
-          <button id="topBellBtn" onclick="openNotificationsModal()" class="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none cursor-pointer" aria-label="Notificaciones">
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-            </svg>
-            <span id="topNotifBadge" class="hidden absolute -top-1 -right-1 bg-[#E87A72] text-[10px] text-white font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              0
-            </span>
-          </button>
-          <div 
-            onclick="openProfileScreen()" 
-            class="w-8 h-8 rounded-full overflow-hidden border border-white/20 cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 flex items-center justify-center p-0"
-            aria-label="Perfil de usuario"
-          >
-            <img id="topHudUserAvatar" src="./assets/images/avatar_chris.png" alt="Chris G." class="w-full h-full object-cover">
-          </div>
+        <!-- ESPACIO RAZONABLE ENTRE LOGO Y LA PASTILLA -->
+        <div class="h-3"></div>
+
+        <!-- NIVEL 2: PASTILLA NEGRA CON SALUDO Y EVENTOS -->
+        <div class="w-full bg-black rounded-none px-5 py-2.5 flex flex-col justify-center">
+          <h1 id="homeGreetingTitle" class="font-display text-[22px] text-white tracking-wide uppercase leading-tight">
+            HEY, CHRIS G.
+          </h1>
+          <span class="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase mt-0.5">
+            TIENES EVENTOS CERCA
+          </span>
         </div>
       </header>
 
