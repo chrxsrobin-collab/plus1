@@ -2092,7 +2092,7 @@
                 <span class="text-sm">↗</span>
               </button>
 
-              <button onclick="document.getElementById('profileCoverFileInput').click()" aria-label="Cambiar portada" class="h-9 px-3 rounded-full bg-black/70 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 flex items-center space-x-1.5 transition-transform active:scale-95 cursor-pointer shadow-lg text-xs font-display font-bold tracking-wider">
+              <button id="profileProEditCoverBtn" onclick="document.getElementById('profileCoverFileInput').click()" aria-label="Cambiar portada" class="h-9 px-3 rounded-full bg-black/70 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 flex items-center space-x-1.5 transition-transform active:scale-95 cursor-pointer shadow-lg text-xs font-display font-bold tracking-wider">
                 <span>📷</span>
                 <span class="hidden sm:inline">EDITAR PORTADA</span>
               </button>
@@ -2109,7 +2109,7 @@
               <div onclick="document.getElementById('profileProAvatarFileInput').click()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#0B0C0E] bg-[#16171B] overflow-hidden shadow-2xl p-[3px] cursor-pointer active:scale-95 transition-transform" style="box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 0 2px #E87A72;">
                 <img id="profileProAvatarDisplay" src="./assets/images/avatar_chris.png" alt="Avatar" class="w-full h-full object-cover rounded-full" />
               </div>
-              <button onclick="document.getElementById('profileProAvatarFileInput').click()" aria-label="Cambiar avatar" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#E87A72] border-2 border-[#0B0C0E] flex items-center justify-center text-black shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all">
+              <button id="profileProEditAvatarBtn" onclick="document.getElementById('profileProAvatarFileInput').click()" aria-label="Cambiar avatar" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#E87A72] border-2 border-[#0B0C0E] flex items-center justify-center text-black shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all">
                 <span class="text-xs">📷</span>
               </button>
               <input type="file" id="profileProAvatarFileInput" accept="image/*" class="hidden" onchange="handleProfileAvatarUpload(this)" />
@@ -2121,15 +2121,15 @@
             </h1>
 
             <!-- C. SELECTOR / BADGE DE RAMO COMERCIAL -->
-            <button onclick="openCategoryPickerModal()" class="px-3.5 py-1 bg-[#26282E] hover:bg-[#32353D] text-zinc-300 hover:text-white font-sans text-xs uppercase tracking-wider rounded-full mt-1.5 flex items-center space-x-1.5 transition-colors cursor-pointer border border-zinc-700/50" title="Cambiar ramo comercial">
+            <button id="profileProCategoryBadgeBtn" onclick="openCategoryPickerModal()" class="px-3.5 py-1 bg-[#26282E] hover:bg-[#32353D] text-zinc-300 hover:text-white font-sans text-xs uppercase tracking-wider rounded-full mt-1.5 flex items-center space-x-1.5 transition-colors cursor-pointer border border-zinc-700/50" title="Cambiar ramo comercial">
               <span id="profileProCategoryBadgeIcon">🪩</span>
               <span id="profileProCategoryBadgeLabel" class="font-semibold">Club</span>
-              <span class="text-[10px] text-zinc-400">▾</span>
+              <span id="profileProCategoryBadgeArrow" class="text-[10px] text-zinc-400">▾</span>
             </button>
           </div>
 
           <!-- D. BOTÓN DE ACCIÓN DINÁMICO (SALMÓN #E87A72) -->
-          <div class="w-full max-w-xs mx-auto mt-4 px-2">
+          <div id="profileProActionBtnContainer" class="w-full max-w-xs mx-auto mt-4 px-2">
             <button onclick="openLiveDashboardModal()" class="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 flex items-center justify-center space-x-2 cursor-pointer">
               <span>🎪</span>
               <span>MIS EVENTOS CREADOS</span>
@@ -2184,7 +2184,7 @@
           </div>
 
           <!-- BOTÓN DIRECTO AL DASHBOARD ANALÍTICO -->
-          <div class="w-full mt-4">
+          <div id="profileProDashboardCard" class="w-full mt-4">
             <button onclick="openLiveDashboardModal()" class="w-full p-4 rounded-2xl bg-gradient-to-r from-[#16171B] via-[#1E2026] to-[#16171B] border border-[#FAB205]/40 hover:border-[#FAB205] flex items-center justify-between shadow-xl transition-all active:scale-98 cursor-pointer">
               <div class="flex items-center space-x-3 text-left">
                 <span class="text-2xl">📊</span>
@@ -2202,7 +2202,7 @@
           </div>
 
           <!-- SECCIÓN CUENTA -->
-          <div class="w-full mt-6 mb-6">
+          <div id="profileProAccountSection" class="w-full mt-6 mb-6">
             <h3 class="font-display text-white text-lg font-black tracking-wider uppercase mb-3 text-left">
               CUENTA
             </h3>
@@ -2263,7 +2263,7 @@
           <button onclick="closeProfileScreen()" aria-label="Regresar" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none">
             <span class="text-xl font-bold leading-none">←</span>
           </button>
-          <span class="font-display text-neutral-400 text-sm font-bold tracking-widest uppercase">MI PERFIL</span>
+          <span id="profileFreeTopTitle" class="font-display text-neutral-400 text-sm font-bold tracking-widest uppercase">MI PERFIL</span>
           <button onclick="showToast('Ajustes de cuenta')" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none">
             <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" />
@@ -2280,7 +2280,7 @@
                 <div class="w-5 h-5 border-2 border-[#E87A72] border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
-            <button type="button" onclick="document.getElementById('profileAvatarFileInput').click()" aria-label="Cambiar foto de perfil" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#16171B] hover:bg-[#22252C] border border-white/20 hover:border-[#E87A72] flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer z-10">
+            <button id="profileFreeAvatarEditBtn" type="button" onclick="document.getElementById('profileAvatarFileInput').click()" aria-label="Cambiar foto de perfil" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#16171B] hover:bg-[#22252C] border border-white/20 hover:border-[#E87A72] flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer z-10">
               <svg class="w-3.5 h-3.5 text-[#E87A72] stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
@@ -2292,7 +2292,7 @@
             <h2 id="profileUserNameDisplay" class="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none">
               CHRIS G.
             </h2>
-            <button onclick="promptEditUserName()" aria-label="Editar nombre" class="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] flex items-center justify-center text-[#9CA3AF] hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer">
+            <button id="profileFreeNameEditBtn" onclick="promptEditUserName()" aria-label="Editar nombre" class="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] flex items-center justify-center text-[#9CA3AF] hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer">
               <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
@@ -2327,7 +2327,7 @@
         </div>
 
         <!-- 4. SECCIÓN CUENTA -->
-        <div class="w-full mt-6">
+        <div id="profileFreeAccountSection" class="w-full mt-6">
           <h3 class="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
             CUENTA
           </h3>
@@ -2901,6 +2901,9 @@
                   }
                   if (data && Array.isArray(data.galleryPhotos)) {
                     currentGalleryPhotos = data.galleryPhotos;
+                  }
+                  if (data && Array.isArray(data.following)) {
+                    currentUserFollowingHtml = data.following;
                   }
                   updatePartnerBadgeDom(Boolean(data && data.isPartner));
                   if (data && data.onboardingCompleted === true) {
@@ -3685,17 +3688,23 @@
       if (hostAuthorEl) {
         const hostName = (event.hostName || 'ANFITRIÓN').toUpperCase();
         const hostPhoto = event.hostPhotoUrl;
+        const hostUid = event.hostUserId || '';
         let avatarMarkup = '';
         if (hostPhoto) {
-          avatarMarkup = `<img src="${hostPhoto}" alt="${hostName}" class="w-[18px] h-[18px] rounded-full object-cover border border-white/20 shrink-0" />`;
+          avatarMarkup = `<img src="${hostPhoto}" alt="${hostName}" class="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0" />`;
         } else {
-          avatarMarkup = `<div class="w-[18px] h-[18px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">${hostName.slice(0, 1)}</div>`;
+          const initial = hostName ? hostName.charAt(0).toUpperCase() : '+';
+          avatarMarkup = `<div class="w-5 h-5 rounded-full bg-[#26282E] flex items-center justify-center text-[10px] text-[#E87A72] font-bold shrink-0">${initial}</div>`;
         }
+        hostAuthorEl.className = "inline-flex items-center gap-2 cursor-pointer group py-1 active:opacity-75 transition-opacity mt-2";
+        hostAuthorEl.title = hostUid ? "Ver perfil del anfitrión" : "";
+        hostAuthorEl.onclick = () => handleOpenHostProfileHtml(hostUid, hostName, hostPhoto);
         hostAuthorEl.innerHTML = `
           ${avatarMarkup}
-          <span class="font-display text-xs sm:text-sm font-bold tracking-wider text-[#9CA3AF] uppercase flex items-center gap-1">
-            BY <span class="text-[#E87A72]">${hostName}</span>
+          <span class="font-sans text-xs tracking-wider text-[#9CA3AF] group-hover:text-white uppercase flex items-center gap-1">
+            BY <strong class="text-white font-semibold underline decoration-white/30 underline-offset-2">${hostName}</strong>
           </span>
+          <span class="text-[10px] text-zinc-500 group-hover:text-zinc-300">›</span>
         `;
       }
 
@@ -6054,21 +6063,406 @@
     }
 
     // Funciones para Pantalla Perfil (ProfileScreen)
-    function openProfileScreen() {
+    function handleOpenHostProfileHtml(hostUserId, hostName, hostPhoto) {
+      if (typeof closeEventDetail === 'function') {
+        closeEventDetail();
+      }
+      openProfileScreen(hostUserId, hostName, hostPhoto);
+    }
+
+    async function toggleFollowHostHtml(targetHostUid) {
+      if (!fbCurrentUser) {
+        showToast('Inicia sesión para seguir anfitriones');
+        return;
+      }
+      if (!targetHostUid) return;
+
+      const isFollowing = currentUserFollowingHtml.includes(targetHostUid);
+
+      if (isFollowing) {
+        currentUserFollowingHtml = currentUserFollowingHtml.filter(id => id !== targetHostUid);
+        showToast('Dejaste de seguir a este anfitrión');
+      } else {
+        currentUserFollowingHtml.push(targetHostUid);
+        showToast('✓ Siguiendo a este anfitrión');
+      }
+
+      updateFollowButtonDom(targetHostUid);
+
+      if (fbDb) {
+        try {
+          const userRef = fbDb.collection('users').doc(fbCurrentUser.uid);
+          if (isFollowing) {
+            await userRef.update({
+              following: firebase.firestore.FieldValue.arrayRemove(targetHostUid)
+            });
+            await fbDb.collection('users').doc(targetHostUid).update({
+              followersCount: firebase.firestore.FieldValue.increment(-1)
+            }).catch(() => {});
+          } else {
+            await userRef.update({
+              following: firebase.firestore.FieldValue.arrayUnion(targetHostUid)
+            });
+            await fbDb.collection('users').doc(targetHostUid).update({
+              followersCount: firebase.firestore.FieldValue.increment(1)
+            }).catch(() => {});
+          }
+        } catch (err) {
+          console.warn('Error actualizando follow en Firestore:', err);
+        }
+      }
+    }
+
+    function updateFollowButtonDom(targetHostUid) {
+      const isFollowing = currentUserFollowingHtml.includes(targetHostUid);
+
+      // Botón en PRO view
+      const proActionContainer = document.getElementById('profileProActionBtnContainer');
+      if (proActionContainer && currentViewingHostUid === targetHostUid) {
+        proActionContainer.innerHTML = `
+          <button 
+            type="button" 
+            onclick="toggleFollowHostHtml('${targetHostUid}')"
+            class="w-full h-12 rounded-2xl ${isFollowing ? 'bg-transparent border border-[#26282E] text-zinc-300 hover:text-white' : 'bg-[#E87A72] hover:bg-[#d66f67] text-black'} font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-all active:scale-95 flex items-center justify-center space-x-2 cursor-pointer shadow-lg"
+          >
+            ${isFollowing ? '<span class="text-[#E87A72]">✓</span><span>SIGUIENDO</span>' : '<span>+</span><span>SEGUIR</span>'}
+          </button>
+        `;
+      }
+
+      // Botón en FREE view
+      const freeBadgeContainer = document.getElementById('profilePartnerBadgeContainer');
+      if (freeBadgeContainer && currentViewingHostUid === targetHostUid) {
+        freeBadgeContainer.innerHTML = `
+          <button 
+            type="button" 
+            onclick="toggleFollowHostHtml('${targetHostUid}')"
+            class="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full ${isFollowing ? 'bg-transparent border border-[#26282E] text-zinc-300' : 'bg-[#E87A72] hover:bg-[#d66f67] text-black'} font-display font-black text-xs uppercase tracking-wider shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <span>${isFollowing ? '✓ SIGUIENDO' : '+ SEGUIR'}</span>
+          </button>
+        `;
+      }
+    }
+
+    async function renderPublicHostProHtml(targetUserId, hostData, fallbackHostName, fallbackHostPhoto) {
+      // 1. Portada
+      const coverImg = document.getElementById('profileProCoverImg');
+      const coverPh = document.getElementById('profileProCoverPlaceholder');
+      const coverUrl = hostData && hostData.coverPhotoUrl;
+      if (coverUrl) {
+        if (coverImg) {
+          coverImg.src = coverUrl;
+          coverImg.classList.remove('hidden');
+        }
+        if (coverPh) coverPh.classList.add('hidden');
+      } else {
+        if (coverImg) coverImg.classList.add('hidden');
+        if (coverPh) coverPh.classList.remove('hidden');
+      }
+
+      // 2. Avatar y Nombre
+      const hostAvatar = (hostData && hostData.photoUrl) || fallbackHostPhoto || './assets/images/avatar_chris.png';
+      const proAvatar = document.getElementById('profileProAvatarDisplay');
+      if (proAvatar) proAvatar.src = hostAvatar;
+
+      const hostName = ((hostData && hostData.name) || fallbackHostName || 'ANFITRIÓN').toUpperCase();
+      const proName = document.getElementById('profileProNameDisplay');
+      if (proName) proName.innerText = hostName;
+
+      // 3. Categoría Comercial
+      const hostCatId = (hostData && hostData.businessCategory) || 'club';
+      const cat = BUSINESS_CATEGORIES_HTML.find(c => c.id === hostCatId) || BUSINESS_CATEGORIES_HTML[0];
+      const catIcon = document.getElementById('profileProCategoryBadgeIcon');
+      const catLabel = document.getElementById('profileProCategoryBadgeLabel');
+      if (catIcon) catIcon.innerText = cat.icon;
+      if (catLabel) catLabel.innerText = cat.label;
+
+      // 4. Botón de Acción (+ SEGUIR / SIGUIENDO)
+      updateFollowButtonDom(targetUserId);
+
+      // 5. Galería 3x2 en modo solo lectura (sin eliminar ni añadir)
+      const galleryGrid = document.getElementById('profileGalleryGrid');
+      if (galleryGrid) {
+        let slotsHtml = '';
+        const photos = (hostData && Array.isArray(hostData.galleryPhotos)) ? hostData.galleryPhotos : [];
+
+        photos.forEach((photoUrl, idx) => {
+          slotsHtml += `
+            <div class="aspect-square rounded-2xl overflow-hidden relative border border-[#26282E] bg-[#16171B] shadow-md">
+              <img src="${photoUrl}" alt="Foto Galería ${idx + 1}" class="w-full h-full object-cover select-none" />
+            </div>
+          `;
+        });
+
+        const remaining = 6 - photos.length;
+        for (let i = 0; i < remaining; i++) {
+          slotsHtml += `
+            <div class="aspect-square rounded-2xl border border-[#26282E]/40 bg-[#16171B]/20 flex items-center justify-center opacity-40">
+              <span class="text-sm text-neutral-600">📸</span>
+            </div>
+          `;
+        }
+
+        galleryGrid.innerHTML = slotsHtml;
+      }
+
+      // 6. Eventos creados por este anfitrión
+      let hostEvents = (eventsData || []).filter(e => e.hostUserId === targetUserId);
+      if (fbDb && targetUserId) {
+        try {
+          const qSnap = await fbDb.collection('events').where('hostUserId', '==', targetUserId).get();
+          const fetched = [];
+          qSnap.forEach(d => fetched.push({ id: d.id, ...d.data() }));
+          if (fetched.length > 0) {
+            hostEvents = fetched;
+          }
+        } catch (e) {
+          console.warn('Error fetching host events:', e);
+        }
+      }
+
+      const eventsContainer = document.getElementById('profileProEventsContainer');
+      if (eventsContainer) {
+        if (hostEvents.length > 0) {
+          eventsContainer.innerHTML = hostEvents.map(evt => `
+            <div class="w-full p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] flex items-center justify-between shadow-md">
+              <div class="flex items-center space-x-3 truncate pr-2">
+                <span class="text-2xl shrink-0">🎪</span>
+                <div class="truncate text-left">
+                  <h4 class="font-display text-white text-base sm:text-lg font-black tracking-wide uppercase truncate leading-tight">
+                    ${evt.title || 'EVENTO SIN TÍTULO'}
+                  </h4>
+                  <span class="font-sans text-xs text-[#9CA3AF] font-medium block mt-0.5">
+                    👥 ${evt.guestsCount || evt.confirmedCount || 0} ASISTENTES
+                  </span>
+                </div>
+              </div>
+              <button
+                onclick="closeProfileScreen(); openEventDetail('${evt.id}')"
+                class="px-3.5 py-1.5 rounded-xl bg-[#26282E] hover:bg-[#E87A72] text-white hover:text-black font-display text-xs font-bold tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer border border-neutral-700/60"
+              >
+                VER PASE
+              </button>
+            </div>
+          `).join('');
+        } else {
+          eventsContainer.innerHTML = `
+            <div class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center shadow-sm">
+              <span class="text-xl mb-1.5">🎪</span>
+              <p class="font-sans text-xs text-neutral-400 font-medium tracking-wide uppercase">
+                ESTE ANFITRIÓN NO TIENE EVENTOS ACTIVOS
+              </p>
+            </div>
+          `;
+        }
+      }
+
+      // 7. Métricas del Anfitrión
+      const proStreak = document.getElementById('profileProStreakCount');
+      if (proStreak) proStreak.innerText = (hostData && hostData.streak) || '1';
+      const proCoins = document.getElementById('profileProPointsCount');
+      if (proCoins) proCoins.innerText = (hostData && hostData.points) || '0';
+      const proAttended = document.getElementById('profileProAttendedCount');
+      if (proAttended) proAttended.innerText = hostEvents.length || '0';
+    }
+
+    async function renderPublicHostFreeHtml(targetUserId, hostData, fallbackHostName, fallbackHostPhoto) {
+      // 1. Avatar y Nombre
+      const hostAvatar = (hostData && hostData.photoUrl) || fallbackHostPhoto || './assets/images/avatar_chris.png';
+      const avatarEl = document.getElementById('profileUserAvatarDisplay');
+      if (avatarEl) avatarEl.src = hostAvatar;
+
+      const hostName = ((hostData && hostData.name) || fallbackHostName || 'ANFITRIÓN').toUpperCase();
+      const nameEl = document.getElementById('profileUserNameDisplay');
+      if (nameEl) nameEl.innerText = hostName;
+
+      // 2. Botón de Seguir en la insignia
+      updateFollowButtonDom(targetUserId);
+
+      // 3. Eventos creados por este anfitrión
+      let hostEvents = (eventsData || []).filter(e => e.hostUserId === targetUserId);
+      if (fbDb && targetUserId) {
+        try {
+          const qSnap = await fbDb.collection('events').where('hostUserId', '==', targetUserId).get();
+          const fetched = [];
+          qSnap.forEach(d => fetched.push({ id: d.id, ...d.data() }));
+          if (fetched.length > 0) {
+            hostEvents = fetched;
+          }
+        } catch (e) {
+          console.warn('Error fetching host events:', e);
+        }
+      }
+
+      const container = document.getElementById('profileFreeEventsContainer');
+      if (container) {
+        container.classList.remove('hidden');
+        if (hostEvents.length > 0) {
+          container.innerHTML = `
+            <div class="space-y-2">
+              <div class="text-left mb-1">
+                <span class="font-display text-xs text-neutral-400 font-bold uppercase tracking-wider">EVENTOS DEL ANFITRIÓN</span>
+              </div>
+              ${hostEvents.map(evt => `
+                <div class="w-full p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] flex items-center justify-between shadow-md">
+                  <div class="flex items-center space-x-3 truncate pr-2">
+                    <span class="text-2xl shrink-0">🎪</span>
+                    <div class="truncate text-left">
+                      <h4 class="font-display text-white text-base sm:text-lg font-black tracking-wide uppercase truncate leading-tight">
+                        ${evt.title || 'EVENTO SIN TÍTULO'}
+                      </h4>
+                      <span class="font-sans text-xs text-[#9CA3AF] font-medium block mt-0.5">
+                        👥 ${evt.guestsCount || evt.confirmedCount || 0} CONFIRMADOS
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onclick="closeProfileScreen(); openEventDetail('${evt.id}')"
+                    class="px-3.5 py-1.5 rounded-xl bg-[#26282E] hover:bg-[#E87A72] text-white hover:text-black font-display text-xs font-bold tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer border border-neutral-700/60"
+                  >
+                    VER PASE
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center shadow-sm">
+              <span class="text-xl mb-1.5">🎉</span>
+              <p class="font-sans text-xs text-neutral-400 font-medium tracking-wide uppercase">
+                EL ANFITRIÓN NO TIENE EVENTOS ACTIVOS
+              </p>
+            </div>
+          `;
+        }
+      }
+
+      // 4. Métricas del Anfitrión
+      const streakEl = document.getElementById('profileStreakCount');
+      if (streakEl) streakEl.innerText = (hostData && hostData.streak) || '1';
+      const ptsEl = document.getElementById('profilePointsCount');
+      if (ptsEl) ptsEl.innerText = (hostData && hostData.points) || '0';
+      const attEl = document.getElementById('profileAttendedCount');
+      if (attEl) attEl.innerText = hostEvents.length || '0';
+    }
+
+    async function openProfileScreen(targetUserId, fallbackHostName, fallbackHostPhoto) {
       const screen = document.getElementById('profileScreenView');
       if (screen) screen.classList.remove('hidden');
-      const proView = document.getElementById('profileProCreatorView');
-      const freeView = document.getElementById('profileFreeView');
 
-      if (currentIsPartner) {
-        if (proView) proView.classList.remove('hidden');
-        if (freeView) freeView.classList.add('hidden');
-        renderProfileProCreatorHtml();
+      const isOwner = !targetUserId || (fbCurrentUser && targetUserId === fbCurrentUser.uid);
+
+      if (!isOwner) {
+        currentViewingHostUid = targetUserId;
+
+        // Ocultar controles de edición del propietario en vista PRO y FREE
+        const proEditCoverBtn = document.getElementById('profileProEditCoverBtn');
+        if (proEditCoverBtn) proEditCoverBtn.classList.add('hidden');
+        const proEditAvatarBtn = document.getElementById('profileProEditAvatarBtn');
+        if (proEditAvatarBtn) proEditAvatarBtn.classList.add('hidden');
+        const proDashboardCard = document.getElementById('profileProDashboardCard');
+        if (proDashboardCard) proDashboardCard.classList.add('hidden');
+        const proAccountSection = document.getElementById('profileProAccountSection');
+        if (proAccountSection) proAccountSection.classList.add('hidden');
+        const proCategoryBadgeArrow = document.getElementById('profileProCategoryBadgeArrow');
+        if (proCategoryBadgeArrow) proCategoryBadgeArrow.classList.add('hidden');
+        const proCategoryBadgeBtn = document.getElementById('profileProCategoryBadgeBtn');
+        if (proCategoryBadgeBtn) proCategoryBadgeBtn.onclick = null;
+
+        const freeAvatarEditBtn = document.getElementById('profileFreeAvatarEditBtn');
+        if (freeAvatarEditBtn) freeAvatarEditBtn.classList.add('hidden');
+        const freeNameEditBtn = document.getElementById('profileFreeNameEditBtn');
+        if (freeNameEditBtn) freeNameEditBtn.classList.add('hidden');
+        const freeAccountSection = document.getElementById('profileFreeAccountSection');
+        if (freeAccountSection) freeAccountSection.classList.add('hidden');
+        const freeTopTitle = document.getElementById('profileFreeTopTitle');
+        if (freeTopTitle) freeTopTitle.innerText = 'PERFIL DE ANFITRIÓN';
+
+        // Consultar el perfil del anfitrión en Firestore (users/{targetUserId})
+        let hostData = null;
+        if (fbDb && targetUserId) {
+          try {
+            const docSnap = await fbDb.collection('users').doc(targetUserId).get();
+            if (docSnap.exists) {
+              hostData = docSnap.data();
+            }
+          } catch (err) {
+            console.warn('Error al cargar perfil del anfitrión:', err);
+          }
+        }
+
+        const isHostPro = hostData ? Boolean(hostData.isPartner) : false;
+
+        const proView = document.getElementById('profileProCreatorView');
+        const freeView = document.getElementById('profileFreeView');
+
+        if (isHostPro) {
+          if (proView) proView.classList.remove('hidden');
+          if (freeView) freeView.classList.add('hidden');
+          await renderPublicHostProHtml(targetUserId, hostData, fallbackHostName, fallbackHostPhoto);
+        } else {
+          if (proView) proView.classList.add('hidden');
+          if (freeView) freeView.classList.remove('hidden');
+          await renderPublicHostFreeHtml(targetUserId, hostData, fallbackHostName, fallbackHostPhoto);
+        }
       } else {
-        if (proView) proView.classList.add('hidden');
-        if (freeView) {
-          freeView.classList.remove('hidden');
-          renderProfileFreeEventsHtml();
+        // MODO PROPIETARIO (LOGGED-IN OWNER)
+        currentViewingHostUid = null;
+
+        // Restaurar controles del propietario
+        const proEditCoverBtn = document.getElementById('profileProEditCoverBtn');
+        if (proEditCoverBtn) proEditCoverBtn.classList.remove('hidden');
+        const proEditAvatarBtn = document.getElementById('profileProEditAvatarBtn');
+        if (proEditAvatarBtn) proEditAvatarBtn.classList.remove('hidden');
+        const proDashboardCard = document.getElementById('profileProDashboardCard');
+        if (proDashboardCard) proDashboardCard.classList.remove('hidden');
+        const proAccountSection = document.getElementById('profileProAccountSection');
+        if (proAccountSection) proAccountSection.classList.remove('hidden');
+        const proCategoryBadgeArrow = document.getElementById('profileProCategoryBadgeArrow');
+        if (proCategoryBadgeArrow) proCategoryBadgeArrow.classList.remove('hidden');
+        const proCategoryBadgeBtn = document.getElementById('profileProCategoryBadgeBtn');
+        if (proCategoryBadgeBtn) proCategoryBadgeBtn.onclick = openCategoryPickerModal;
+
+        const proActionContainer = document.getElementById('profileProActionBtnContainer');
+        if (proActionContainer) {
+          proActionContainer.innerHTML = `
+            <button onclick="openLiveDashboardModal()" class="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 flex items-center justify-center space-x-2 cursor-pointer">
+              <span>🎪</span>
+              <span>MIS EVENTOS CREADOS</span>
+            </button>
+          `;
+        }
+
+        const freeAvatarEditBtn = document.getElementById('profileFreeAvatarEditBtn');
+        if (freeAvatarEditBtn) freeAvatarEditBtn.classList.remove('hidden');
+        const freeNameEditBtn = document.getElementById('profileFreeNameEditBtn');
+        if (freeNameEditBtn) freeNameEditBtn.classList.remove('hidden');
+        const freeAccountSection = document.getElementById('profileFreeAccountSection');
+        if (freeAccountSection) freeAccountSection.classList.remove('hidden');
+        const freeTopTitle = document.getElementById('profileFreeTopTitle');
+        if (freeTopTitle) freeTopTitle.innerText = 'MI PERFIL';
+
+        // Restaurar nombre y avatar del usuario en el DOM
+        const currentName = (fbCurrentUser && fbCurrentUser.displayName) || 'CHRIS G.';
+        updateUserNameDom(currentName);
+        const currentAvatar = (fbCurrentUser && fbCurrentUser.photoURL) || './assets/images/avatar_chris.png';
+        updateUserAvatarDom(currentAvatar);
+
+        const proView = document.getElementById('profileProCreatorView');
+        const freeView = document.getElementById('profileFreeView');
+
+        if (currentIsPartner) {
+          if (proView) proView.classList.remove('hidden');
+          if (freeView) freeView.classList.add('hidden');
+          renderProfileProCreatorHtml();
+        } else {
+          if (proView) proView.classList.add('hidden');
+          if (freeView) {
+            freeView.classList.remove('hidden');
+            renderProfileFreeEventsHtml();
+          }
         }
       }
     }
@@ -6959,6 +7353,8 @@
     let currentBusinessCategory = 'club';
     let currentCoverPhotoUrl = '';
     let currentGalleryPhotos = [];
+    let currentUserFollowingHtml = [];
+    let currentViewingHostUid = null;
 
     function updatePartnerBadgeDom(isPartner) {
       currentIsPartner = Boolean(isPartner);
