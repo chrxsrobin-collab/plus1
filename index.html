@@ -193,17 +193,17 @@
           </div>
         </div>
 
-        <!-- ESPACIO RAZONABLE ENTRE LOGO Y LA PASTILLA -->
-        <div class="h-3"></div>
-
-        <!-- NIVEL 2: PASTILLA NEGRA CON SALUDO Y EVENTOS -->
-        <div class="w-full bg-black rounded-none px-5 py-2.5 flex flex-col justify-center">
-          <h1 id="homeGreetingTitle" class="font-display text-[22px] text-white tracking-wide uppercase leading-tight">
-            HEY, CHRIS G.
-          </h1>
-          <span class="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase mt-0.5">
-            TIENES EVENTOS CERCA
-          </span>
+        <!-- NIVEL 2: PASTILLA NEGRA CON SALUDO Y EVENTOS (ANCHO DINÁMICO) -->
+        <div class="w-full flex justify-start my-3">
+          <!-- Pastilla dinámica que solo cubre el ancho del texto -->
+          <div class="bg-black rounded-none pl-5 pr-5 py-2.5 w-max max-w-[85%] flex flex-col justify-center shadow-none border-0">
+            <h1 id="homeGreetingTitle" class="font-display text-[22px] text-white tracking-wide uppercase leading-tight whitespace-nowrap">
+              HEY, CHRIS G.
+            </h1>
+            <span class="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase mt-0.5 whitespace-nowrap">
+              TIENES EVENTOS CERCA
+            </span>
+          </div>
         </div>
       </header>
 
