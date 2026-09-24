@@ -3239,7 +3239,7 @@
       
       cards.forEach((card, idx) => {
         const rawOffset = idx - currentCardIndex;
-        const effectiveOffset = rawOffset - (dragOffset / DRAG_STEP_PX);
+        const effectiveOffset = rawOffset + (dragOffset / DRAG_STEP_PX);
         const physics = getCardPhysicsHtml(effectiveOffset);
 
         card.style.transform = `translateX(${physics.translateX}px) translateZ(${physics.translateZ}px) rotateY(${physics.rotateY}deg) scale(${physics.scale})`;
@@ -3710,10 +3710,10 @@
           const deltaTime = Math.max(1, Date.now() - startTime);
           const velocityX = (diffX / deltaTime) * 1000; // px/s
 
-          // Detección de intención por velocidad (>300px/s) o distancia (>50px)
-          if (diffX < -50 || velocityX < -300) {
+          // Detección de intención por velocidad (>250px/s) o distancia (>50px)
+          if (diffX < -50 || velocityX < -250) {
             setFullCard(currentCardIndex + 1, 0, false);
-          } else if (diffX > 50 || velocityX > 300) {
+          } else if (diffX > 50 || velocityX > 250) {
             setFullCard(currentCardIndex - 1, 0, false);
           } else {
             // Rebote elástico al centro
@@ -3764,9 +3764,9 @@
           const deltaTime = Math.max(1, Date.now() - startTime);
           const velocityX = (diffX / deltaTime) * 1000;
 
-          if (diffX < -50 || velocityX < -300) {
+          if (diffX < -50 || velocityX < -250) {
             setFullCard(currentCardIndex + 1, 0, false);
-          } else if (diffX > 50 || velocityX > 300) {
+          } else if (diffX > 50 || velocityX > 250) {
             setFullCard(currentCardIndex - 1, 0, false);
           } else {
             setFullCard(currentCardIndex, 0, false);
@@ -3812,91 +3812,7 @@
           tIsDragging = false;
         });
       }
-
-      // Controladores para Auto-Hiding / Collapsible Floating Tab Bar (#floatingBottomNav)
-      window.addEventListener('click', (e) => {
-        if (e.target.closest('#floatingBottomNav') || e.target.closest('#eventDetailModal') || e.target.closest('#searchEventsModal') || e.target.closest('#notificationsModal') || e.target.closest('#doorModal')) {
-          if (isFloatingNavVisible) resetFloatingNavTimer();
-          return;
-        }
-        showFloatingNav();
-      });
-
-      const scrollContainer = document.getElementById('mainHomeScrollContainer');
-      if (scrollContainer) {
-        scrollContainer.addEventListener('scroll', () => {
-          const currentY = scrollContainer.scrollTop;
-          const diff = currentY - navLastScrollY;
-
-          if (diff > 4) {
-            // Scroll hacia abajo (recorrido de contenido) -> emerge barra
-            showFloatingNav();
-          } else if (diff < -15) {
-            // Scroll prolongado en dirección opuesta -> se oculta
-            hideFloatingNav();
-          } else if (isFloatingNavVisible) {
-            resetFloatingNavTimer();
-          }
-          navLastScrollY = currentY;
-        }, { passive: true });
-
-        let tStartY = 0;
-        scrollContainer.addEventListener('touchstart', (e) => {
-          tStartY = e.touches[0].clientY;
-        }, { passive: true });
-
-        scrollContainer.addEventListener('touchmove', (e) => {
-          const diff = tStartY - e.touches[0].clientY; // positivo = arrastre hacia arriba
-          if (diff > 8) {
-            showFloatingNav();
-          } else if (diff < -18) {
-            hideFloatingNav();
-          } else if (isFloatingNavVisible) {
-            resetFloatingNavTimer();
-          }
-        }, { passive: true });
-      }
-
-      window.addEventListener('wheel', (e) => {
-        if (e.deltaY > 4) {
-          showFloatingNav();
-        } else if (e.deltaY < -15) {
-          hideFloatingNav();
-        } else if (isFloatingNavVisible) {
-          resetFloatingNavTimer();
-        }
-      }, { passive: true });
     });
-
-    // Lógica para Auto-Hiding / Collapsible Tab Bar Flotante
-    let navHideTimer = null;
-    let navLastScrollY = 0;
-    let isFloatingNavVisible = false;
-
-    function resetFloatingNavTimer() {
-      if (navHideTimer) clearTimeout(navHideTimer);
-      navHideTimer = setTimeout(() => {
-        hideFloatingNav();
-      }, 4000);
-    }
-
-    function showFloatingNav() {
-      const nav = document.getElementById('floatingBottomNav');
-      if (!nav) return;
-      isFloatingNavVisible = true;
-      nav.classList.remove('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
-      nav.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
-      resetFloatingNavTimer();
-    }
-
-    function hideFloatingNav() {
-      const nav = document.getElementById('floatingBottomNav');
-      if (!nav) return;
-      isFloatingNavVisible = false;
-      nav.classList.add('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
-      nav.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
-      if (navHideTimer) clearTimeout(navHideTimer);
-    }
 
     function showToast(msg) {
       const toast = document.createElement("div");
