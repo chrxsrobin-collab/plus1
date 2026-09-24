@@ -91,7 +91,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({
     } else if (activeFilter === 'Conciertos / Indie') {
       const match =
         evt.theme === 'indie' ||
-        /indie|concierto|rock|banda/i.test(`${evt.title} ${evt.subtitle} ${evt.description}`);
+        /indie|concierto|rock|banda|rock_indie|live rock/i.test(`${evt.title} ${evt.subtitle} ${evt.description}`);
       if (!match) return false;
     } else if (activeFilter === 'Club / Reggaeton') {
       const match =

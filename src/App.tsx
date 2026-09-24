@@ -228,9 +228,13 @@ export const App: React.FC = () => {
       );
     }
 
-    if (currentRoute === '/profile') {
+    if (currentRoute === '/profile' || currentRoute.startsWith('/profile/')) {
+      const profileUserId = currentRoute.startsWith('/profile/')
+        ? currentRoute.replace('/profile/', '').split('?')[0].trim()
+        : undefined;
       return (
         <ProfileScreen
+          userId={profileUserId}
           user={userProfile}
           onUpdateName={handleUpdateName}
           onUpdateAvatar={handleUpdateAvatar}

@@ -48,7 +48,7 @@ export const TopHud: React.FC<TopHudProps> = ({
     >
       {/* Logo +1 en color Salmón / Coral #E87A72 */}
       <div className="flex items-center cursor-pointer group">
-        <span className="font-display text-[#E87A72] text-[40px] font-black tracking-tight leading-none hover:opacity-90 transition-opacity">
+        <span className="font-display text-[#E87A72] text-[26px] sm:text-[28px] font-black tracking-tight leading-none hover:opacity-90 transition-opacity">
           +1
         </span>
       </div>

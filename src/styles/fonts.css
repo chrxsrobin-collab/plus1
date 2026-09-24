@@ -50,3 +50,10 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   display: none;
   -webkit-appearance: none;
 }
+
+/* Prevención de recarga brusca del navegador durante Pull-to-Refresh */
+html,
+body {
+  overscroll-behavior-y: contain;
+}
+

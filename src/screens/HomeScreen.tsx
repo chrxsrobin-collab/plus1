@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TopHud } from '../components/TopHud';
 import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
 import { ActionFooter } from '../components/ActionFooter';
 import { BottomNav } from '../components/BottomNav';
@@ -9,6 +8,7 @@ import { SelectEventToScanSheet, HostScanEventItem } from '../components/SelectE
 import { EventDetailModal } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
 import { NotificationsModal } from '../components/NotificationsModal';
+import { PullToRefresh } from '../components/PullToRefresh';
 import { db, auth } from '../lib/firebase';
 import {
   collection,
@@ -62,6 +62,12 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   vipCutoffTime: data.vipCutoffTime || null,
 });
 
+const BellIcon: React.FC<{ className?: string }> = ({ className = "w-5 h-5" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" />
+  </svg>
+);
+
 export interface HomeScreenProps {
   onNavigate?: (route: string) => void;
   user?: UserProfile;
@@ -108,14 +114,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   }, []);
 
   // Estado reactivo del perfil del usuario conectado (por cada dispositivo)
-  const [userProfile, setUserProfile] = useState<{ name?: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ name?: string; following?: string[] } | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
     const userRef = doc(db, 'users', auth.currentUser.uid);
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setUserProfile(snapshot.data() as { name?: string });
+        setUserProfile(snapshot.data() as { name?: string; following?: string[] });
       }
     });
     return () => unsubscribe();
@@ -251,6 +257,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const touchStartYRef = useRef<number>(0);
   
   const user = propUser || mockUserProfile;
+  const userName = userProfile?.name || auth.currentUser?.displayName || (auth.currentUser?.isAnonymous ? "INVITADO #" + auth.currentUser.uid.slice(-4).toUpperCase() : (user.name || 'USUARIO'));
+  const userPhotoUrl = auth.currentUser?.photoURL || user.avatarUrl;
 
   // Temporizador para auto-ocultar la barra tras 4 segundos de inactividad
   const resetHideTimer = useCallback(() => {
@@ -338,24 +346,73 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     }
   };
 
-  // Combinar eventos con su prueba social y aforo restante en tiempo real
-  const eventsWithSocialProof: VipFlyerItem[] = events.map((event) => {
-    const proof = socialProofMap[event.id];
-    const guestLimit = event.guestLimit || event.maxCapacity || 100;
-    if (proof) {
+  const openNotifications = () => {
+    setIsNotificationsOpen(true);
+  };
+
+  const openProfile = () => {
+    handleNavigate('/profile');
+  };
+
+  const handleRefresh = async () => {
+    try {
+      const now = Date.now();
+      const qEvents = query(collection(db, 'events'), where('type', '==', 'public'));
+      const evSnap = await getDocs(qEvents);
+      const activeEvents = evSnap.docs
+        .map((d) => mapDocToVipFlyer(d.id, d.data()))
+        .filter((event) => {
+          const eventEnd = event.endTimestamp || computeEventEndTimestamp(event.date, event.endTime, event.startTime);
+          return eventEnd > now;
+        });
+      setEvents(activeEvents);
+
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data() as { name?: string });
+        }
+      }
+      showToast('Eventos actualizados');
+    } catch (err) {
+      console.error('[HomeScreen] Error en pull-to-refresh:', err);
+    }
+  };
+
+  // Combinar eventos con su prueba social y aforo restante en tiempo real,
+  // con PRIORIDAD ALGORÍTMICA: Eventos de anfitriones seguidos (following) se posicionan primero en el Cover Flow
+  const eventsWithSocialProof: VipFlyerItem[] = useMemo(() => {
+    const followingSet = new Set<string>(userProfile?.following || propUser?.following || []);
+
+    const mapped = events.map((event) => {
+      const proof = socialProofMap[event.id];
+      const guestLimit = event.guestLimit || event.maxCapacity || 100;
+      if (proof) {
+        return {
+          ...event,
+          ...proof,
+        };
+      }
       return {
         ...event,
-        ...proof,
+        activePassesCount: 0,
+        confirmedUsers: [],
+        remainingSpots: guestLimit,
+        recentRequestsCount: 12,
       };
-    }
-    return {
-      ...event,
-      activePassesCount: 0,
-      confirmedUsers: [],
-      remainingSpots: guestLimit,
-      recentRequestsCount: 12,
-    };
-  });
+    });
+
+    if (followingSet.size === 0) return mapped;
+
+    return [...mapped].sort((a, b) => {
+      const aFollowed = a.hostUserId ? followingSet.has(a.hostUserId) : false;
+      const bFollowed = b.hostUserId ? followingSet.has(b.hostUserId) : false;
+      if (aFollowed && !bFollowed) return -1;
+      if (!aFollowed && bFollowed) return 1;
+      return 0;
+    });
+  }, [events, socialProofMap, userProfile?.following, propUser?.following]);
 
   const handleApplyVip = (flyerId: string) => {
     const targetEvt = eventsWithSocialProof.find((e) => e.id === flyerId);
@@ -542,51 +599,68 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       {/* Degradado superior sutil para HUD */}
       <div className="fixed inset-x-0 top-0 h-28 bg-gradient-to-b from-[#000000] via-[#000000]/70 to-transparent pointer-events-none z-10" />
 
-      {/* Contenedor central móvil estructurado */}
-      <div className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto pb-28">
+      {/* Contenedor central móvil estructurado con Pull-to-Refresh */}
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        className="relative z-10 flex-1 flex flex-col w-full max-w-md mx-auto pb-28"
+      >
         
-        {/* 1. TOP BAR / HUD (Logo +1 en #E87A72, Notificaciones y Avatar) */}
-        <TopHud
-          user={{ ...user, unreadNotifications: unreadCount }}
-          onNotificationsClick={() => {
-            setIsNotificationsOpen(true);
-          }}
-          onProfileClick={() => handleNavigate('/profile')}
-        />
+        {/* REESTRUCTURACIÓN DEL HEADER (DOS NIVELES VERTICALES) */}
+        <header className="w-full z-20 flex flex-col">
+          {/* NIVEL 1: TOP BAR (LOGO +1 INDEPENDIENTE) */}
+          <div className="w-full px-5 pt-3 pb-1 flex items-center justify-between">
+            {/* Isotipo +1 en solitario a la izquierda */}
+            <span className="font-display text-3xl text-[#E87A72] font-bold tracking-tight">
+              +1
+            </span>
 
-        {/* 2. SALUDO PRINCIPAL: HEY, [NOMBRE DE USUARIO] */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut', delay: 0.1 }}
-          className="px-6 pt-1 pb-1"
-        >
-          <h1 className="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
-            HEY, {userProfile?.name || auth.currentUser?.displayName || (auth.currentUser?.isAnonymous ? "INVITADO #" + auth.currentUser.uid.slice(-4).toUpperCase() : (user.name || 'USUARIO'))}
-          </h1>
-        </motion.div>
+            {/* Lado derecho: Notificaciones y Avatar */}
+            <div className="flex items-center gap-3">
+              <button onClick={openNotifications} className="relative p-1 text-white hover:text-[#E87A72] transition-colors focus:outline-none cursor-pointer" aria-label="Notificaciones">
+                <BellIcon className="w-5 h-5"/>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#E87A72] text-[10px] text-white font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              <div 
+                onClick={openProfile} 
+                className="w-8 h-8 rounded-full overflow-hidden border border-white/20 cursor-pointer transition-transform duration-150 hover:scale-105 active:scale-95 flex items-center justify-center p-0"
+                aria-label="Perfil de usuario"
+              >
+                <img 
+                  src={userPhotoUrl || "/assets/images/avatar_placeholder.png"} 
+                  alt="Avatar" 
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+            </div>
+          </div>
 
-        {/* 3. ENCABEZADO INDEPENDIENTE: EVENTOS PARA TI (FUERA DE LA TARJETA) */}
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut', delay: 0.15 }}
-          className="px-6 pt-1 pb-1 mt-2"
-        >
-          <h2 className="font-sans text-[#9CA3AF] text-sm sm:text-base font-semibold tracking-wider uppercase m-0 leading-none">
-            EVENTOS PARA TI
-          </h2>
-        </motion.div>
+          {/* NIVEL 2: PASTILLA NEGRA CON SALUDO Y EVENTOS (ANCHO DINÁMICO) */}
+          <div className="w-full flex justify-start my-3">
+            {/* Pastilla dinámica que solo cubre el ancho del texto */}
+            <div className="bg-black rounded-none pl-5 pr-5 py-2.5 w-max max-w-[85%] flex flex-col justify-center shadow-none border-0">
+              <h1 className="font-display text-[22px] text-white tracking-wide uppercase leading-tight whitespace-nowrap">
+                HEY, {userName}
+              </h1>
+              <span className="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase mt-0.5 whitespace-nowrap">
+                TIENES EVENTOS CERCA
+              </span>
+            </div>
+          </div>
+        </header>
 
         {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS O ESTADO VACÍO */}
         <motion.main
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-          className="flex-1 flex flex-col items-center justify-center my-auto py-1"
+          className="flex-1 flex flex-col items-center justify-center my-auto py-1 w-full overflow-x-visible"
         >
           {isEventsLoading ? (
-            <div className="w-full max-w-[340px] sm:max-w-[360px] h-[460px] sm:h-[480px] bg-[#16171B]/50 border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto animate-pulse">
+            <div className="w-full max-w-[340px] sm:max-w-[360px] h-[435px] sm:h-[465px] bg-[#16171B]/50 border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto animate-pulse">
               <div className="w-12 h-12 rounded-full border-2 border-[#E87A72] border-t-transparent animate-spin mb-4" />
               <span className="font-display text-neutral-400 text-xs font-bold tracking-widest uppercase">
                 CARGANDO EVENTOS...
@@ -596,7 +670,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-[340px] sm:max-w-[360px] h-[460px] sm:h-[480px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto"
+              className="w-full max-w-[340px] sm:max-w-[360px] h-[435px] sm:h-[465px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto"
             >
               <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl mb-4">
                 🎪
@@ -633,7 +707,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           />
         </div>
 
-      </div>
+      </PullToRefresh>
 
       {/* 6. BOTTOM NAVIGATION BAR FLOTANTE DINÁMICA (Auto-Hiding Floating Capsule) */}
       <BottomNav

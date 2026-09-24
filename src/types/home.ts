@@ -96,7 +96,35 @@ export interface UserProfile {
   isAdult?: boolean;
   interests?: string[];
   onboardingCompleted?: boolean;
+  coverPhotoUrl?: string;
+  businessCategory?: BusinessCategoryType | string;
+  galleryPhotos?: string[];
+  followersCount?: number;
+  following?: string[];
 }
+
+export type BusinessCategoryType =
+  | 'club'
+  | 'promotor'
+  | 'cafe'
+  | 'teatro'
+  | 'cine'
+  | 'salon_eventos'
+  | 'conferencista'
+  | 'pub'
+  | 'gimnacio';
+
+export const BUSINESS_CATEGORIES: { id: BusinessCategoryType; label: string; icon: string }[] = [
+  { id: 'club', label: 'Club', icon: '🪩' },
+  { id: 'promotor', label: 'Promotor', icon: '🎟️' },
+  { id: 'cafe', label: 'Café', icon: '☕' },
+  { id: 'teatro', label: 'Teatro', icon: '🎭' },
+  { id: 'cine', label: 'Cine', icon: '🍿' },
+  { id: 'salon_eventos', label: 'Salón de Eventos', icon: '🏛️' },
+  { id: 'conferencista', label: 'Conferencia', icon: '🎤' },
+  { id: 'pub', label: 'Pub', icon: '🍻' },
+  { id: 'gimnacio', label: 'Gimnasio', icon: '🥊' },
+];
 
 export interface CreatedEventItem {
   id: string;
@@ -183,16 +211,18 @@ export interface CreateEventFormData {
   vipCutoffTime?: string | null;
 }
 
-export const AVAILABLE_EVENT_TAGS = [
+export const AVAILABLE_CATEGORIES = [
   { id: "reggaeton", label: "Reggaetón 🍑" },
   { id: "techno", label: "Electrónica / Techno 🎧" },
-  { id: "indie", label: "Indie & Live Rock 🎸" },
+  { id: "rock_indie", label: "Live Rock & Indie 🎸" },      // Antes: Indie & Live Rock
   { id: "previas", label: "Previas & Juntadas 🍻" },
   { id: "boliches", label: "Boliches & Clubs 🪩" },
-  { id: "cocktails", label: "Cocktails & Lounges 🍸" },
+  { id: "arte_cocktails", label: "Arte & Cocktails 🎨" },   // Antes: Cocktails & Lounges
   { id: "festivales", label: "Festivales & Open Air ⚡" },
-  { id: "rooftops", label: "VIP & Rooftops 🏙️" },
+  { id: "deportes_salud", label: "Deportes & Salud 🏃‍♂️" },  // Antes: VIP & Rooftops
 ] as const;
+
+export const AVAILABLE_EVENT_TAGS = AVAILABLE_CATEGORIES;
 
 export interface EventInviteData {
   id: string;

@@ -236,22 +236,31 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               </h3>
 
               {/* Atribución del Anfitrión / Creador */}
-              <div className="flex items-center space-x-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedEvent.hostUserId) {
+                    onClose();
+                    onNavigate?.(`/profile/${selectedEvent.hostUserId}`);
+                  }
+                }}
+                className="flex items-center space-x-2 mt-2 group text-left cursor-pointer transition-opacity hover:opacity-90"
+              >
                 {selectedEvent.hostPhotoUrl ? (
                   <img
                     src={selectedEvent.hostPhotoUrl}
                     alt={selectedEvent.hostName || 'Anfitrión'}
-                    className="w-[18px] h-[18px] rounded-full object-cover border border-white/20 shrink-0"
+                    className="w-[20px] h-[20px] rounded-full object-cover border border-white/20 shrink-0"
                   />
                 ) : (
-                  <div className="w-[18px] h-[18px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">
+                  <div className="w-[20px] h-[20px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">
                     {(selectedEvent.hostName || 'A').slice(0, 1).toUpperCase()}
                   </div>
                 )}
                 <span className="font-display text-xs sm:text-sm font-bold tracking-wider text-[#9CA3AF] uppercase flex items-center gap-1">
-                  BY <span className="text-[#E87A72]">{selectedEvent.hostName || 'ANFITRIÓN'}</span>
+                  BY <span className="text-[#E87A72] group-hover:underline">{selectedEvent.hostName || 'ANFITRIÓN'}</span>
                 </span>
-              </div>
+              </button>
 
               {selectedEvent.subtitle && (
                 <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">

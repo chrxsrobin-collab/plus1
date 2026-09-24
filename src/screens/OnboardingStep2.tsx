@@ -13,12 +13,12 @@ export interface OnboardingStep2Props {
 const INTEREST_TAGS = [
   { id: 'reggaeton', label: 'Reggaetón', emoji: '🍑' },
   { id: 'techno', label: 'Electrónica / Techno', emoji: '🎧' },
-  { id: 'rock', label: 'Indie & Live Rock', emoji: '🎸' },
+  { id: 'rock_indie', label: 'Live Rock & Indie', emoji: '🎸' },
   { id: 'previas', label: 'Previas & Juntadas', emoji: '🍻' },
-  { id: 'clubs', label: 'Boliches & Clubs', emoji: '🪩' },
-  { id: 'lounges', label: 'Cocktails & Lounges', emoji: '🍸' },
-  { id: 'festivals', label: 'Festivales & Open Air', emoji: '⚡' },
-  { id: 'rooftops', label: 'VIP & Rooftops', emoji: '🏙️' },
+  { id: 'boliches', label: 'Boliches & Clubs', emoji: '🪩' },
+  { id: 'arte_cocktails', label: 'Arte & Cocktails', emoji: '🎨' },
+  { id: 'festivales', label: 'Festivales & Open Air', emoji: '⚡' },
+  { id: 'deportes_salud', label: 'Deportes & Salud', emoji: '🏃‍♂️' },
 ];
 
 export const OnboardingStep2: React.FC<OnboardingStep2Props> = ({

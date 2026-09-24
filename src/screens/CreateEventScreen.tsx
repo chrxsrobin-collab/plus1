@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { CreateEventFormData, AVAILABLE_EVENT_TAGS } from '../types/home';
+import { CreateEventFormData, AVAILABLE_CATEGORIES, AVAILABLE_EVENT_TAGS } from '../types/home';
 import { LocationPickerModal, Coordinates } from '../components/LocationPickerModal';
 import { ShareEventModal } from '../components/ShareEventModal';
 import { computeEventEndTimestamp, formatVipCutoffDisplay } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
-export { AVAILABLE_EVENT_TAGS };
+export { AVAILABLE_CATEGORIES, AVAILABLE_EVENT_TAGS };
 
 export interface CreateEventScreenProps {
   eventId?: string;
@@ -85,6 +85,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
           if (d.tags && Array.isArray(d.tags)) {
             const normalized = d.tags.map((t: string) => {
+              if (t === 'indie') return 'rock_indie';
+              if (t === 'cocktails') return 'arte_cocktails';
+              if (t === 'rooftops' || t === 'deportes') return 'deportes_salud';
               const found = AVAILABLE_EVENT_TAGS.find((at) => at.id === t || at.label === t);
               return found ? found.id : t;
             });
