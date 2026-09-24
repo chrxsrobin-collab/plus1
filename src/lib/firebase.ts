@@ -6,8 +6,6 @@ import {
   doc, 
   onSnapshot, 
   setDoc, 
-  addDoc, 
-  updateDoc, 
   serverTimestamp,
   query,
   orderBy
@@ -41,11 +39,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Soporte offline para persistencia de pases en puerta
 if (typeof window !== "undefined") {
-  enableIndexedDbPersistence(db).catch((err) => {
-    if (err.code !== "failed-precondition" && err.code !== "unimplemented") {
-      console.warn("Firestore offline persistence error:", err);
-    }
-  });
+  enableIndexedDbPersistence(db).catch(() => {});
 }
 
 // ==========================================
@@ -70,8 +64,8 @@ export const loginAnonymously = async () => {
       const defaultName = "INVITADO #" + user.uid.slice(-4).toUpperCase();
       try {
         await updateProfile(user, { displayName: defaultName });
-      } catch (e) {
-        console.warn('updateProfile error:', e);
+      } catch {
+        // updateProfile fallback
       }
       await setDoc(doc(db, "users", user.uid), { 
         name: defaultName, 
@@ -113,9 +107,7 @@ export const subscribeToLiveEvents = (callback: (events: any[]) => void) => {
   return onSnapshot(q, (snapshot) => {
     const events = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     callback(events);
-  }, (err) => {
-    console.warn("Error escuchando eventos en vivo:", err);
-  });
+  }, () => {});
 };
 
 // 2. Escuchar invitaciones en vivo por ID
@@ -125,9 +117,7 @@ export const subscribeToInvite = (inviteId: string, callback: (invite: any) => v
     if (snapshot.exists()) {
       callback({ id: snapshot.id, ...snapshot.data() });
     }
-  }, (err) => {
-    console.warn(`Error escuchando invitación ${inviteId}:`, err);
-  });
+  }, () => {});
 };
 
 // 3. Confirmar asistencia a invitación (+1)

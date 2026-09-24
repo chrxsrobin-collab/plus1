@@ -189,8 +189,8 @@ export async function generateStoryImage(
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       }
       ctx.restore();
-    } catch (e) {
-      console.warn('Error dibujando fondo borroso en canvas:', e);
+    } catch {
+      // blur fallback
     }
   }
 

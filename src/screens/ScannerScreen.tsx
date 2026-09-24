@@ -41,8 +41,8 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
             setEventTitle(data.title);
           }
         }
-      } catch (err) {
-        console.warn('[ScannerScreen] Error cargando evento:', err);
+      } catch {
+        // fetchEvent fallback
       }
     };
     fetchEventData();
@@ -67,8 +67,7 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
             });
           }
         })
-        .catch((err) => {
-          console.warn('[ScannerScreen] Cámara no disponible o permiso denegado:', err);
+        .catch(() => {
           setCameraError(true);
         });
     } else {
@@ -88,8 +87,6 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
       onBack();
     } else if (onNavigate) {
       onNavigate('/');
-    } else {
-      console.log('[Navigation] -> Back to Home');
     }
   };
 
@@ -108,8 +105,8 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
           });
         }
       }
-    } catch (e) {
-      console.log('[Torch] No soportado directamente en este hardware');
+    } catch {
+      // Torch fallback
     }
   };
 
@@ -204,8 +201,8 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
           }
         }
       }, 500);
-    } catch (err) {
-      console.warn('BarcodeDetector no inicializable:', err);
+    } catch {
+      // BarcodeDetector fallback
     }
 
     return () => {

@@ -37,9 +37,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       (snapshot) => {
         setActiveCount(snapshot.docs.length);
       },
-      (error) => {
-        console.warn('Error escuchando notificaciones en TopBar:', error);
-      }
+      () => {}
     );
 
     return () => unsubscribe();

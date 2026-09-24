@@ -54,7 +54,22 @@ export const App: React.FC = () => {
 
   // Escucha del estado de autenticación de Firebase en tiempo real
   useEffect(() => {
+    let unsubDoc: (() => void) | null = null;
+    let unsubPasses: (() => void) | null = null;
+
+    const cleanupSubscribers = () => {
+      if (unsubDoc) {
+        unsubDoc();
+        unsubDoc = null;
+      }
+      if (unsubPasses) {
+        unsubPasses();
+        unsubPasses = null;
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      cleanupSubscribers();
       setCurrentUser(user);
       setIsAuthChecking(false);
 
@@ -74,9 +89,9 @@ export const App: React.FC = () => {
         getDoc(userDocRef).then((snap) => {
           if (!snap.exists()) {
             if (!user.displayName && user.isAnonymous) {
-              updateProfile(user, { displayName: defaultGuestName }).catch(console.warn);
+              updateProfile(user, { displayName: defaultGuestName }).catch(() => {});
             }
-            setDoc(userDocRef, { name: initialName, streak: 1, points: 0, onboardingCompleted: false }, { merge: true }).catch(console.warn);
+            setDoc(userDocRef, { name: initialName, streak: 1, points: 0, onboardingCompleted: false }, { merge: true }).catch(() => {});
             setIsOnboarding(true);
           } else {
             const data = snap.data();
@@ -86,11 +101,9 @@ export const App: React.FC = () => {
               setIsOnboarding(false);
             }
           }
-        }).catch((err) => {
-          console.warn('[+1 App] Error verificando usuario:', err);
-        });
+        }).catch(() => {});
 
-        const unsubDoc = onSnapshot(userDocRef, (snap) => {
+        unsubDoc = onSnapshot(userDocRef, (snap) => {
           if (snap.exists()) {
             const data = snap.data();
             if (data) {
@@ -108,9 +121,7 @@ export const App: React.FC = () => {
               }
             }
           }
-        }, (err) => {
-          console.warn('[+1 App] Escucha de usuario:', err);
-        });
+        }, () => {});
 
         // Escucha en tiempo real de los pases del usuario en la colección 'passes' (estrictamente activos)
         const passesQuery = query(
@@ -118,7 +129,7 @@ export const App: React.FC = () => {
           where('userId', '==', user.uid),
           where('status', '==', 'active')
         );
-        const unsubPasses = onSnapshot(passesQuery, (snapshot) => {
+        unsubPasses = onSnapshot(passesQuery, (snapshot) => {
           const ticketsList: PassItem[] = snapshot.docs
             .map((d) => {
               const data = d.data();
@@ -172,18 +183,14 @@ export const App: React.FC = () => {
             })
             .filter((p) => p.status === 'active');
           setUserTickets(ticketsList);
-        }, (err) => {
-          console.warn('[+1 App] Escucha de pases:', err);
-        });
-
-        return () => {
-          unsubDoc();
-          unsubPasses();
-        };
+        }, () => {});
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      cleanupSubscribers();
+      unsubscribe();
+    };
   }, []);
 
   const handleUpdateName = (newName: string) => {
@@ -200,7 +207,6 @@ export const App: React.FC = () => {
   };
 
   const handleNavigate = (route: string) => {
-    console.log(`[+1 Route] -> ${route}`);
     setCurrentRoute(route);
   };
 

@@ -72,9 +72,7 @@ export const ExploreScreen: React.FC<ExploreScreenProps> = ({
     const unsub = onSnapshot(q, (snap) => {
       const live = snap.docs.map((d) => mapDocToVipFlyer(d.id, d.data()));
       setEvents(live);
-    }, (err) => {
-      console.warn('ExploreScreen Firestore error:', err);
-    });
+    }, () => {});
     return () => unsub();
   }, []);
 

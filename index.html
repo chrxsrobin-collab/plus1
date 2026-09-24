@@ -220,7 +220,7 @@
       </main>
 
       <!-- 4. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] (INMEDIATAMENTE DEBAJO DEL CARRUSEL) -->
-      <div class="anim-footer px-4 pt-2 pb-2 z-20">
+      <div class="anim-footer px-4 pt-2 pb-3 mb-1 z-20">
         <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
           <!-- CREAR EVENTO CON [ + ] -->
           <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
@@ -244,8 +244,8 @@
 
     </div>
 
-    <!-- 5. BOTTOM NAVIGATION BAR FLOTANTE DINÁMICA (Auto-Hiding Floating Capsule) -->
-    <nav id="floatingBottomNav" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[260px] w-[90%] mx-auto py-2.5 px-6 rounded-full bg-[#121316]/85 backdrop-blur-lg border border-[#26282E] shadow-2xl flex items-center justify-around select-none transition-all duration-300 ease-out translate-y-[150%] opacity-0 pointer-events-none">
+    <!-- 5. BOTTOM NAVIGATION BAR PERMANENTE Y FIJA -->
+    <nav id="floatingBottomNav" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[260px] w-[88%] mx-auto py-2.5 px-6 rounded-full bg-[#121316]/90 backdrop-blur-lg border border-[#26282E] shadow-2xl flex items-center justify-around select-none opacity-100 pointer-events-auto transform translate-y-0">
       <!-- Home -->
       <button class="p-1 text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); showToast('Ruta: /')">
         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -978,23 +978,19 @@
         <div class="w-8 h-[2px] bg-[#E87A72]/40 rounded-full mt-4"></div>
       </div>
 
-      <!-- 3. BOTONES DE ACCESO RÁPIDO (ONBOARDING EN 1 TOQUE) -->
-      <div class="relative z-10 w-full max-w-md mx-auto px-6 pb-12 flex flex-col space-y-3">
-        <button onclick="handleGoogleSignInHtml()" class="w-full py-4 px-5 rounded-2xl bg-white hover:bg-neutral-100 text-black font-sans font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-2xl transition-all focus:outline-none cursor-pointer active:scale-98">
+      <!-- 3. BOTÓN DE ACCESO ÚNICO CON GOOGLE -->
+      <div class="relative z-10 w-full max-w-sm mx-auto px-6 pb-8 flex flex-col items-center space-y-3">
+        <button onclick="handleGoogleSignInHtml()" class="w-full h-14 px-5 rounded-2xl bg-[#FFFFFF] hover:bg-neutral-100 text-black font-sans font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-2xl transition-all focus:outline-none cursor-pointer active:scale-98">
           <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
             <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
             <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
             <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
           </svg>
-          <span class="tracking-wide font-sans font-bold">CONTINUAR CON GOOGLE</span>
+          <span class="tracking-wide uppercase font-sans font-bold">CONTINUAR CON GOOGLE</span>
         </button>
 
-        <button onclick="handleGuestSignInHtml()" class="w-full py-3.5 px-5 rounded-2xl bg-transparent hover:bg-white/5 border border-[#26282E] text-neutral-400 hover:text-white font-sans font-semibold text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center transition-all focus:outline-none cursor-pointer active:scale-98">
-          ENTRAR COMO INVITADO
-        </button>
-
-        <p class="text-[11px] text-neutral-500 text-center font-sans pt-2">
+        <p class="text-[11px] text-neutral-500 text-center font-sans pt-1">
           Al continuar aceptas nuestros términos y acceso exclusivo +1 VIP
         </p>
       </div>
@@ -2141,32 +2137,7 @@
           <div id="profilePartnerBadgeContainer" class="mt-2 flex items-center justify-center"></div>
         </div>
 
-        <!-- 2. SECCIÓN "MIS EVENTOS CREADOS" (NUEVA UBICACIÓN PRIORITARIA) -->
-        <div class="w-full mt-3">
-          <div onclick="openMyEventsModal()" class="p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
-            <div class="flex items-center space-x-3.5">
-              <div class="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-xl shrink-0">
-                🎪
-              </div>
-              <div class="text-left">
-                <h4 class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase leading-tight">
-                  MIS EVENTOS CREADOS
-                </h4>
-                <p class="font-sans text-neutral-400 text-xs mt-0.5">
-                  Gestiona listas y capacidad
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span id="profileEventsCount" class="font-display text-[#E87A72] text-sm font-black bg-neutral-900 border border-[#26282E] px-2.5 py-1 rounded-xl shadow-inner min-w-[28px] text-center">
-                0
-              </span>
-              <span class="text-neutral-500 font-bold text-lg">›</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN (DEBAJO DE EVENTOS CREADOS) -->
+        <!-- 2. GRID DE 3 MÉTRICAS DE GAMIFICACIÓN -->
         <div class="grid grid-cols-3 gap-2.5 w-full mt-3">
           <!-- Tarjeta 1: EVENTOS ASISTIDOS -->
           <div onclick="openAttendedEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
@@ -2202,6 +2173,103 @@
             <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
               PLUSCOINS
             </span>
+          </div>
+        </div>
+
+        <!-- --- TOP SELECTOR DE EVENTO --- -->
+        <div class="w-full flex items-center justify-between px-2 mt-6 mb-3">
+          <button class="text-zinc-400 hover:text-white p-1">‹</button>
+          <h2 class="font-display text-xl text-white tracking-wider uppercase">
+            MÉXICO TEQUILA & DESMADRE
+          </h2>
+          <button class="text-zinc-400 hover:text-white p-1">›</button>
+        </div>
+
+        <!-- --- CARD 1: ASISTENCIA (DIALES RADIALES Y GRÁFICA) --- -->
+        <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4 mb-4">
+          <div class="border-b border-[#26282E] pb-2 mb-4 text-center">
+            <span class="font-display text-lg text-white tracking-wider">ASISTENCIA</span>
+          </div>
+
+          <!-- 3 Diales / Medidores Circulares -->
+          <div class="grid grid-cols-3 gap-2 text-center mb-6">
+            <!-- Dial Naranja - Invitaciones -->
+            <div class="flex flex-col items-center">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="text-[#26282E]" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="text-[#F17D02]" stroke-dasharray="75, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <span class="absolute font-display text-xl text-white">100</span>
+              </div>
+              <span class="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INVITACIONES</span>
+              <span class="font-sans text-[10px] text-[#F17D02] font-bold">+100%</span>
+            </div>
+
+            <!-- Dial Verde - Ingresos -->
+            <div class="flex flex-col items-center">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="text-[#26282E]" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="text-[#22C55E]" stroke-dasharray="80, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <span class="absolute font-display text-xl text-white">100</span>
+              </div>
+              <span class="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INGRESOS</span>
+              <span class="font-sans text-[10px] text-[#22C55E] font-bold">+100%</span>
+            </div>
+
+            <!-- Dial Celeste - Cortesías -->
+            <div class="flex flex-col items-center">
+              <div class="relative w-20 h-20 flex items-center justify-center">
+                <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                  <path class="text-[#26282E]" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path class="text-[#00A3FF]" stroke-dasharray="60, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <span class="absolute font-display text-xl text-white">100</span>
+              </div>
+              <span class="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">CORTESÍAS</span>
+              <span class="font-sans text-[10px] text-[#00A3FF] font-bold">+100%</span>
+            </div>
+          </div>
+
+          <!-- Gráfica de Barras por Horas (Peak Hours) -->
+          <div class="w-full border-t border-[#26282E] pt-4">
+            <div class="h-28 flex items-end justify-between px-2 gap-2 border-b border-[#26282E] pb-1">
+              <div class="w-6 bg-zinc-800 h-2 rounded-t-sm"></div>
+              <div class="w-6 bg-zinc-800 h-3 rounded-t-sm"></div>
+              <div class="w-6 bg-zinc-800 h-2 rounded-t-sm"></div>
+              <div class="w-6 bg-zinc-800 h-4 rounded-t-sm"></div>
+              <div class="w-6 bg-[#22C55E]/40 border border-[#22C55E] h-14 rounded-t-sm"></div>
+              <div class="w-6 bg-[#22C55E] h-24 rounded-t-sm"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-zinc-500 font-sans mt-2 px-1">
+              <span>12 AM</span>
+              <span>4 AM</span>
+              <span>8 AM</span>
+              <span>12 PM</span>
+              <span>4 PM</span>
+              <span>8 PM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- --- CARD 2: COVERS GENERAL (VENTA EN PUERTA) --- -->
+        <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4 mb-6">
+          <div class="border-b border-[#26282E] pb-2 mb-3 text-center">
+            <span class="font-display text-sm text-zinc-300 tracking-wider">COVERS GENERAL</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-[#8B24C7]"></div>
+              <div>
+                <div class="font-sans text-xs font-bold text-white uppercase">COVER (50BS C/U)</div>
+                <div class="font-sans text-xs text-zinc-400">x 16</div>
+              </div>
+            </div>
+            <div class="font-display text-lg text-white">
+              Bs.800,00
+            </div>
           </div>
         </div>
 
@@ -2576,10 +2644,26 @@
           </div>
         </div>
 
-        <!-- Acciones -->
-        <div class="space-y-2.5">
+        <!-- Acciones con Código de Desbloqueo ("prouser") -->
+        <div class="space-y-3 pt-2 border-t border-[#26282E]">
+          <div>
+            <label class="font-sans text-[#8E8E93] text-[11px] font-bold uppercase tracking-wider block mb-1.5 text-center">
+              CÓDIGO DE ACCESO PRO / BETA TESTER
+            </label>
+            <input
+              type="password"
+              id="partnerSecretCodeInput"
+              placeholder="Ingresa código de activación..."
+              class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#FAB205] text-white text-center font-display text-base tracking-wider placeholder:text-neutral-600 outline-none transition-colors"
+              oninput="document.getElementById('partnerSecretCodeError').classList.add('hidden')"
+            />
+            <p id="partnerSecretCodeError" class="hidden font-sans text-xs text-[#EF4444] font-bold text-center mt-2">
+              🤡 INTENTA DE NUEVO HAHAHA 
+            </p>
+          </div>
+
           <button id="subscriptionMainBtn" onclick="handleSubscribePartnerHtml()" class="w-full h-12 sm:h-14 rounded-xl bg-[#FAB205] hover:bg-yellow-400 active:scale-98 text-black font-display font-black text-sm sm:text-base tracking-wider uppercase transition-all shadow-xl cursor-pointer flex items-center justify-center">
-            SUSCRIBIRME POR $US 4.99/MES
+            [ ACTIVAR MEMBRESÍA SOCIO + ]
           </button>
 
           <button onclick="closeSubscriptionModal()" class="w-full h-11 rounded-xl bg-[#101114] border border-[#26282E] text-neutral-400 hover:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
@@ -2617,14 +2701,11 @@
         fbAuth = firebase.auth();
 
         // Soporte offline para persistencia de pases en puerta
-        fbDb.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-          if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
-            console.warn('[+1 Firebase] Persistencia offline nota:', err);
-          }
-        });
+        fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
         let userPassesUnsubscribe = null;
         let userNotifsUnsubscribe = null;
+        let userDocUnsubscribe = null;
         let realtimeNotifsList = [];
 
         // Escucha del estado de autenticación
@@ -2632,7 +2713,6 @@
           fbCurrentUser = user;
           const authView = document.getElementById('authScreenView');
           if (user) {
-            console.log('[+1 Firebase Auth] Conectado:', user.uid, user.displayName || 'Invitado');
             if (authView) authView.classList.add('hidden');
             const defaultName = user.displayName || (user.isAnonymous ? "INVITADO #" + user.uid.slice(-4).toUpperCase() : 'USUARIO VIP');
             
@@ -2642,7 +2722,11 @@
 
             // Escucha en tiempo real del perfil propio del usuario
             if (fbDb) {
-              fbDb.collection('users').doc(user.uid).onSnapshot((docSnap) => {
+              if (userDocUnsubscribe) {
+                userDocUnsubscribe();
+                userDocUnsubscribe = null;
+              }
+              userDocUnsubscribe = fbDb.collection('users').doc(user.uid).onSnapshot((docSnap) => {
                 if (docSnap && docSnap.exists) {
                   const data = docSnap.data();
                   if (data && data.name) {
@@ -2663,7 +2747,7 @@
                   updatePartnerBadgeDom(false);
                   openOnboardingScreen();
                 }
-              }, (err) => console.warn('[+1 Firestore] Escucha usuario:', err));
+              }, () => {});
 
               // Escucha en tiempo real de notificaciones dedicadas
               if (userNotifsUnsubscribe) {
@@ -2779,15 +2863,18 @@
                 if (typeof renderCoverFlow === 'function') {
                   renderCoverFlow();
                 }
-              }, (err) => console.warn('[+1 Firestore] Escucha pases usuario:', err));
+              }, () => {});
             } else {
               updateUserNameDom(defaultName);
               updatePartnerBadgeDom(false);
             }
           } else {
-            console.log('[+1 Firebase Auth] Desconectado');
             closeOnboardingScreen();
             if (authView) authView.classList.remove('hidden');
+            if (userDocUnsubscribe) {
+              userDocUnsubscribe();
+              userDocUnsubscribe = null;
+            }
             if (userNotifsUnsubscribe) {
               userNotifsUnsubscribe();
               userNotifsUnsubscribe = null;
@@ -2935,7 +3022,6 @@
           isLoadingEvents = false;
           eventsData = liveEvents;
           renderCoverFlow();
-          console.log('[+1 Firestore] Eventos públicos activos actualizados:', eventsData.length);
         }, (err) => {
           console.warn('[+1 Firestore] Error al sincronizar eventos públicos:', err);
           isLoadingEvents = false;
@@ -2993,8 +3079,6 @@
         }, (err) => {
           console.warn('[+1 Firestore] Error al sincronizar pases globales:', err);
         });
-
-        console.log('[+1 Firebase] Sincronización en vivo activa (Proyecto: plus1vip)');
       } catch (e) {
         console.warn('[+1 Firebase] Inicialización fallback:', e);
       }
@@ -3710,10 +3794,15 @@
           const deltaTime = Math.max(1, Date.now() - startTime);
           const velocityX = (diffX / deltaTime) * 1000; // px/s
 
-          // Detección de intención por velocidad (>250px/s) o distancia (>50px)
-          if (diffX < -50 || velocityX < -250) {
+          const threshold = 50;
+          const velocityThreshold = 250;
+
+          // Arrastre hacia la IZQUIERDA (offset negativo) -> Avanza al siguiente evento
+          if (diffX < -threshold || velocityX < -velocityThreshold) {
             setFullCard(currentCardIndex + 1, 0, false);
-          } else if (diffX > 50 || velocityX > 250) {
+          }
+          // Arrastre hacia la DERECHA (offset positivo) -> Retrocede al evento anterior
+          else if (diffX > threshold || velocityX > velocityThreshold) {
             setFullCard(currentCardIndex - 1, 0, false);
           } else {
             // Rebote elástico al centro
@@ -3764,9 +3853,15 @@
           const deltaTime = Math.max(1, Date.now() - startTime);
           const velocityX = (diffX / deltaTime) * 1000;
 
-          if (diffX < -50 || velocityX < -250) {
+          const threshold = 50;
+          const velocityThreshold = 250;
+
+          // Arrastre hacia la IZQUIERDA (offset negativo) -> Avanza al siguiente evento
+          if (diffX < -threshold || velocityX < -velocityThreshold) {
             setFullCard(currentCardIndex + 1, 0, false);
-          } else if (diffX > 50 || velocityX > 250) {
+          }
+          // Arrastre hacia la DERECHA (offset positivo) -> Retrocede al evento anterior
+          else if (diffX > threshold || velocityX > velocityThreshold) {
             setFullCard(currentCardIndex - 1, 0, false);
           } else {
             setFullCard(currentCardIndex, 0, false);
@@ -5560,7 +5655,6 @@
     }
 
     function handleNavigation(route) {
-      console.log("Navegando a:", route);
       if (route === '/profile') {
         openProfileScreen();
         return;
@@ -6711,6 +6805,16 @@
         showToast('Inicia sesión para suscribirte');
         return;
       }
+      const codeInput = document.getElementById('partnerSecretCodeInput');
+      const errorMsg = document.getElementById('partnerSecretCodeError');
+      const code = (codeInput?.value || '').trim().toLowerCase();
+
+      if (code !== 'prouser') {
+        if (errorMsg) errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      if (errorMsg) errorMsg.classList.add('hidden');
       const btn = document.getElementById('subscriptionMainBtn');
       if (btn) btn.innerText = 'ACTIVANDO...';
       try {
@@ -6718,15 +6822,19 @@
           await fbDb.collection('users').doc(fbCurrentUser.uid).set({
             isPartner: true,
             partnerTier: 'SOCIO_PLUS',
-            subscriptionExpiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
+            activatedViaCode: 'prouser',
+            updatedAt: Date.now()
           }, { merge: true });
         }
         updatePartnerBadgeDom(true);
         closeSubscriptionModal();
-        showToast('⭐ ¡MEMBRESÍA SOCIO + ACTIVADA!');
+        if (codeInput) codeInput.value = '';
+        showToast('PRO Activado');
       } catch (e) {
         console.error('Error al suscribir socio:', e);
         showToast('Error al activar suscripción');
+      } finally {
+        if (btn) btn.innerText = '[ ACTIVAR MEMBRESÍA SOCIO + ]';
       }
     }
 

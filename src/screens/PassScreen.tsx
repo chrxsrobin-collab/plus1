@@ -25,8 +25,6 @@ export const PassScreen: React.FC<PassScreenProps> = ({
       onBack();
     } else if (onNavigate) {
       onNavigate('/');
-    } else {
-      console.log('[Navigation] -> Back to Home');
     }
   };
 

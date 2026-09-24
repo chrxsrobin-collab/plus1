@@ -39,14 +39,18 @@ export const SearchEventsModal: React.FC<SearchEventsModalProps> = ({
 
   // Autoenfoque al abrir
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (isOpen) {
-      setTimeout(() => {
+      timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     } else {
       setSearchQuery('');
       setActiveFilter('Todos');
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isOpen]);
 
   // Manejo de tecla Escape

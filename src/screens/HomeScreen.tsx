@@ -22,7 +22,7 @@ import {
   collectionGroup,
 } from 'firebase/firestore';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
-import { TabType, VipFlyerItem, NotificationItem, AppNotification, ConfirmedAttendee, EventSocialProof } from '../types/home';
+import { TabType, VipFlyerItem, AppNotification, ConfirmedAttendee, EventSocialProof } from '../types/home';
 import { computeEventEndTimestamp } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
@@ -72,7 +72,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSelectEventSheetOpen, setIsSelectEventSheetOpen] = useState<boolean>(false);
   const [hostEventsToScan, setHostEventsToScan] = useState<HostScanEventItem[]>([]);
-  const [isCheckingScannerEvents, setIsCheckingScannerEvents] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<VipFlyerItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
@@ -99,8 +98,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         setEvents(activeEvents);
         setIsEventsLoading(false);
       },
-      (error) => {
-        console.warn('Error escuchando eventos públicos de Firestore:', error);
+      () => {
         setEvents([]);
         setIsEventsLoading(false);
       }
@@ -125,7 +123,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
 
   // Escucha reactiva en tiempo real de los pases del usuario (activos y pendientes)
   const [userPasses, setUserPasses] = useState<Record<string, string>>({});
-  const [activeApprovedPasses, setActiveApprovedPasses] = useState<any[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -145,29 +142,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       q,
       (snapshot) => {
         const passMap: Record<string, string> = {};
-        const activeList: any[] = [];
         snapshot.docs.forEach((d) => {
           const data = d.data();
           if (data.eventId) {
             passMap[data.eventId] = data.status || 'pending';
           }
-          if (data.status === 'active' || data.status === 'confirmed') {
-            activeList.push({ id: d.id, ...data });
-          }
         });
         setUserPasses(passMap);
-        setActiveApprovedPasses(activeList);
       },
-      (error) => {
-        console.warn('Error escuchando pases en HomeScreen:', error);
-      }
+      () => {}
     );
     return () => unsubscribe();
   }, [auth.currentUser]);
 
   // Escucha reactiva en tiempo real de notificaciones dedicadas del usuario
   const [realtimeNotifications, setRealtimeNotifications] = useState<AppNotification[]>([]);
-  const [unreadNotifCount, setUnreadNotifCount] = useState<number>(0);
 
   // Escucha reactiva en tiempo real de todos los pases para prueba social (asistentes, aforo restante, FOMO)
   const [socialProofMap, setSocialProofMap] = useState<Record<string, EventSocialProof>>({});
@@ -225,9 +214,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
 
         setSocialProofMap(proofMap);
       },
-      (error) => {
-        console.warn('Error escuchando pases globales para prueba social:', error);
-      }
+      () => {}
     );
 
     return () => unsubscribe();
@@ -250,12 +237,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         notifs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setRealtimeNotifications(notifs);
         const unread = notifs.filter((n) => !n.read).length;
-        setUnreadNotifCount(unread);
         setUnreadCount(unread);
       },
-      (error) => {
-        console.warn('Error escuchando notifications en HomeScreen:', error);
-      }
+      () => {}
     );
     return () => unsubscribe();
   }, [auth.currentUser]);
@@ -351,8 +335,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const handleNavigate = (route: string) => {
     if (onNavigate) {
       onNavigate(route);
-    } else {
-      console.log(`[Navigation] -> ${route}`);
     }
   };
 
@@ -486,8 +468,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
             }
           }
         }
-      } catch (err) {
-        console.warn('Fallback checking staff door pairing:', err);
+      } catch {
+        // Fallback checking staff door pairing
       }
 
       // 3. Respaldo local de Staff de Puerta vinculado
@@ -498,8 +480,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           if (evSnap.exists()) {
             staffEvents.push({ id: evSnap.id, ...evSnap.data() } as HostScanEventItem);
           }
-        } catch (e) {
-          console.warn('Local staff doc check error:', e);
+        } catch {
+          // Local staff doc check fallback
         }
       }
 
@@ -521,11 +503,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         setHostEventsToScan(allAuthorizedEvents);
         setIsSelectEventSheetOpen(true);
       }
-    } catch (error) {
-      console.warn('Error consultando eventos para escanear:', error);
+    } catch {
       setIsModalOpen(true);
-    } finally {
-      setIsCheckingScannerEvents(false);
     }
   };
 

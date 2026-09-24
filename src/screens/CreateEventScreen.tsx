@@ -43,7 +43,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
   const [isVipCutoffActive, setIsVipCutoffActive] = useState<boolean>(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [isLoadingEvent, setIsLoadingEvent] = useState(isEditMode);
   const [eventHostUserId, setEventHostUserId] = useState<string | null>(null);
 
   // Cargar datos del evento existente desde Firestore cuando se pasa eventId
@@ -52,7 +51,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
 
     let isMounted = true;
     const fetchEventData = async () => {
-      setIsLoadingEvent(true);
       try {
         const eventRef = doc(db, 'events', eventId);
         const snap = await getDoc(eventRef);
@@ -95,8 +93,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         }
       } catch (err) {
         console.error('Error al cargar datos del evento para editar:', err);
-      } finally {
-        if (isMounted) setIsLoadingEvent(false);
       }
     };
 
@@ -153,8 +149,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       onBack();
     } else if (onNavigate) {
       onNavigate('/');
-    } else {
-      console.log('[Navigation] -> Back to Home');
     }
   };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import { VipFlyerItem, ConfirmedAttendee } from '../types/home';
+import { ConfirmedAttendee } from '../types/home';
 import { ShareEventModal } from './ShareEventModal';
 import { formatCardDate, formatVipCutoffDisplay } from '../lib/dateUtils';
 
@@ -26,7 +26,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   const selectedEvent = propSelectedEvent || propEvent;
   const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'capacity_reached' | 'used'>('none');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Estados reactivos de Prueba Social y FOMO
@@ -38,13 +37,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       ? selectedEvent.remainingSpots
       : Math.max(0, (selectedEvent?.guestLimit || selectedEvent?.maxCapacity || 100) - (selectedEvent?.activePassesCount || 0))
   );
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 2500);
-  };
 
   const handleShareEvent = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,9 +62,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       } else {
         setPassStatus('none');
       }
-    }, (err) => {
-      console.warn('Error escuchando estado del pase en modal:', err);
-    });
+    }, () => {});
     return () => unsub();
   }, [isOpen, selectedEvent?.id]);
 
@@ -112,9 +102,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         (p: any) => (p.createdAt || 0) > oneDayAgo || (p.requestedAt || 0) > oneDayAgo
       ).length;
       setRecentRequestsCount(recent > 0 ? recent : (actCount > 0 ? actCount + 3 : 12));
-    }, (err) => {
-      console.warn('Error escuchando pases del evento en modal:', err);
-    });
+    }, () => {});
     return () => unsub();
   }, [isOpen, selectedEvent?.id, selectedEvent?.guestLimit, selectedEvent?.maxCapacity]);
 
@@ -444,19 +432,6 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 </svg>
               </button>
             </div>
-
-            {/* Toast flotante */}
-            {toastMessage && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-[#E87A72] text-black font-display text-xs font-black px-4 py-2 rounded-xl shadow-2xl tracking-wider uppercase z-50 whitespace-nowrap pointer-events-none"
-              >
-                {toastMessage}
-              </motion.div>
-            )}
-
           </motion.div>
         </div>
       )}

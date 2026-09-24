@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { signInWithPopup, signInAnonymously, updateProfile } from 'firebase/auth';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import '../styles/fonts.css';
@@ -10,12 +10,12 @@ export interface AuthScreenProps {
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
-  const [loadingMode, setLoadingMode] = useState<'google' | 'guest' | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
-    if (loadingMode) return;
-    setLoadingMode('google');
+    if (isLoading) return;
+    setIsLoading(true);
     setErrorMsg(null);
     try {
       const cred = await signInWithPopup(auth, googleProvider);
@@ -31,38 +31,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
         setErrorMsg('No se pudo completar el acceso con Google. Intenta nuevamente.');
       }
     } finally {
-      setLoadingMode(null);
-    }
-  };
-
-  const handleGuestSignIn = async () => {
-    if (loadingMode) return;
-    setLoadingMode('guest');
-    setErrorMsg(null);
-    try {
-      const cred = await signInAnonymously(auth);
-      const user = cred.user;
-      if (user) {
-        const defaultName = "INVITADO #" + user.uid.slice(-4).toUpperCase();
-        try {
-          await updateProfile(user, { displayName: defaultName });
-        } catch (e) {
-          console.warn('updateProfile error:', e);
-        }
-        await setDoc(doc(db, "users", user.uid), { name: defaultName, streak: 1, points: 0 }, { merge: true });
-      }
-      if (onSuccess) onSuccess();
-    } catch (err: any) {
-      console.error('Error al autenticar como invitado:', err);
-      setErrorMsg('No se pudo acceder en modo invitado. Intenta con Google.');
-    } finally {
-      setLoadingMode(null);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="relative w-full h-[100dvh] bg-black text-white flex flex-col justify-between overflow-hidden select-none">
-      {/* 1. VIDEO DE FONDO EN LOOP */}
+      {/* 1. VIDEO DE FONDO EN LOOP CONTINUO */}
       <video
         autoPlay
         loop
@@ -99,10 +74,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
         </motion.div>
       </div>
 
-      {/* 3. BOTONES DE ACCESO RÁPIDO (ONBOARDING EN 1 TOQUE) */}
-      <div className="relative z-10 w-full max-w-md mx-auto px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] flex flex-col space-y-3">
+      {/* 3. BOTÓN DE ACCESO ÚNICO CON GOOGLE */}
+      <div className="relative z-10 w-full max-w-sm mx-auto px-6 pb-8 flex flex-col items-center space-y-3">
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center font-sans">
+          <div className="w-full p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-center font-sans">
             {errorMsg}
           </div>
         )}
@@ -112,8 +87,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleGoogleSignIn}
-          disabled={loadingMode !== null}
-          className="w-full py-4 px-5 rounded-2xl bg-white hover:bg-neutral-100 text-black font-sans font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-2xl transition-all focus:outline-none cursor-pointer"
+          disabled={isLoading}
+          className="w-full h-14 px-5 rounded-2xl bg-[#FFFFFF] hover:bg-neutral-100 text-black font-sans font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-2xl transition-all focus:outline-none cursor-pointer disabled:opacity-60"
         >
           {/* Icono de Google oficial */}
           <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
@@ -134,24 +109,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onSuccess }) => {
               d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
             />
           </svg>
-          <span className="tracking-wide">
-            {loadingMode === 'google' ? 'CONECTANDO...' : 'CONTINUAR CON GOOGLE'}
+          <span className="tracking-wide uppercase font-sans font-bold">
+            {isLoading ? 'CONECTANDO...' : 'CONTINUAR CON GOOGLE'}
           </span>
         </motion.button>
 
-        {/* Botón Secundario: Entrar como Invitado */}
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleGuestSignIn}
-          disabled={loadingMode !== null}
-          className="w-full py-3.5 px-5 rounded-2xl bg-transparent hover:bg-white/5 border border-[#26282E] text-neutral-400 hover:text-white font-sans font-semibold text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center transition-all focus:outline-none cursor-pointer"
-        >
-          {loadingMode === 'guest' ? 'ACCEDIENDO...' : 'ENTRAR COMO INVITADO'}
-        </motion.button>
-
         {/* Términos y privacidad sutil */}
-        <p className="text-[11px] text-neutral-500 text-center font-sans pt-2">
+        <p className="text-[11px] text-neutral-500 text-center font-sans pt-1">
           Al continuar aceptas nuestros términos y acceso exclusivo +1 VIP
         </p>
       </div>

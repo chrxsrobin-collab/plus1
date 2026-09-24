@@ -69,7 +69,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
           let token = d.doorSecretToken;
           if (!token) {
             token = `door_${eventId.slice(-4)}_${Math.random().toString(36).substring(2, 8)}`;
-            updateDoc(doc(db, 'events', eventId), { doorSecretToken: token }).catch(console.warn);
+            updateDoc(doc(db, 'events', eventId), { doorSecretToken: token }).catch(() => {});
           }
           setEventData({
             title: d.title || 'Evento sin título',
@@ -83,8 +83,8 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
             doorSecretToken: token,
           });
         }
-      } catch (err) {
-        console.warn('Error al cargar datos del evento en EventManager:', err);
+      } catch {
+        // fetchEvent fallback
       }
     };
 
@@ -149,8 +149,7 @@ export const EventManagerScreen: React.FC<EventManagerScreenProps> = ({
         setPasses(livePasses);
         setIsLoading(false);
       },
-      (err) => {
-        console.warn('Error al escuchar pases en EventManager:', err);
+      () => {
         setIsLoading(false);
       }
     );

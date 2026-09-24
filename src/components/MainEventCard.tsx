@@ -65,7 +65,6 @@ export const MainEventCard: React.FC<MainEventCardProps> = ({
           >
             {flyers.map((flyer, index) => {
               const offset = index - currentIndex;
-              const isCenter = offset === 0;
 
               let rotateY = 0;
               let scale = 1;

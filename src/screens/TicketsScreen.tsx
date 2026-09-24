@@ -117,15 +117,13 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
                   );
                 }
               }
-            } catch (e) {
-              console.warn('Error resolviendo flyer en TicketsScreen:', e);
+            } catch {
+              // flyer resolution fallback
             }
           }
         });
       },
-      (err) => {
-        console.warn('Error escuchando pases activos en TicketsScreen:', err);
-      }
+      () => {}
     );
 
     return () => unsubscribe();
@@ -175,8 +173,6 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
       onBack();
     } else if (onNavigate) {
       onNavigate('/');
-    } else {
-      console.log('[Navigation] -> Back to Home');
     }
   };
 

@@ -106,8 +106,7 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
       } else {
         setDetectedAddress(`Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
-    } catch (err) {
-      console.warn('Fallo al obtener dirección legible de OpenStreetMap:', err);
+    } catch {
       setDetectedAddress(`Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } finally {
       setIsLoadingAddress(false);
@@ -139,8 +138,8 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
         const results = await resp.json();
         setSearchResults(Array.isArray(results) ? results : []);
       }
-    } catch (err) {
-      console.warn('Error en búsqueda de venues en Nominatim:', err);
+    } catch {
+      // Nominatim search fallback
     } finally {
       setIsSearching(false);
     }
@@ -352,7 +351,6 @@ export const LocationPickerModal: React.FC<LocationPickerModalProps> = ({
       },
       (error) => {
         setIsLocating(false);
-        console.warn('Error de geolocalización:', error);
         alert('No se pudo acceder a tu ubicación actual. Revisa los permisos de ubicación de tu navegador.');
       },
       {

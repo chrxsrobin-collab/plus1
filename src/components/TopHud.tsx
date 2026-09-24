@@ -32,9 +32,7 @@ export const TopHud: React.FC<TopHudProps> = ({
       (snapshot) => {
         setUnreadNotifCount(snapshot.docs.length);
       },
-      (error) => {
-        console.warn('Error escuchando notificaciones en TopHud:', error);
-      }
+      () => {}
     );
 
     return () => unsubscribe();
