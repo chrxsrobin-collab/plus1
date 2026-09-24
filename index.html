@@ -194,7 +194,7 @@
 
       <!-- 2. SALUDO PRINCIPAL: HEY, [NOMBRE DE USUARIO] -->
       <div class="anim-greeting px-6 pt-1 pb-1">
-        <h1 id="homeGreetingTitle" class="font-display text-white text-[38px] sm:text-[42px] font-black tracking-tight leading-none uppercase">
+        <h1 id="homeGreetingTitle" class="font-display text-[22px] tracking-tight text-white uppercase font-black leading-none">
           HEY, CHRIS G.
         </h1>
       </div>
@@ -224,8 +224,8 @@
         <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
           <!-- CREAR EVENTO CON [ + ] -->
           <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
-            <span class="font-display text-black text-[26px] sm:text-[28px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
-              <span class="text-xl font-bold">[ + ]</span>
+            <span class="font-display text-black text-[22px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
+              <span class="text-[22px] font-bold">[ + ]</span>
               <span>CREAR EVENTO</span>
             </span>
           </button>
@@ -235,7 +235,7 @@
             <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
               <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
             </svg>
-            <span class="font-display text-white text-[12px] sm:text-xs font-bold tracking-wider uppercase whitespace-nowrap">
+            <span class="font-display text-[22px] tracking-wider text-white uppercase whitespace-nowrap">
               ESCANEAR QR
             </span>
           </button>
@@ -1198,9 +1198,9 @@
             </button>
 
             <!-- Chip 3 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Indie & Live Rock')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Live Rock & Indie')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🎸</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Indie & Live Rock</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Live Rock & Indie</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
@@ -1219,9 +1219,9 @@
             </button>
 
             <!-- Chip 6 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Cocktails & Lounges')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
-              <span class="text-xl shrink-0">🍸</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Cocktails & Lounges</span>
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Arte & Cocktails')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🎨</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Arte & Cocktails</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
@@ -1233,9 +1233,9 @@
             </button>
 
             <!-- Chip 8 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'VIP & Rooftops')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
-              <span class="text-xl shrink-0">🏙️</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">VIP & Rooftops</span>
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Deportes & Salud')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🏃‍♂️</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Deportes & Salud</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
           </div>
@@ -1674,8 +1674,8 @@
               <button type="button" onclick="toggleCreateEventTagHtml('techno')" id="createTag_techno" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
                 Electrónica / Techno 🎧
               </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('indie')" id="createTag_indie" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Indie & Live Rock 🎸
+              <button type="button" onclick="toggleCreateEventTagHtml('rock_indie')" id="createTag_rock_indie" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Live Rock & Indie 🎸
               </button>
               <button type="button" onclick="toggleCreateEventTagHtml('previas')" id="createTag_previas" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
                 Previas & Juntadas 🍻
@@ -1683,14 +1683,14 @@
               <button type="button" onclick="toggleCreateEventTagHtml('boliches')" id="createTag_boliches" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
                 Boliches & Clubs 🪩
               </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('cocktails')" id="createTag_cocktails" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Cocktails & Lounges 🍸
+              <button type="button" onclick="toggleCreateEventTagHtml('arte_cocktails')" id="createTag_arte_cocktails" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Arte & Cocktails 🎨
               </button>
               <button type="button" onclick="toggleCreateEventTagHtml('festivales')" id="createTag_festivales" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
                 Festivales & Open Air ⚡
               </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('deportes')" id="createTag_deportes" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Deportes / Salud 🏃‍♂️
+              <button type="button" onclick="toggleCreateEventTagHtml('deportes_salud')" id="createTag_deportes_salud" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Deportes & Salud 🏃‍♂️
               </button>
             </div>
           </div>
@@ -3239,7 +3239,7 @@
             <div class="w-full flex-1 flex flex-col justify-between pt-2 pb-0.5">
               <div>
                 <!-- Título: MEXICO en Antonio Bold mayúscula, color blanco y tamaño destacado -->
-                <h3 class="font-display text-white text-2xl sm:text-[26px] font-black tracking-wide uppercase leading-tight truncate">
+                <h3 class="font-display text-[22px] tracking-wide text-white uppercase truncate font-black leading-tight">
                   ${cleanTitle}
                 </h3>
                 <!-- Fecha y Rango de Horarios: 24.09.26 · 16:00 — 20:00 en Cabinet Grotesk #9CA3AF -->
@@ -4370,16 +4370,17 @@
 
     let createEventSelectedTags = [];
 
-    const CREATE_EVENT_AVAILABLE_TAGS = [
+    const AVAILABLE_CATEGORIES = [
       { id: "reggaeton", label: "Reggaetón 🍑" },
       { id: "techno", label: "Electrónica / Techno 🎧" },
-      { id: "indie", label: "Indie & Live Rock 🎸" },
+      { id: "rock_indie", label: "Live Rock & Indie 🎸" },      // Antes: Indie & Live Rock
       { id: "previas", label: "Previas & Juntadas 🍻" },
       { id: "boliches", label: "Boliches & Clubs 🪩" },
-      { id: "cocktails", label: "Cocktails & Lounges 🍸" },
+      { id: "arte_cocktails", label: "Arte & Cocktails 🎨" },   // Antes: Cocktails & Lounges
       { id: "festivales", label: "Festivales & Open Air ⚡" },
-      { id: "deportes", label: "Deportes / Salud 🏃‍♂️" },
+      { id: "deportes_salud", label: "Deportes & Salud 🏃‍♂️" },  // Antes: VIP & Rooftops
     ];
+    const CREATE_EVENT_AVAILABLE_TAGS = AVAILABLE_CATEGORIES;
 
     function toggleCreateEventTagHtml(tagId) {
       const idx = createEventSelectedTags.indexOf(tagId);
