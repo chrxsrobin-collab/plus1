@@ -208,14 +208,14 @@
 
       <!-- 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (DESPLAZAMIENTO EN BLOQUE) -->
       <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1">
-        <div class="relative w-full h-[485px] sm:h-[500px] flex items-center justify-center py-2" style="perspective: 1100px;">
+        <div class="relative w-full h-[435px] sm:h-[455px] flex items-center justify-center py-1" style="perspective: 1100px;">
           <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
             <!-- Empty state o tarjetas generadas dinámicamente vía renderCoverFlow() -->
           </div>
         </div>
 
         <!-- Paginador Dots Centrados -->
-        <div id="coverFlowDotsContainer" class="flex items-center justify-center space-x-2 mt-3">
+        <div id="coverFlowDotsContainer" class="flex items-center justify-center space-x-2 mt-2">
         </div>
       </main>
 
@@ -368,6 +368,14 @@
           <div id="modalVipCutoffBadge" class="hidden mt-3 px-3 py-2 rounded-xl bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-2">
             <span class="text-sm">⏳</span>
             <span id="modalVipCutoffText" class="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase"></span>
+          </div>
+
+          <!-- Micro-badge de Dress Code -->
+          <div id="modalDressCodeBox" class="hidden mt-3 px-3.5 py-2 rounded-xl bg-[#16171B] border border-[#26282E] flex items-center space-x-2">
+            <span class="text-sm">👔</span>
+            <span class="font-sans text-neutral-300 text-xs font-semibold tracking-wide">
+              DRESS CODE: <strong id="modalDressCodeText" class="text-white uppercase"></strong>
+            </span>
           </div>
 
           <!-- FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") -->
@@ -1327,10 +1335,74 @@
       </div>
 
       <!-- Feedback -->
-      <div class="w-full max-w-sm mx-auto h-24 flex items-center justify-center relative z-10">
+      <div class="w-full max-w-sm mx-auto h-20 flex items-center justify-center relative z-10">
         <div id="scannerFeedbackBox" class="w-full">
           <p class="text-gray-400 text-sm text-center font-sans">Apunta la cámara al código QR del pase</p>
         </div>
+      </div>
+
+      <!-- Botón de Acceso Rápido: Búsqueda Manual / Emergencia -->
+      <div class="w-full max-w-sm mx-auto pb-4 relative z-10 px-2">
+        <button onclick="openManualCheckInModal()" class="w-full py-3.5 px-4 rounded-2xl bg-[#16171B] hover:bg-[#1f2228] border border-[#26282E] text-white font-display text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-transform active:scale-95 shadow-xl cursor-pointer focus:outline-none">
+          <span class="text-base">🔎</span>
+          <span>BÚSQUEDA MANUAL / EMERGENCIA</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL DE CHECK-IN MANUAL / BÚSQUEDA DE EMERGENCIA (ManualCheckInModal) -->
+    <div id="manualCheckInModalView" class="hidden fixed inset-0 z-50 bg-[#0E0F12] text-white flex flex-col justify-between overflow-hidden select-none font-sans">
+      <!-- 1. CABECERA -->
+      <header class="w-full max-w-md mx-auto px-4 pt-4 pb-3 border-b border-[#26282E] flex flex-col gap-2 relative z-20">
+        <div class="flex items-center justify-between">
+          <button onclick="closeManualCheckInModal()" class="text-white hover:text-neutral-300 font-display text-sm font-bold tracking-wider uppercase py-1.5 px-3 rounded-xl bg-[#16171B] border border-[#26282E] transition-transform active:scale-95 cursor-pointer focus:outline-none">
+            ✕ VOLVER AL ESCÁNER
+          </button>
+          <span id="manualCheckInCountBadge" class="font-mono text-xs text-[#8E8E93] uppercase font-bold">
+            0 PASES
+          </span>
+        </div>
+
+        <div>
+          <h2 class="font-display text-white text-2xl font-black tracking-wide uppercase leading-tight">
+            CHECK-IN MANUAL
+          </h2>
+          <p class="font-sans text-xs text-[#8E8E93] mt-0.5 leading-normal">
+            Busca por nombre o código corto del pase (ej. #1JLXM).
+          </p>
+        </div>
+
+        <!-- 2. INPUT DE BÚSQUEDA INSTANTÁNEA -->
+        <div class="relative w-full mt-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-neutral-400">
+            <span class="text-base">🔎</span>
+          </div>
+          <input
+            id="manualCheckInSearchInput"
+            type="text"
+            oninput="filterManualCheckInList()"
+            placeholder="Escribe nombre o código..."
+            class="w-full pl-10 pr-10 py-3 rounded-2xl bg-[#16171B] border border-[#26282E] text-white placeholder-neutral-500 font-sans text-sm focus:outline-none focus:border-[#12C061] transition-colors shadow-inner"
+          />
+          <button
+            id="manualCheckInClearBtn"
+            onclick="clearManualCheckInSearch()"
+            class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-neutral-400 hover:text-white cursor-pointer focus:outline-none"
+          >
+            <span class="text-sm font-bold">✕</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 3. RESULTADOS Y ACCIONES EN 1 TOQUE -->
+      <main id="manualCheckInListContainer" class="flex-1 w-full max-w-md mx-auto px-4 py-3 overflow-y-auto space-y-3 no-scrollbar">
+        <!-- Renderizado dinámicamente -->
+      </main>
+
+      <!-- 4. BANNER / TOAST VERDE FLOTANTE -->
+      <div id="manualCheckInToast" class="hidden fixed bottom-6 inset-x-4 max-w-sm mx-auto bg-[#12C061] text-black font-display text-base font-black px-5 py-4 rounded-2xl shadow-2xl text-center uppercase tracking-wide z-50 flex items-center justify-center space-x-2 border-2 border-white/30 animate-bounce">
+        <span class="text-xl">🟢</span>
+        <span id="manualCheckInToastText">INGRESO CONFIRMADO</span>
       </div>
     </div>
 
@@ -1417,72 +1489,99 @@
             <input type="text" id="createEventNameInput" placeholder="Ej. FIESTA DE JOSIE 🔥" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
           </div>
 
-          <!-- CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS ALINEADAS CON LOS OTROS CAMPOS) -->
-          <div class="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
-            <!-- Columna Inicio -->
-            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
-                INICIO
+          <!-- CAMPO 3: DESCRIPCIÓN DEL PLAN (MÁXIMO 100 CARACTERES) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                DESCRIPCIÓN DEL PLAN
               </label>
-              <input type="date" id="createEventDateInput" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
-              <input type="time" id="createEventStartTimeInput" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+              <span id="createEventDescCounter" class="font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]">
+                0/100
+              </span>
             </div>
+            <textarea id="createEventDescInput" rows="2" maxlength="100" oninput="handleCreateEventDescInput(this)" placeholder="De qué va la fiesta, promos o vibe general..." class="w-full p-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"></textarea>
+          </div>
 
-            <!-- Columna Fin -->
-            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
-                TÉRMINO
-              </label>
-              <input type="date" id="createEventEndDateInput" value="2026-09-21" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
-              <input type="time" id="createEventEndTimeInput" value="04:30" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+          <!-- CAMPO 4: DRESS CODE (MÁXIMO 30 CARACTERES, OPCIONAL) -->
+          <div class="w-full">
+            <button id="createDressCodeEmptyBtn" type="button" onclick="activateCreateDressCode()" class="w-full py-2.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] text-[#8E8E93] hover:text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]">
+              <span>+ AGREGAR DRESS CODE (OPCIONAL)</span>
+            </button>
+            <div id="createDressCodeActiveBox" class="hidden p-3 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="text-sm">👔</span>
+                  <label class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
+                    DRESS CODE
+                  </label>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span id="createDressCodeCounter" class="font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]">
+                    0/30
+                  </span>
+                  <button type="button" onclick="deactivateCreateDressCode()" class="text-[#8E8E93] hover:text-[#EF4444] text-xs px-1.5 py-0.5 rounded transition-colors" title="Eliminar dress code">
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <input type="text" id="createEventDressCodeInput" maxlength="30" oninput="handleCreateEventDressCodeInput(this)" placeholder="Ej. All Black, Urbano, White..." class="w-full h-10 px-3 rounded-lg bg-[#0E0F12] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-xs outline-none transition-colors" />
             </div>
           </div>
 
-          <!-- CONTROL: CIERRE DE LISTA VIP (OPCIONAL) -->
-          <div class="w-full">
-            <!-- ESTADO INACTIVO -->
-            <button
-              id="createVipCutoffEmptyBtn"
-              type="button"
-              onclick="activateCreateVipCutoff()"
-              class="w-full py-2.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] text-[#8E8E93] hover:text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
-            >
-              <span>+ DEFINIR HORA DE CIERRE DE LISTA VIP (OPCIONAL)</span>
-            </button>
+          <!-- CAMPO 5: FECHA Y HORA DE INICIO (2 COLUMNAS ALINEADAS) -->
+          <div class="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
+            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
+                FECHA
+              </label>
+              <input type="date" id="createEventDateInput" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+            </div>
 
-            <!-- ESTADO ACTIVO -->
-            <div id="createVipCutoffActiveBox" class="hidden p-3 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-[#E87A72] text-base">⏳</span>
-                  <label id="createVipCutoffDisplayLabel" class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
-                    Cierre de Lista: 01:00 AM
-                  </label>
-                </div>
+            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
+                HORA DE INICIO
+              </label>
+              <input type="time" id="createEventStartTimeInput" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+            </div>
+          </div>
+
+          <!-- CONTROL: CIERRE DE LISTA VIP -->
+          <div class="w-full space-y-1" id="createVipCutoffContainer">
+            <div class="flex items-center justify-between sm:justify-start gap-3">
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[#E87A72] text-sm">⏳</span>
+                <label class="font-display text-white text-xs sm:text-sm font-bold tracking-wider uppercase">
+                  Cierre de lista VIP
+                </label>
+              </div>
+
+              <!-- BOTÓN DISPARADOR INACTIVO -->
+              <button id="createVipCutoffEmptyBtn" type="button" onclick="openVipTimePickerModal()" class="relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/50 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-all cursor-pointer active:scale-95 shadow-sm">
+                <span>+ Definir hora</span>
+              </button>
+
+              <!-- PASTILLA CON HORARIO DEFINIDO (ACTIVO) -->
+              <div id="createVipCutoffActivePill" class="hidden inline-flex items-center gap-1.5 bg-[#16171B] border border-[#E87A72]/50 rounded-xl px-2.5 py-1 shadow-sm">
+                <button type="button" onclick="openVipTimePickerModal()" class="flex items-center gap-1.5 cursor-pointer text-left focus:outline-none" title="Modificar hora de cierre VIP">
+                  <span id="createVipCutoffDisplayLabel" class="font-display font-black text-xs text-[#E87A72] tracking-wider uppercase">
+                    01:00 AM
+                  </span>
+                  <span class="text-neutral-400 hover:text-white text-[10px]">✏️</span>
+                </button>
                 <button
                   type="button"
                   onclick="deactivateCreateVipCutoff()"
                   title="Remover límite de lista VIP"
-                  class="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-xs font-bold transition-all active:scale-90 cursor-pointer"
+                  class="w-4 h-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] ml-0.5 transition-all cursor-pointer active:scale-90"
                 >
                   ✕
                 </button>
               </div>
-
-              <div class="flex items-center gap-2">
-                <input
-                  type="time"
-                  id="createEventVipCutoffInput"
-                  value="01:00"
-                  oninput="updateCreateVipCutoffLabel(this.value)"
-                  class="w-full h-11 px-3 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors"
-                />
-              </div>
-
-              <p class="font-sans text-[#8E8E93] text-xs leading-relaxed">
-                Los pases VIP solicitados solo serán válidos para ingresar hasta esta hora.
-              </p>
             </div>
+
+            <p id="createVipCutoffHelperText" class="hidden font-sans text-[#8E8E93] text-[11px] leading-tight pl-6">
+              Los pases VIP solicitados solo serán válidos para ingresar hasta esta hora.
+            </p>
           </div>
 
           <!-- CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) -->
@@ -1594,8 +1693,8 @@
               <button type="button" onclick="toggleCreateEventTagHtml('festivales')" id="createTag_festivales" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
                 Festivales & Open Air ⚡
               </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('rooftops')" id="createTag_rooftops" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                VIP & Rooftops 🏙️
+              <button type="button" onclick="toggleCreateEventTagHtml('deportes')" id="createTag_deportes" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
+                Deportes / Salud 🏃‍♂️
               </button>
             </div>
           </div>
@@ -1823,6 +1922,80 @@
       </div>
     </div>
 
+    <!-- MODAL SELECTOR DE HORA DE CIERRE VIP (VipTimePickerModal) -->
+    <div id="vipTimePickerModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="bg-[#16171B] border border-[#26282E] rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl relative anim-modal-zoom flex flex-col space-y-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-[#26282E]">
+          <div class="flex items-center gap-2">
+            <span class="text-[#E87A72] text-lg">⏳</span>
+            <h3 class="font-display text-white text-lg font-black tracking-wider uppercase">
+              CIERRE DE LISTA VIP
+            </h3>
+          </div>
+          <button
+            type="button"
+            onclick="closeVipTimePickerModal()"
+            class="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-xs"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p class="font-sans text-xs text-[#8E8E93] leading-relaxed">
+          Selecciona la hora límite para el ingreso de los pases VIP solicitados:
+        </p>
+
+        <!-- Selector Central de Hora -->
+        <div class="flex flex-col items-center justify-center py-2">
+          <input
+            type="time"
+            id="vipTimePickerModalInput"
+            value="01:00"
+            oninput="handleVipTimeModalInputChange(this.value)"
+            class="w-full h-14 bg-[#101114] border-2 border-[#E87A72]/60 focus:border-[#E87A72] rounded-2xl text-center text-white font-display text-3xl font-black tracking-widest outline-none transition-colors"
+          />
+          <span class="text-[#8E8E93] text-xs font-sans mt-2">
+            Horario visible: <strong id="vipTimePickerModalPreviewText" class="text-white">01:00 AM</strong>
+          </span>
+        </div>
+
+        <!-- Atajos de Horarios Típicos -->
+        <div class="space-y-1.5">
+          <span class="font-sans text-[11px] text-[#8E8E93] uppercase tracking-wider block font-bold">
+            Horarios sugeridos
+          </span>
+          <div class="grid grid-cols-5 gap-1.5" id="vipTimePresetContainer">
+            <button type="button" onclick="setVipTimePreset('23:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">23:00</button>
+            <button type="button" onclick="setVipTimePreset('00:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">00:00</button>
+            <button type="button" onclick="setVipTimePreset('01:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#E87A72] text-black shadow-md">01:00</button>
+            <button type="button" onclick="setVipTimePreset('02:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">02:00</button>
+            <button type="button" onclick="setVipTimePreset('03:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">03:00</button>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="pt-2 flex flex-col gap-2">
+          <button
+            type="button"
+            onclick="confirmVipTimePickerModal()"
+            class="w-full py-3.5 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-sm font-black tracking-wider uppercase transition-all shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>CONFIRMAR HORARIO</span>
+            <span class="text-base leading-none">✓</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="closeVipTimePickerModal()"
+            class="w-full py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-colors cursor-pointer"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL SELECTOR DE UBICACIÓN INTERACTIVO CON MAPA (LocationPickerModal) -->
     <div id="locationPickerModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3">
       <div class="bg-[#16171B] border border-[#26282E] rounded-3xl max-w-md w-full overflow-hidden shadow-2xl relative anim-modal-zoom flex flex-col max-h-[92vh]">
@@ -1838,33 +2011,6 @@
           <button type="button" onclick="closeLocationPickerModal()" aria-label="Cerrar modal de mapa" class="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors active:scale-95 cursor-pointer">
             ✕
           </button>
-        </div>
-
-        <!-- BARRA DE BÚSQUEDA PREDICTIVA DE VENUES Y SALONES -->
-        <div class="relative px-5 py-2.5 bg-[#101114] border-b border-[#26282E]/80 z-30">
-          <div class="relative flex items-center">
-            <span class="absolute left-3 text-neutral-400 text-xs pointer-events-none">🔍</span>
-            <input
-              id="mapVenueSearchInput"
-              type="text"
-              oninput="handleMapVenueSearchInput(this.value)"
-              onkeydown="if(event.key==='Enter'){event.preventDefault(); executeMapVenueSearch(this.value);}"
-              placeholder="Buscar salón, local o dirección..."
-              class="w-full h-9 pl-8 pr-8 bg-[#16171B] border border-[#26282E] focus:border-[#E87A72]/60 rounded-xl text-white font-sans text-xs placeholder-neutral-500 focus:outline-none transition-colors"
-            />
-            <button
-              id="mapVenueSearchClearBtn"
-              type="button"
-              onclick="clearMapVenueSearch()"
-              class="hidden absolute right-2.5 w-5 h-5 rounded-full bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-
-          <!-- Dropdown flotante de sugerencias predictivas -->
-          <div id="mapVenueSearchResultsDropdown" class="hidden absolute left-5 right-5 top-full mt-1.5 z-40 bg-[#16171B] border border-[#26282E] rounded-2xl shadow-2xl overflow-hidden divide-y divide-[#26282E]/70 max-h-52 overflow-y-auto">
-          </div>
         </div>
 
         <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
@@ -2550,6 +2696,8 @@
                 const attendedList = [];
                 const activeApprovedList = [];
                 if (querySnap) {
+                  const ONE_HOUR_MS = 60 * 60 * 1000;
+                  const now = Date.now();
                   querySnap.forEach((doc) => {
                     const data = doc.data();
                     const isCapacityReached = data.status === 'capacity_reached' || data.status === 'rejected';
@@ -2557,21 +2705,40 @@
                     const isUsed = data.status === 'used';
                     const isActive = data.status === 'active' || data.status === 'confirmed';
 
-                    // Estricto: la billetera solo incluye accesos reales activos
-                    if (isActive) {
+                    const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
+                    const checkInCount = typeof data.checkInCount === 'number' ? data.checkInCount : (isUsed ? (allowsPlusOne ? 2 : 1) : 0);
+                    const endTimestamp = data.endTimestamp || data.eventEndTime || (data.endTime ? new Date(data.endTime).getTime() : undefined);
+                    const eventDateTimestamp = data.eventDateTimestamp || data.eventTimestamp || (data.timestamp?.toMillis ? data.timestamp.toMillis() : (data.dateTimestamp || undefined));
+                    const eventEndTime = endTimestamp || (eventDateTimestamp ? eventDateTimestamp + (6 * 3600000) : null);
+                    const isWithinRetention = !eventEndTime || (now <= eventEndTime + ONE_HOUR_MS);
+
+                    // Retención: incluir pases activos y usados dentro de la ventana de 1 hora post-evento
+                    if ((isActive || isUsed) && isWithinRetention) {
+                      const cleanHolder = (data.holderName || data.userName || user.displayName || 'INVITADO')
+                        .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+                        .trim();
+                      const statusText = isUsed
+                        ? (allowsPlusOne && checkInCount === 1 ? 'INGRESO 1/2' : (checkInCount >= 2 ? 'PASE UTILIZADO (2/2)' : 'PASE UTILIZADO'))
+                        : 'PASE ACTIVO';
+
                       list.push({
                         id: doc.id,
                         eventId: data.eventId,
-                        title: data.eventTitle || 'EVENTO +1',
+                        title: data.eventTitle || data.title || 'EVENTO +1',
                         emoji: '🎟️',
                         dateStr: data.dateStr || data.eventDate || 'PRÓXIMAMENTE',
                         timeStr: data.timeStr || data.eventTime || '22:00',
                         location: data.location || data.eventLocation || 'ACCESO OFICIAL +1',
-                        status: 'active',
-                        statusText: 'PASE ACTIVO',
-                        companionsCount: data.withPlusOne ? 1 : 0,
-                        accentBorderColor: '#12C061',
-                        holderName: (data.holderName || data.userName || user.displayName || 'INVITADO') + (data.withPlusOne ? ' · +1 INCLUIDO' : ' · INDIVIDUAL'),
+                        status: data.status,
+                        statusText: statusText,
+                        companionsCount: allowsPlusOne ? 1 : 0,
+                        allowsPlusOne: allowsPlusOne,
+                        withPlusOne: allowsPlusOne,
+                        checkInCount: checkInCount,
+                        endTimestamp: endTimestamp,
+                        eventDateTimestamp: eventDateTimestamp,
+                        accentBorderColor: isUsed ? '#8E8E93' : '#12C061',
+                        holderName: cleanHolder,
                         listType: 'LISTA VIP',
                         ticketId: '#' + doc.id.slice(-4).toUpperCase(),
                         verifiedProvider: 'VERIFICADO CON GOOGLE',
@@ -2580,12 +2747,14 @@
                         qrCodeValue: data.qrCodeValue || doc.id
                       });
 
-                      activeApprovedList.push({
-                        id: doc.id,
-                        title: data.eventTitle || 'Evento +1',
-                        date: data.eventDate || data.dateStr || '',
-                        time: data.eventTime || data.timeStr || ''
-                      });
+                      if (isActive) {
+                        activeApprovedList.push({
+                          id: doc.id,
+                          title: data.eventTitle || 'Evento +1',
+                          date: data.eventDate || data.dateStr || '',
+                          time: data.eventTime || data.timeStr || ''
+                        });
+                      }
                     }
 
                     if (isUsed) {
@@ -2748,6 +2917,7 @@
                 imageUrl: d.imageUrl || d.artImage || '',
                 exactAddress: d.location || '',
                 description: d.description || `Evento exclusivo creado por ${d.hostName || 'Anfitrión +1'}. Acceso validado con pase digital.`,
+                dressCode: d.dressCode || null,
                 promotions: [
                   d.allowsPlusOne ? 'Acceso con acompañante +1 incluido' : 'Acceso individual nominal',
                   'Validación rápida por escaneo QR en puerta',
@@ -2860,6 +3030,59 @@
       return { activeCount, confirmedUsers, remainingSpots, recentRequests, guestLimit };
     }
 
+    function extractDateBadgeHtml(dateStr) {
+      if (!dateStr) return '19 SEP';
+      const clean = String(dateStr).trim();
+      const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+      if (/^\d{4}-(\d{2})-(\d{2})$/.test(clean)) {
+        const parts = clean.split('-');
+        const mIdx = parseInt(parts[1], 10) - 1;
+        return `${parseInt(parts[2], 10)} ${months[mIdx] || 'SEP'}`;
+      }
+      if (/^(\d{1,2})\.(\d{2})\.(\d{2,4})$/.test(clean)) {
+        const m = clean.match(/^(\d{1,2})\.(\d{2})\.(\d{2,4})$/);
+        if (m) {
+          const mIdx = parseInt(m[2], 10) - 1;
+          return `${parseInt(m[1], 10)} ${months[mIdx] || 'SEP'}`;
+        }
+      }
+      const stripped = clean.replace(/^[A-ZÁÉÍÓÚ]+\.?\s*/i, '');
+      const match = stripped.match(/^(\d{1,2})\s*(?:DE\s+)?([A-ZÁÉÍÓÚ]{3,})/i);
+      if (match) {
+        return `${match[1]} ${match[2].slice(0, 3).toUpperCase()}`;
+      }
+      return '19 SEP';
+    }
+
+    function formatDateTimeHtml(date, dateDisplay, timeRange) {
+      let datePart = '24.09.26';
+      const rawDate = date || dateDisplay || '';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+        const parts = rawDate.split('-');
+        datePart = `${parts[2]}.${parts[1]}.${parts[0].slice(-2)}`;
+      } else if (/^(\d{1,2})\.(\d{2})\.(\d{2,4})$/.test(rawDate)) {
+        datePart = rawDate;
+      } else if (rawDate) {
+        const m = rawDate.match(/(\d{1,2})\s*(?:DE\s+)?([A-ZÁÉÍÓÚ]{3,})/i);
+        if (m) {
+          const months = {
+            ENE: '01', FEB: '02', MAR: '03', ABR: '04', MAY: '05', JUN: '06',
+            JUL: '07', AGO: '08', SEP: '09', OCT: '10', NOV: '11', DIC: '12'
+          };
+          const monthPrefix = m[2].slice(0, 3).toUpperCase();
+          const mm = months[monthPrefix] || '09';
+          const dd = m[1].padStart(2, '0');
+          datePart = `${dd}.${mm}.26`;
+        } else {
+          datePart = rawDate;
+        }
+      }
+
+      const timePart = timeRange || '16:00 — 20:00';
+      return `${datePart} · ${timePart}`;
+    }
+
+    // Renderizar Carrusel Cover Flow de Tarjetas Completas
     function renderCoverFlow() {
       const track = document.getElementById('coverFlowTrack');
       const dotsContainer = document.getElementById('coverFlowDotsContainer');
@@ -2867,7 +3090,7 @@
 
       if (isLoadingEvents) {
         track.innerHTML = `
-          <div class="w-[300px] sm:w-[320px] h-[460px] sm:h-[480px] p-6 rounded-[28px] bg-[#16171B]/50 border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-xl select-none animate-pulse">
+          <div class="w-full max-w-[340px] sm:max-w-[360px] h-[420px] sm:h-[440px] bg-[#16171B]/50 border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-xl select-none mx-auto animate-pulse">
             <div class="w-12 h-12 rounded-full border-2 border-[#E87A72] border-t-transparent animate-spin mb-2"></div>
             <span class="font-display text-neutral-400 text-xs font-bold tracking-widest uppercase">
               CARGANDO EVENTOS...
@@ -2882,14 +3105,15 @@
 
       if (totalCards === 0) {
         track.innerHTML = `
-          <div class="w-[300px] sm:w-[320px] p-6 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center space-y-4 shadow-2xl">
-            <span class="text-3xl filter drop-shadow">✨</span>
-            <p class="font-sans text-xs sm:text-sm font-semibold text-neutral-300 tracking-wider uppercase leading-relaxed">
+          <div class="w-full max-w-[340px] sm:max-w-[360px] h-[420px] sm:h-[440px] bg-[#16171B] border border-[#26282E] rounded-[28px] p-6 flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto">
+            <div class="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-2xl mb-4">
+              🎪
+            </div>
+            <p class="font-sans text-neutral-300 text-sm sm:text-base font-medium tracking-wide uppercase leading-relaxed max-w-[260px]">
               NO HAY EVENTOS PÚBLICOS ACTIVOS · SÉ EL PRIMERO EN CREAR UNO
             </p>
-            <button onclick="handleNavigation('/create-event')" class="py-2.5 px-5 rounded-full bg-[#12C061] text-black font-display text-sm font-black tracking-wider uppercase flex items-center space-x-1.5 shadow-lg active:scale-95 transition-all">
-              <span>[ + ]</span>
-              <span>CREAR EVENTO</span>
+            <button onclick="handleCreateEventAction()" class="mt-6 py-3 px-6 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#12C061]/25 cursor-pointer">
+              [ + ] CREAR EVENTO
             </button>
           </div>
         `;
@@ -2900,91 +3124,60 @@
       // Generar tarjetas Cover Flow con soporte 3D y Prueba Social
       track.innerHTML = eventsData.map((event, idx) => {
         const borderCol = event.accentColor || '#E87A72';
-        const userPass = (typeof userTickets !== 'undefined' && userTickets) ? userTickets.find(t => t.eventId === event.id) : null;
-        const isPending = userPass && userPass.status === 'pending';
-        const isActive = userPass && (userPass.status === 'active' || userPass.status === 'confirmed');
-
         const social = getEventSocialData(event);
-        const isSoldOut = social.remainingSpots === 0;
 
-        let btnMarkup = '';
-        if (isPending) {
-          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#26282E] text-neutral-400 font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-700/60 cursor-default opacity-85 shadow-inner">⏳ PENDIENTE</button>`;
-        } else if (isActive) {
-          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); goToSection('passesView')" class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#12C061] text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm cursor-pointer">🎟️ PASE ACTIVO</button>`;
-        } else if (isSoldOut) {
-          btnMarkup = `<button id="vip-btn-${idx}" disabled class="w-full mt-2.5 py-3 px-4 rounded-full bg-[#26282E] text-neutral-500 font-display text-[17px] sm:text-[18px] font-black tracking-wider uppercase flex items-center justify-center border border-neutral-800 cursor-not-allowed opacity-75 shadow-inner">🔒 LISTA VIP COMPLETA</button>`;
-        } else {
-          btnMarkup = `<button id="vip-btn-${idx}" onclick="event.stopPropagation(); requestVipCoverFlow(${idx}, this)" class="w-full mt-2.5 py-3 px-4 rounded-full bg-white hover:bg-neutral-100 text-black font-display text-[18px] sm:text-[19px] font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-sm active:scale-95 cursor-pointer focus:outline-none">SOLICITAR VIP</button>`;
-        }
-
-        let urgencyMarkup = '';
-        if (isSoldOut) {
-          urgencyMarkup = `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#121316] border border-[#DC2626] text-[#DC2626] font-display text-[11px] font-black tracking-wider uppercase">🔒 LISTA VIP COMPLETA</span>`;
-        } else if (social.remainingSpots <= 20 && social.remainingSpots > 0) {
-          urgencyMarkup = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[#121316] border border-[#E87A72] text-[#E87A72] font-display text-[11px] font-black tracking-wider uppercase shadow-sm">⏳ ÚLTIMOS ${social.remainingSpots} CUPOS</span>`;
-        } else {
-          urgencyMarkup = `<p class="font-sans text-[#E87A72] text-xs font-bold tracking-wide">${event.availabilityText || 'CUPO MÁX. ' + social.guestLimit + ' ·'}</p>`;
-        }
-
-        let attendeesAvatars = '';
-        if (social.confirmedUsers && social.confirmedUsers.length > 0) {
-          attendeesAvatars = `<div class="flex -space-x-2 overflow-hidden shrink-0">` +
-            social.confirmedUsers.map(u => u.photoUrl ?
-              `<img src="${u.photoUrl}" alt="${u.name}" class="w-6 h-6 rounded-full border-2 border-[#16171B] object-cover shrink-0" />` :
-              `<div class="w-6 h-6 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0"><span class="text-white font-display text-[10px] font-black uppercase">${(u.name || 'A').slice(0, 1)}</span></div>`
-            ).join('') + `</div>`;
-        } else {
-          attendeesAvatars = `<div class="w-6 h-6 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0"><span class="text-[10px]">🎟️</span></div>`;
-        }
+        const cleanTitle = (event.title || 'MEXICO').replace(/^FLYER.*?:\s*/i, '').trim();
+        const dateBadgeText = extractDateBadgeHtml(event.date || event.dateDisplay);
+        const dateTimeStr = formatDateTimeHtml(event.date, event.dateDisplay, event.timeRange);
 
         const attendeesText = social.activeCount > 0 ?
           (social.activeCount === 1 ? `${social.confirmedUsers[0]?.name || '1 persona'} ya tiene su pase` : `${social.confirmedUsers[0]?.name || '1 persona'} y ${social.activeCount - 1} más ya tienen su pase`) :
           'Sé el primero en anotarte en la lista VIP';
 
         return `
-          <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[465px] sm:h-[480px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
-            <!-- Miniatura Superior -->
-            <div class="relative w-full h-[195px] sm:h-[210px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] flex-shrink-0">
-              ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${event.title}" class="w-full h-full object-cover rounded-xl" />` : `
-                <div class="w-full h-full bg-gradient-to-b from-[#1E2025] to-[#121316] rounded-xl flex items-center justify-center">
+          <div class="cf-fullcard absolute w-[290px] sm:w-[310px] h-[420px] sm:h-[440px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] p-3 sm:p-3.5 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300 ease-out select-none" style="border-color: ${borderCol};" onclick="handleCardTap(${idx})">
+            <!-- 1. Miniatura Superior Grande del Flyer (~1:1) -->
+            <div class="relative w-full h-[250px] sm:h-[270px] rounded-2xl overflow-hidden border border-neutral-800 shadow flex flex-col items-center justify-center bg-gradient-to-b from-[#1b003a] via-[#090b1c] to-[#04040a] flex-shrink-0">
+              <!-- Badge de fecha superpuesto en la esquina superior izquierda (19 SEP) -->
+              <div class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-xl bg-black/80 backdrop-blur-md border border-neutral-700/80 shadow-md flex items-center justify-center z-10 pointer-events-none">
+                <span class="font-mono text-[10px] sm:text-[11px] font-bold text-white uppercase tracking-wider leading-none">
+                  ${dateBadgeText}
+                </span>
+              </div>
+              ${event.imageUrl ? `<img src="${event.imageUrl}" alt="${cleanTitle}" class="w-full h-full object-cover rounded-2xl" />` : `
+                <div class="w-full h-full bg-gradient-to-b from-[#1E2025] to-[#121316] rounded-2xl flex items-center justify-center">
                   <span class="text-zinc-500 font-sans text-xs">SIN FLYER</span>
                 </div>
               `}
             </div>
 
-            <!-- Bloque Descriptivo y Metadatos -->
-            <div class="w-full flex-1 flex flex-col justify-between pt-2.5 pb-1">
-              <div class="space-y-1">
-                <h4 class="font-display text-white text-lg sm:text-xl font-black tracking-tight uppercase leading-tight line-clamp-1">
-                  ${event.title}
-                </h4>
-                <div class="flex items-baseline space-x-2">
-                  <p class="font-display text-white text-xs sm:text-sm font-bold tracking-wide uppercase">
-                    ${formatCardDate(event.dateDisplay || event.date)}
-                  </p>
-                  <p class="font-sans text-zinc-400 text-xs font-medium">
-                    · ${event.timeRange}
-                  </p>
-                </div>
-                <p class="font-sans text-neutral-300 text-xs sm:text-sm font-normal line-clamp-1">
-                  ${event.location}
+            <!-- 2. Bloque Descriptivo y Metadatos Reorganizado -->
+            <div class="w-full flex-1 flex flex-col justify-between pt-2 pb-0.5">
+              <div>
+                <!-- Título: MEXICO en Antonio Bold mayúscula, color blanco y tamaño destacado -->
+                <h3 class="font-display text-white text-2xl sm:text-[26px] font-black tracking-wide uppercase leading-tight truncate">
+                  ${cleanTitle}
+                </h3>
+                <!-- Fecha y Rango de Horarios: 24.09.26 · 16:00 — 20:00 en Cabinet Grotesk #9CA3AF -->
+                <p class="font-sans text-[#9CA3AF] text-xs sm:text-[13px] font-medium tracking-normal mt-0.5 truncate">
+                  ${dateTimeStr}
                 </p>
-
-                <!-- BADGES DE URGENCIA Y ESCASEZ -->
-                <div class="pt-0.5">
-                  ${urgencyMarkup}
-                </div>
-
-                <!-- FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?") -->
-                <div class="flex items-center space-x-2 pt-1 pb-0.5">
-                  ${attendeesAvatars}
-                  <span class="font-sans text-[#8E8E93] text-xs truncate leading-tight">
-                    ${attendeesText}
-                  </span>
-                </div>
+                <!-- Ubicación: Dirección con icono/texto truncado limpio -->
+                <p class="font-sans text-neutral-300 text-xs sm:text-[13px] font-normal tracking-normal truncate mt-0.5 flex items-center space-x-1">
+                  <span class="text-[11px] opacity-80">📍</span>
+                  <span class="truncate">${event.location || event.venue || 'Ciudad de México'}</span>
+                </p>
               </div>
-              ${btnMarkup}
+
+              <!-- Cupos y Muro Social: Fila con CUPO MÁX. 150 en salmón #E87A72 y la micro-etiqueta -->
+              <div class="flex items-center space-x-1.5 pt-1 mt-auto truncate">
+                <span class="font-sans text-[#E87A72] text-xs font-bold tracking-wide shrink-0">
+                  CUPO MÁX. ${social.guestLimit || 150} ·
+                </span>
+                <span class="font-sans text-[#8E8E93] text-xs truncate leading-tight">
+                  ${attendeesText}
+                </span>
+              </div>
             </div>
           </div>
         `;
@@ -3000,50 +3193,77 @@
       setFullCard(currentCardIndex);
     }
 
-    function setFullCard(targetIndex) {
+    const DRAG_STEP_PX = 180;
+
+    function getCardPhysicsHtml(offset) {
+      const clamped = Math.max(-2.5, Math.min(2.5, offset));
+      const absOffset = Math.abs(clamped);
+
+      // 1. Inclinación 3D (rotateY): 0 en el centro, hasta ~48deg lateral
+      let rotateY = 0;
+      if (clamped > 0) {
+        rotateY = -Math.min(48, clamped * 48);
+      } else if (clamped < 0) {
+        rotateY = Math.min(48, -clamped * 48);
+      }
+
+      // 2. Escala proporcional (1.0 en centro, decrece suave a 0.86)
+      const scale = Math.max(0.82, 1 - Math.min(1.2, absOffset) * 0.14);
+
+      // 3. Desplazamiento X proporcional y apilamiento lateral
+      let translateX = 0;
+      if (clamped > 0) {
+        translateX = Math.min(clamped, 1) * 140 + Math.max(0, clamped - 1) * 35;
+      } else if (clamped < 0) {
+        translateX = Math.max(clamped, -1) * 140 + Math.min(0, clamped + 1) * 35;
+      }
+
+      // 4. Profundidad Z: aleja las tarjetas laterales en el plano 3D
+      const translateZ = -Math.min(1, absOffset) * 70;
+
+      // 5. Z-Index dinámico: mayor prioridad cuanto más cerca del centro
+      const zIndex = Math.round(30 - Math.min(3, absOffset) * 10);
+
+      // 6. Desenfoque interpolado: 0px en foco central hasta 2.5px
+      const blur = Math.min(2.5, absOffset * 2.5);
+
+      return { rotateY, scale, translateX, translateZ, zIndex, blur };
+    }
+
+    function setFullCard(targetIndex, dragOffset = 0, isLiveDrag = false) {
       if (totalCards === 0) return;
-      currentCardIndex = Math.max(0, Math.min(totalCards - 1, targetIndex));
+      if (!isLiveDrag) {
+        currentCardIndex = Math.max(0, Math.min(totalCards - 1, targetIndex));
+      }
       const cards = document.querySelectorAll('.cf-fullcard');
       
       cards.forEach((card, idx) => {
-        const offset = idx - currentCardIndex;
-        const isCenter = offset === 0;
-        let rotateY = 0;
-        let scale = 1;
-        let opacity = 1;
-        let zIndex = 20;
-        let translateX = 0;
-        let translateZ = 0;
+        const rawOffset = idx - currentCardIndex;
+        const effectiveOffset = rawOffset - (dragOffset / DRAG_STEP_PX);
+        const physics = getCardPhysicsHtml(effectiveOffset);
 
-        if (offset < 0) {
-          rotateY = 50;
-          scale = 0.86;
-          zIndex = 10 + offset;
-          translateX = -140 + (offset + 1) * 35;
-          translateZ = -70;
-        } else if (offset > 0) {
-          rotateY = -50;
-          scale = 0.86;
-          zIndex = 10 - offset;
-          translateX = 140 + (offset - 1) * 35;
-          translateZ = -70;
-        }
-
-        card.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        card.style.transform = `translateX(${physics.translateX}px) translateZ(${physics.translateZ}px) rotateY(${physics.rotateY}deg) scale(${physics.scale})`;
         card.style.opacity = '1';
-        card.style.zIndex = zIndex;
-        card.style.filter = isCenter ? 'blur(0px)' : 'blur(2.5px)';
-        card.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-out, filter 0.3s ease-out';
+        card.style.zIndex = physics.zIndex;
+        card.style.filter = `blur(${physics.blur.toFixed(1)}px)`;
+
+        if (isLiveDrag) {
+          card.style.transition = 'none'; // Seguimiento directo 1:1 sin latencia
+        } else {
+          card.style.transition = 'transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease-out, filter 0.3s ease-out';
+        }
       });
 
       // Actualizar dots
-      for (let i = 0; i < totalCards; i++) {
-        const dot = document.getElementById(`dot${i}`);
-        if (dot) {
-          if (i === currentCardIndex) {
-            dot.className = "w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none";
-          } else {
-            dot.className = "w-1.5 h-1.5 bg-neutral-600 hover:bg-neutral-400 rounded-full transition-all duration-300 focus:outline-none";
+      if (!isLiveDrag) {
+        for (let i = 0; i < totalCards; i++) {
+          const dot = document.getElementById(`dot${i}`);
+          if (dot) {
+            if (i === currentCardIndex) {
+              dot.className = "w-2 h-2 bg-white rounded-full transition-all duration-300 focus:outline-none";
+            } else {
+              dot.className = "w-1.5 h-1.5 bg-neutral-600 hover:bg-neutral-400 rounded-full transition-all duration-300 focus:outline-none";
+            }
           }
         }
       }
@@ -3108,11 +3328,14 @@
       }
     }
 
+    let hasDraggedCard = false;
+
     function handleCardTap(index) {
+      if (hasDraggedCard) return;
       if (currentCardIndex === index) {
         openEventDetail(index);
       } else {
-        setFullCard(index);
+        setFullCard(index, 0, false);
       }
     }
 
@@ -3145,11 +3368,12 @@
                 date: d.date || '',
                 startTime: d.startTime || '',
                 endTime: d.endTime || '',
-                timeRange: `${d.startTime || '22:00'} — ${d.endTime || '04:00'}`,
+                timeRange: d.startTime && d.endTime ? `${d.startTime} — ${d.endTime}` : (d.startTime || '22:00'),
                 location: d.location || 'Por definir',
                 availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
                 imageUrl: d.imageUrl || d.artImage,
-                description: `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+                description: d.description || `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+                dressCode: d.dressCode || null,
                 isTonight: true,
                 isWeekend: true,
                 isVipOrFree: true,
@@ -3238,6 +3462,18 @@
           vipCutoffEl.classList.remove('hidden');
         } else {
           vipCutoffEl.classList.add('hidden');
+        }
+      }
+
+      // Micro-badge de Dress Code (si aplica)
+      const dressCodeEl = document.getElementById('modalDressCodeBox');
+      const dressCodeText = document.getElementById('modalDressCodeText');
+      if (dressCodeEl && dressCodeText) {
+        if (event.dressCode) {
+          dressCodeText.innerText = event.dressCode;
+          dressCodeEl.classList.remove('hidden');
+        } else {
+          dressCodeEl.classList.add('hidden');
         }
       }
 
@@ -3416,33 +3652,130 @@
       const track = document.getElementById('coverFlowTrack');
       if (track) {
         let startX = 0;
+        let startY = 0;
+        let startTime = 0;
         let isDragging = false;
+        let hasMoved = false;
 
+        // Gestos táctiles con seguimiento continuo 1:1
         track.addEventListener('touchstart', (e) => {
+          if (e.touches.length > 1) return;
           startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          startTime = Date.now();
           isDragging = true;
+          hasMoved = false;
+          hasDraggedCard = false;
+        }, { passive: true });
+
+        track.addEventListener('touchmove', (e) => {
+          if (!isDragging || e.touches.length > 1) return;
+          const currentX = e.touches[0].clientX;
+          const currentY = e.touches[0].clientY;
+          const diffX = currentX - startX;
+          const diffY = currentY - startY;
+
+          // Aislamiento gestual: si el gesto es vertical pronunciado, permitir scroll de pantalla
+          if (!hasMoved && Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 8) {
+            isDragging = false;
+            return;
+          }
+
+          if (Math.abs(diffX) > 6) {
+            hasMoved = true;
+            hasDraggedCard = true;
+          }
+
+          if (hasMoved) {
+            // Amortiguación elástica al llegar a los extremos
+            let effectiveDiffX = diffX;
+            if ((currentCardIndex === 0 && diffX > 0) || (currentCardIndex === totalCards - 1 && diffX < 0)) {
+              effectiveDiffX = diffX * 0.25;
+            }
+            setFullCard(currentCardIndex, effectiveDiffX, true);
+          }
         }, { passive: true });
 
         track.addEventListener('touchend', (e) => {
           if (!isDragging) return;
+          isDragging = false;
+
+          if (!hasMoved) {
+            setFullCard(currentCardIndex, 0, false);
+            return;
+          }
+
           const endX = e.changedTouches[0].clientX;
           const diffX = endX - startX;
-          if (diffX < -30) setFullCard(currentCardIndex + 1);
-          else if (diffX > 30) setFullCard(currentCardIndex - 1);
-          isDragging = false;
+          const deltaTime = Math.max(1, Date.now() - startTime);
+          const velocityX = (diffX / deltaTime) * 1000; // px/s
+
+          // Detección de intención por velocidad (>300px/s) o distancia (>50px)
+          if (diffX < -50 || velocityX < -300) {
+            setFullCard(currentCardIndex + 1, 0, false);
+          } else if (diffX > 50 || velocityX > 300) {
+            setFullCard(currentCardIndex - 1, 0, false);
+          } else {
+            // Rebote elástico al centro
+            setFullCard(currentCardIndex, 0, false);
+          }
+
+          setTimeout(() => {
+            hasDraggedCard = false;
+            hasMoved = false;
+          }, 60);
         });
 
+        // Eventos de ratón para escritorio
         track.addEventListener('mousedown', (e) => {
           startX = e.clientX;
+          startTime = Date.now();
           isDragging = true;
+          hasMoved = false;
+          hasDraggedCard = false;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          const diffX = e.clientX - startX;
+          if (Math.abs(diffX) > 6) {
+            hasMoved = true;
+            hasDraggedCard = true;
+          }
+          if (hasMoved) {
+            let effectiveDiffX = diffX;
+            if ((currentCardIndex === 0 && diffX > 0) || (currentCardIndex === totalCards - 1 && diffX < 0)) {
+              effectiveDiffX = diffX * 0.25;
+            }
+            setFullCard(currentCardIndex, effectiveDiffX, true);
+          }
         });
 
         window.addEventListener('mouseup', (e) => {
           if (!isDragging) return;
-          const diffX = e.clientX - startX;
-          if (diffX < -35) setFullCard(currentCardIndex + 1);
-          else if (diffX > 35) setFullCard(currentCardIndex - 1);
           isDragging = false;
+
+          if (!hasMoved) {
+            setFullCard(currentCardIndex, 0, false);
+            return;
+          }
+
+          const diffX = e.clientX - startX;
+          const deltaTime = Math.max(1, Date.now() - startTime);
+          const velocityX = (diffX / deltaTime) * 1000;
+
+          if (diffX < -50 || velocityX < -300) {
+            setFullCard(currentCardIndex + 1, 0, false);
+          } else if (diffX > 50 || velocityX > 300) {
+            setFullCard(currentCardIndex - 1, 0, false);
+          } else {
+            setFullCard(currentCardIndex, 0, false);
+          }
+
+          setTimeout(() => {
+            hasDraggedCard = false;
+            hasMoved = false;
+          }, 60);
         });
       }
 
@@ -3707,9 +4040,9 @@
                 ` : ''}
               </div>
               <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                <h3 class="font-display text-white text-lg tracking-wider uppercase truncate">
-                  ${cleanHolder || 'INVITADO'} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
-                </h3>
+                <div class="font-display text-white text-lg tracking-wider uppercase truncate">
+                  ${cleanHolder || 'USUARIO'} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                </div>
                 <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
                   <span class="font-mono font-bold text-neutral-300">#${passCode}</span>
                   <span>·</span>
@@ -3896,10 +4229,12 @@
       createVipCutoffActive = true;
       createVipCutoffTime = initialTime;
       const emptyBtn = document.getElementById('createVipCutoffEmptyBtn');
-      const activeBox = document.getElementById('createVipCutoffActiveBox');
+      const activePill = document.getElementById('createVipCutoffActivePill');
+      const helperText = document.getElementById('createVipCutoffHelperText');
       const input = document.getElementById('createEventVipCutoffInput');
       if (emptyBtn) emptyBtn.classList.add('hidden');
-      if (activeBox) activeBox.classList.remove('hidden');
+      if (activePill) activePill.classList.remove('hidden');
+      if (helperText) helperText.classList.remove('hidden');
       if (input) input.value = initialTime;
       updateCreateVipCutoffLabel(initialTime);
     }
@@ -3908,10 +4243,12 @@
       createVipCutoffActive = false;
       createVipCutoffTime = null;
       const emptyBtn = document.getElementById('createVipCutoffEmptyBtn');
-      const activeBox = document.getElementById('createVipCutoffActiveBox');
+      const activePill = document.getElementById('createVipCutoffActivePill');
+      const helperText = document.getElementById('createVipCutoffHelperText');
       const input = document.getElementById('createEventVipCutoffInput');
       if (emptyBtn) emptyBtn.classList.remove('hidden');
-      if (activeBox) activeBox.classList.add('hidden');
+      if (activePill) activePill.classList.add('hidden');
+      if (helperText) helperText.classList.add('hidden');
       if (input) input.value = '01:00';
     }
 
@@ -3919,8 +4256,58 @@
       createVipCutoffTime = val;
       const label = document.getElementById('createVipCutoffDisplayLabel');
       if (label) {
-        label.innerText = 'Cierre de Lista: ' + (val ? formatVipCutoffDisplay(val) : '01:00 AM');
+        label.innerText = val ? formatVipCutoffDisplay(val) : '01:00 AM';
       }
+    }
+
+    let tempVipModalTime = '01:00';
+
+    function openVipTimePickerModal() {
+      const modal = document.getElementById('vipTimePickerModal');
+      if (!modal) return;
+      tempVipModalTime = createVipCutoffTime || '01:00';
+      const input = document.getElementById('vipTimePickerModalInput');
+      if (input) input.value = tempVipModalTime;
+      handleVipTimeModalInputChange(tempVipModalTime);
+      modal.classList.remove('hidden');
+    }
+
+    function closeVipTimePickerModal() {
+      const modal = document.getElementById('vipTimePickerModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleVipTimeModalInputChange(val) {
+      tempVipModalTime = val || '01:00';
+      const preview = document.getElementById('vipTimePickerModalPreviewText');
+      if (preview) {
+        preview.innerText = formatVipCutoffDisplay(tempVipModalTime);
+      }
+      updateVipPresetBtnStyles(tempVipModalTime);
+    }
+
+    function setVipTimePreset(preset) {
+      tempVipModalTime = preset;
+      const input = document.getElementById('vipTimePickerModalInput');
+      if (input) input.value = preset;
+      handleVipTimeModalInputChange(preset);
+    }
+
+    function updateVipPresetBtnStyles(selectedTime) {
+      const btns = document.querySelectorAll('.vip-preset-btn');
+      btns.forEach(btn => {
+        if (btn.innerText.trim() === selectedTime) {
+          btn.className = "vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#E87A72] text-black shadow-md";
+        } else {
+          btn.className = "vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30";
+        }
+      });
+    }
+
+    function confirmVipTimePickerModal() {
+      activateCreateVipCutoff(tempVipModalTime);
+      closeVipTimePickerModal();
+      showToast('⏳ Cierre VIP fijado a las ' + formatVipCutoffDisplay(tempVipModalTime));
     }
 
     function openCreateEventScreen(editId = null) {
@@ -3980,7 +4367,7 @@
       { id: "boliches", label: "Boliches & Clubs 🪩" },
       { id: "cocktails", label: "Cocktails & Lounges 🍸" },
       { id: "festivales", label: "Festivales & Open Air ⚡" },
-      { id: "rooftops", label: "VIP & Rooftops 🏙️" },
+      { id: "deportes", label: "Deportes / Salud 🏃‍♂️" },
     ];
 
     function toggleCreateEventTagHtml(tagId) {
@@ -4021,6 +4408,62 @@
       });
     }
 
+    let createDressCodeActive = false;
+
+    function activateCreateDressCode(initialVal = '') {
+      createDressCodeActive = true;
+      const emptyBtn = document.getElementById('createDressCodeEmptyBtn');
+      const activeBox = document.getElementById('createDressCodeActiveBox');
+      const input = document.getElementById('createEventDressCodeInput');
+      const counter = document.getElementById('createDressCodeCounter');
+      if (emptyBtn) emptyBtn.classList.add('hidden');
+      if (activeBox) activeBox.classList.remove('hidden');
+      if (input) {
+        input.value = initialVal || '';
+        if (counter) {
+          const len = input.value.length;
+          counter.innerText = `${len}/30`;
+          counter.className = `font-sans text-[11px] font-semibold tracking-wider ${len >= 30 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+        }
+        input.focus();
+      }
+    }
+
+    function deactivateCreateDressCode() {
+      createDressCodeActive = false;
+      const emptyBtn = document.getElementById('createDressCodeEmptyBtn');
+      const activeBox = document.getElementById('createDressCodeActiveBox');
+      const input = document.getElementById('createEventDressCodeInput');
+      const counter = document.getElementById('createDressCodeCounter');
+      if (emptyBtn) emptyBtn.classList.remove('hidden');
+      if (activeBox) activeBox.classList.add('hidden');
+      if (input) input.value = '';
+      if (counter) {
+        counter.innerText = '0/30';
+        counter.className = 'font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]';
+      }
+    }
+
+    function handleCreateEventDescInput(el) {
+      if (!el) return;
+      if (el.value.length > 100) el.value = el.value.slice(0, 100);
+      const counter = document.getElementById('createEventDescCounter');
+      if (counter) {
+        counter.innerText = `${el.value.length}/100`;
+        counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+      }
+    }
+
+    function handleCreateEventDressCodeInput(el) {
+      if (!el) return;
+      if (el.value.length > 30) el.value = el.value.slice(0, 30);
+      const counter = document.getElementById('createDressCodeCounter');
+      if (counter) {
+        counter.innerText = `${el.value.length}/30`;
+        counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 30 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+      }
+    }
+
     function resetCreateEventForm() {
       editingEventId = null;
       isEventPublished = false;
@@ -4032,17 +4475,23 @@
       const deleteContainer = document.getElementById('deleteEventBtnContainer');
       if (deleteContainer) deleteContainer.classList.add('hidden');
       const nameInput = document.getElementById('createEventNameInput');
+      const descInput = document.getElementById('createEventDescInput');
+      const descCounter = document.getElementById('createEventDescCounter');
       const dateInput = document.getElementById('createEventDateInput');
       const startTimeInput = document.getElementById('createEventStartTimeInput');
-      const endTimeInput = document.getElementById('createEventEndTimeInput');
       const locationInput = document.getElementById('createEventLocationInput');
       const previewImg = document.getElementById('createArtPreviewImg');
       const btn = document.getElementById('publishEventBtn');
 
       if (nameInput) nameInput.value = '';
+      if (descInput) descInput.value = '';
+      if (descCounter) {
+        descCounter.innerText = '0/100';
+        descCounter.className = 'font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]';
+      }
+      deactivateCreateDressCode();
       if (dateInput) dateInput.value = '';
       if (startTimeInput) startTimeInput.value = '';
-      if (endTimeInput) endTimeInput.value = '';
       if (locationInput) locationInput.value = '';
       handleRemoveArtImage();
       deactivateCreateVipCutoff();
@@ -4060,9 +4509,10 @@
     function populateCreateEventForm(data) {
       isEventPublished = false;
       const nameInput = document.getElementById('createEventNameInput');
+      const descInput = document.getElementById('createEventDescInput');
+      const descCounter = document.getElementById('createEventDescCounter');
       const dateInput = document.getElementById('createEventDateInput');
       const startTimeInput = document.getElementById('createEventStartTimeInput');
-      const endTimeInput = document.getElementById('createEventEndTimeInput');
       const locationInput = document.getElementById('createEventLocationInput');
       const previewImg = document.getElementById('createArtPreviewImg');
       const previewWrapper = document.getElementById('createArtPreviewWrapper');
@@ -4070,9 +4520,21 @@
       const btn = document.getElementById('publishEventBtn');
 
       if (nameInput) nameInput.value = data.title || '';
+      if (descInput) {
+        descInput.value = data.description || '';
+        if (descCounter) {
+          const len = (data.description || '').length;
+          descCounter.innerText = `${len}/100`;
+          descCounter.className = `font-sans text-[11px] font-semibold tracking-wider ${len >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+        }
+      }
+      if (data.dressCode) {
+        activateCreateDressCode(data.dressCode);
+      } else {
+        deactivateCreateDressCode();
+      }
       if (dateInput) dateInput.value = data.date || data.startDate || '';
       if (startTimeInput) startTimeInput.value = data.startTime || '';
-      if (endTimeInput) endTimeInput.value = data.endTime || '';
       if (locationInput) locationInput.value = data.location || '';
       if (data.coordinates) {
         setCreateEventCoords(data.coordinates);
@@ -4285,9 +4747,10 @@
       }
 
       const title = document.getElementById('createEventNameInput')?.value.trim();
+      const description = document.getElementById('createEventDescInput')?.value.slice(0, 100) || '';
+      const dressCode = createDressCodeActive ? (document.getElementById('createEventDressCodeInput')?.value.trim().slice(0, 30) || '') : null;
       const date = document.getElementById('createEventDateInput')?.value || '';
       const startTime = document.getElementById('createEventStartTimeInput')?.value || '';
-      const endTime = document.getElementById('createEventEndTimeInput')?.value || '';
       const location = document.getElementById('createEventLocationInput')?.value.trim() || '';
 
       if (!title) {
@@ -4301,14 +4764,16 @@
         btn.setAttribute('disabled', 'true');
       }
 
-      const calculatedEndTimestamp = computeEventEndTimestamp(date, endTime, startTime);
+      const calculatedEndTimestamp = computeEventEndTimestamp(date, undefined, startTime);
 
       const eventPayload = {
         title: title,
+        description: description,
+        dressCode: dressCode,
         type: createPrivacyMode || 'public',
         date: date,
         startTime: startTime,
-        endTime: endTime,
+        endTime: null,
         endTimestamp: calculatedEndTimestamp,
         location: location,
         coordinates: createEventCoordinates || null,
@@ -4329,11 +4794,13 @@
           if (fbDb) {
             await fbDb.collection('events').doc(editingEventId).update({
               title: eventPayload.title,
+              description: eventPayload.description,
+              dressCode: eventPayload.dressCode,
               type: eventPayload.type,
               tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
               date: eventPayload.date,
               startTime: eventPayload.startTime,
-              endTime: eventPayload.endTime,
+              endTime: null,
               endTimestamp: calculatedEndTimestamp,
               location: eventPayload.location,
               coordinates: eventPayload.coordinates,
@@ -4368,9 +4835,11 @@
           eventsData.unshift({
             id: newEventId,
             title: eventPayload.title,
+            description: eventPayload.description,
+            dressCode: eventPayload.dressCode,
             subtitle: eventPayload.type === 'public' ? 'Evento Público' : 'Lista Exclusiva',
             dateDisplay: eventPayload.date,
-            timeRange: `${eventPayload.startTime} — ${eventPayload.endTime}`,
+            timeRange: eventPayload.startTime || '22:00',
             location: eventPayload.location,
             availabilityText: 'ÚLTIMOS CUPOS ·',
             imageUrl: eventPayload.imageUrl,
@@ -4478,7 +4947,8 @@
       if (!modal) return;
       modal.classList.remove('hidden');
 
-      const initial = createEventCoordinates || { lat: -16.5042, lng: -68.1294 };
+      const hasExplicitCoords = Boolean(createEventCoordinates && createEventCoordinates.lat && createEventCoordinates.lng);
+      const initial = hasExplicitCoords ? createEventCoordinates : { lat: -16.5042, lng: -68.1294 };
       tempPickerCoords = { ...initial };
 
       const existingInput = document.getElementById('createEventLocationInput')?.value.trim();
@@ -4490,6 +4960,11 @@
       if (coordsDisplay) coordsDisplay.innerText = `Lat: ${tempPickerCoords.lat.toFixed(5)} · Lng: ${tempPickerCoords.lng.toFixed(5)}`;
 
       initOrUpdateLocationMap();
+
+      // Ubicación actual por defecto al abrirse si no hay coordenadas guardadas
+      if (!hasExplicitCoords && navigator.geolocation) {
+        centerMapOnCurrentLocation();
+      }
     }
 
     function closeLocationPickerModal() {
@@ -6507,6 +6982,7 @@
     let html5QrCodeScanner = null;
     let scannerScanTimeout = null;
     let currentScannerEventId = null;
+    let testPassCheckInCount = 0;
 
     function triggerScannerHaptic(type) {
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
@@ -6522,7 +6998,7 @@
       }
     }
 
-    function setScannerFeedback(status, attendeeName) {
+    function setScannerFeedback(status, attendeeName, customMessage) {
       const fbBox = document.getElementById('scannerFeedbackBox');
       const glow = document.getElementById('scannerFlashGlowOverlay');
 
@@ -6531,24 +7007,27 @@
       }
 
       if (status === 'valid') {
+        const text = customMessage || (attendeeName ? `🟢 ACCESO AUTORIZADO · ${attendeeName}` : '🟢 ACCESO AUTORIZADO');
         if (fbBox) {
-          fbBox.innerHTML = `<div class="w-full bg-[#12C061] text-black font-display font-bold p-4 rounded-2xl text-center text-xl animate-bounce shadow-lg">🟢 ACCESO AUTORIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+          fbBox.innerHTML = `<div class="w-full bg-[#12C061] text-black font-display font-black p-4 rounded-2xl text-center text-lg sm:text-xl animate-bounce shadow-lg uppercase tracking-wide">${text}</div>`;
         }
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#12C061]/25 backdrop-blur-[2px] border-4 border-[#12C061] shadow-[inset_0_0_80px_rgba(18,192,97,0.6)] animate-flash-glow transition-all duration-300";
         }
         triggerScannerHaptic('success');
       } else if (status === 'used') {
+        const text = customMessage || (attendeeName ? `🔴 PASE YA UTILIZADO · ${attendeeName}` : '🔴 PASE YA UTILIZADO');
         if (fbBox) {
-          fbBox.innerHTML = `<div class="w-full bg-[#DC2626] text-white font-display font-bold p-4 rounded-2xl text-center text-xl animate-shake shadow-lg">🔴 PASE YA UTILIZADO${attendeeName ? ' · ' + attendeeName : ''}</div>`;
+          fbBox.innerHTML = `<div class="w-full bg-[#DC2626] text-white font-display font-black p-4 rounded-2xl text-center text-lg sm:text-xl animate-shake shadow-lg uppercase tracking-wide">${text}</div>`;
         }
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
         }
         triggerScannerHaptic('error');
       } else if (status === 'invalid') {
+        const text = customMessage || '⚠️ CÓDIGO NO VÁLIDO';
         if (fbBox) {
-          fbBox.innerHTML = `<div class="w-full bg-[#FAB205] text-black font-display font-bold p-4 rounded-2xl text-center text-xl shadow-lg">⚠️ CÓDIGO NO VÁLIDO</div>`;
+          fbBox.innerHTML = `<div class="w-full bg-[#FAB205] text-black font-display font-black p-4 rounded-2xl text-center text-lg sm:text-xl shadow-lg uppercase tracking-wide">${text}</div>`;
         }
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
@@ -6661,7 +7140,7 @@
 
         localStorage.setItem('plus1_active_door_event', targetEventId);
         currentScannerEventId = targetEventId;
-        setScannerFeedback('valid', 'MODO PUERTA ACTIVADO');
+        setScannerFeedback('valid', null, 'MODO PUERTA ACTIVADO');
         scheduleScannerResume();
         return;
       }
@@ -6677,7 +7156,16 @@
 
         // Soporte de prueba instantánea para pases de demostración / test
         if (passId === 'TEST_PASS_123' || passId === 'pass_default' || passId === 'pepe-birthday') {
-          setScannerFeedback('valid', 'INVITADO VIP (TEST)');
+          const testAttendee = 'INVITADO VIP (TEST)';
+          if (testPassCheckInCount === 0) {
+            testPassCheckInCount = 1;
+            setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 1/2 · ${testAttendee}`);
+          } else if (testPassCheckInCount === 1) {
+            testPassCheckInCount = 2;
+            setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO) · ${testAttendee}`);
+          } else {
+            setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2 INGRESADOS) · ${testAttendee}`);
+          }
           scheduleScannerResume();
           return;
         }
@@ -6689,17 +7177,50 @@
               setScannerFeedback('invalid');
             } else {
               const passData = passSnap.data();
-              const attendeeName = passData.holderName || passData.userName || 'Invitado';
-              if (passData.status === 'used') {
-                setScannerFeedback('used', attendeeName);
-              } else if (passData.status === 'active' || passData.status === 'confirmed') {
-                await fbDb.collection('passes').doc(passId).update({
-                  status: 'used',
-                  checkedInAt: Date.now()
-                });
-                setScannerFeedback('valid', attendeeName);
+              const attendeeName = (passData.holderName || passData.userName || 'Invitado')
+                .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+                .trim();
+              const allowsPlusOne = Boolean(passData.allowsPlusOne ?? passData.withPlusOne ?? passData.allowPlusOne ?? (passData.companionsCount && passData.companionsCount > 0));
+              const currentCount = typeof passData.checkInCount === 'number'
+                ? passData.checkInCount
+                : (passData.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0);
+
+              if (allowsPlusOne) {
+                if (currentCount === 0 && passData.status !== 'used') {
+                  // Primer escaneo (checkInCount === 0):
+                  // Incrementa checkInCount a 1, mantiene status: 'active'
+                  await fbDb.collection('passes').doc(passId).update({
+                    checkInCount: 1,
+                    checkedInAt: Date.now()
+                  });
+                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 1/2 · ${attendeeName}`);
+                } else if (currentCount === 1 && passData.status !== 'used') {
+                  // Segundo escaneo (checkInCount === 1):
+                  // Incrementa checkInCount a 2, cambia status: 'used'
+                  await fbDb.collection('passes').doc(passId).update({
+                    checkInCount: 2,
+                    status: 'used',
+                    lastCheckedInAt: Date.now()
+                  });
+                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO) · ${attendeeName}`);
+                } else {
+                  // Tercer escaneo o posterior (checkInCount >= 2 o status === 'used')
+                  setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2 INGRESADOS) · ${attendeeName}`);
+                }
               } else {
-                setScannerFeedback('invalid');
+                // Individual (allowsPlusOne: false o indefinido)
+                if (passData.status === 'used' || currentCount >= 1) {
+                  setScannerFeedback('used', null, `🔴 PASE YA UTILIZADO · ${attendeeName}`);
+                } else if (passData.status === 'active' || passData.status === 'confirmed') {
+                  await fbDb.collection('passes').doc(passId).update({
+                    status: 'used',
+                    checkInCount: 1,
+                    checkedInAt: Date.now()
+                  });
+                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INDIVIDUAL · ${attendeeName}`);
+                } else {
+                  setScannerFeedback('invalid');
+                }
               }
             }
           } catch (e) {
@@ -6712,7 +7233,7 @@
       }
 
       // 3. Fallback / Validación estándar
-      setScannerFeedback('valid', 'PASE VERIFICADO');
+      setScannerFeedback('valid', null, 'PASE VERIFICADO');
       scheduleScannerResume();
     }
 
@@ -6754,6 +7275,329 @@
           console.warn('Error al detener Html5Qrcode:', e);
         }
       }
+    }
+
+    // ==========================================
+    // BUSCADOR DE EMERGENCIA / CHECK-IN MANUAL (ManualCheckInModal)
+    // ==========================================
+    let manualPassesCache = [];
+    let manualPassesUnsubscribe = null;
+
+    const DEMO_MANUAL_PASSES_HTML = [
+      {
+        id: 'TEST_PASS_123',
+        holderName: 'INVITADO VIP (TEST)',
+        ticketId: '#1JLXM',
+        listType: 'VIP',
+        allowsPlusOne: true,
+        status: 'active',
+        checkInCount: 0,
+        checkedInAt: null,
+      },
+      {
+        id: 'pepe-birthday',
+        holderName: 'PEPE RODRÍGUEZ',
+        ticketId: '#PEP77',
+        listType: 'VIP',
+        allowsPlusOne: true,
+        status: 'active',
+        checkInCount: 1,
+        checkedInAt: Date.now() - 1500000,
+      },
+      {
+        id: 'pass_sofia',
+        holderName: 'SOFÍA GÓMEZ',
+        ticketId: '#SOF99',
+        listType: 'GENERAL',
+        allowsPlusOne: false,
+        status: 'used',
+        checkInCount: 1,
+        checkedInAt: Date.now() - 3600000,
+      },
+      {
+        id: 'pass_mateo',
+        holderName: 'MATEO MORALES',
+        ticketId: '#MAT01',
+        listType: 'VIP',
+        allowsPlusOne: false,
+        status: 'active',
+        checkInCount: 0,
+        checkedInAt: null,
+      },
+      {
+        id: 'pass_lucia',
+        holderName: 'LUCÍA FERNÁNDEZ',
+        ticketId: '#LUC42',
+        listType: 'VIP',
+        allowsPlusOne: true,
+        status: 'active',
+        checkInCount: 0,
+        checkedInAt: null,
+      }
+    ];
+
+    function openManualCheckInModal() {
+      if (html5QrCodeScanner) {
+        try { html5QrCodeScanner.pause(); } catch (e) {}
+      }
+
+      const modal = document.getElementById('manualCheckInModalView');
+      if (modal) modal.classList.remove('hidden');
+
+      const searchInput = document.getElementById('manualCheckInSearchInput');
+      if (searchInput) {
+        searchInput.value = '';
+        setTimeout(() => searchInput.focus(), 150);
+      }
+      const clearBtn = document.getElementById('manualCheckInClearBtn');
+      if (clearBtn) clearBtn.classList.add('hidden');
+
+      loadManualCheckInPasses();
+    }
+
+    function closeManualCheckInModal() {
+      const modal = document.getElementById('manualCheckInModalView');
+      if (modal) modal.classList.add('hidden');
+
+      if (manualPassesUnsubscribe) {
+        manualPassesUnsubscribe();
+        manualPassesUnsubscribe = null;
+      }
+
+      if (html5QrCodeScanner) {
+        try { html5QrCodeScanner.resume(); } catch (e) {}
+      }
+    }
+
+    function clearManualCheckInSearch() {
+      const searchInput = document.getElementById('manualCheckInSearchInput');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      const clearBtn = document.getElementById('manualCheckInClearBtn');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      filterManualCheckInList();
+    }
+
+    function loadManualCheckInPasses() {
+      manualPassesCache = [...DEMO_MANUAL_PASSES_HTML];
+      renderManualCheckInList(manualPassesCache);
+
+      if (fbDb) {
+        try {
+          let ref = fbDb.collection('passes');
+          if (currentScannerEventId) {
+            ref = ref.where('eventId', '==', currentScannerEventId);
+          } else {
+            ref = ref.limit(60);
+          }
+
+          if (manualPassesUnsubscribe) manualPassesUnsubscribe();
+          manualPassesUnsubscribe = ref.onSnapshot((snapshot) => {
+            if (snapshot && !snapshot.empty) {
+              const live = [];
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                const cleanHolder = (data.holderName || data.userName || 'Invitado')
+                  .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+                  .trim();
+                const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
+                const checkInCount = typeof data.checkInCount === 'number'
+                  ? data.checkInCount
+                  : (data.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0);
+
+                live.push({
+                  id: doc.id,
+                  eventId: data.eventId,
+                  holderName: cleanHolder,
+                  ticketId: data.ticketId || '#' + doc.id.slice(0, 5).toUpperCase(),
+                  listType: data.listType || 'VIP',
+                  allowsPlusOne: allowsPlusOne,
+                  status: data.status || 'active',
+                  checkInCount: checkInCount,
+                  checkedInAt: data.checkedInAt || data.usedAt || null
+                });
+              });
+
+              // Mantener los de test para pruebas instantáneas
+              const hasTest = live.some(p => p.id === 'TEST_PASS_123');
+              manualPassesCache = hasTest ? live : [...DEMO_MANUAL_PASSES_HTML, ...live];
+              filterManualCheckInList();
+            }
+          }, (err) => console.warn('Error fetching manual check in passes:', err));
+        } catch (e) {
+          console.warn('Error iniciando escucha manual:', e);
+        }
+      }
+    }
+
+    function normalizeSearchText(t) {
+      return (t || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function filterManualCheckInList() {
+      const searchInput = document.getElementById('manualCheckInSearchInput');
+      const clearBtn = document.getElementById('manualCheckInClearBtn');
+      const val = searchInput ? searchInput.value : '';
+
+      if (clearBtn) {
+        if (val) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+      }
+
+      const clean = normalizeSearchText(val);
+      if (!clean) {
+        renderManualCheckInList(manualPassesCache);
+        return;
+      }
+
+      const filtered = manualPassesCache.filter((pass) => {
+        const nameMatch = normalizeSearchText(pass.holderName).includes(clean);
+        const idMatch = normalizeSearchText(pass.id).includes(clean);
+        const codeMatch = normalizeSearchText(pass.ticketId).replace('#', '').includes(clean.replace('#', ''));
+        return nameMatch || idMatch || codeMatch;
+      });
+
+      renderManualCheckInList(filtered);
+    }
+
+    function formatManualTime(ts) {
+      if (!ts) return '23:30';
+      const d = new Date(ts);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderManualCheckInList(passes) {
+      const container = document.getElementById('manualCheckInListContainer');
+      const badge = document.getElementById('manualCheckInCountBadge');
+      if (badge) {
+        badge.innerText = `${passes.length} ${passes.length === 1 ? 'PASE' : 'PASES'}`;
+      }
+      if (!container) return;
+
+      if (!passes || passes.length === 0) {
+        container.innerHTML = `
+          <div class="h-64 flex flex-col items-center justify-center text-center p-6 bg-[#16171B]/50 border border-dashed border-[#26282E] rounded-3xl mt-4">
+            <span class="text-3xl mb-2">🔍</span>
+            <p class="font-display text-white text-base font-bold uppercase tracking-wider">NO SE ENCONTRARON PASES</p>
+            <p class="font-sans text-xs text-[#8E8E93] mt-1 max-w-[240px]">Verifica el nombre o los caracteres del código del boleto.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = passes.map((pass) => {
+        const isFullyEntered = pass.status === 'used' && (pass.checkInCount >= (pass.allowsPlusOne ? 2 : 1) || !pass.allowsPlusOne);
+        const isPartialEntered = pass.allowsPlusOne && pass.checkInCount === 1 && pass.status !== 'used';
+
+        let statusBadgeHtml = '';
+        if (isFullyEntered) {
+          statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/20 px-2.5 py-1 rounded-full uppercase">🔴 INGRESÓ ${pass.checkedInAt ? 'A LAS ' + formatManualTime(pass.checkedInAt) : ''}</span>`;
+        } else if (isPartialEntered) {
+          statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/20 px-2.5 py-1 rounded-full uppercase">🟡 INGRESÓ 1/2</span>`;
+        } else {
+          statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#12C061] bg-[#12C061]/10 border border-[#12C061]/20 px-2.5 py-1 rounded-full uppercase">🟢 PENDIENTE DE INGRESO</span>`;
+        }
+
+        let buttonsHtml = '';
+        if (isFullyEntered) {
+          buttonsHtml = `<div class="w-full py-2 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-center text-xs font-sans text-neutral-500 font-semibold uppercase tracking-wider">PASE AGOTADO (ACCESO COMPLETADO)</div>`;
+        } else if (!pass.allowsPlusOne) {
+          buttonsHtml = `
+            <button onclick="executeManualCheckIn('${pass.id}', 1)" class="w-full py-2.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa653] text-black font-display text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-1.5 transition-transform active:scale-95 shadow-md cursor-pointer focus:outline-none">
+              <span>🟢</span>
+              <span>ADMITIR</span>
+            </button>
+          `;
+        } else {
+          buttonsHtml = `
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="executeManualCheckIn('${pass.id}', 1)" class="py-2.5 px-2 rounded-xl bg-white hover:bg-neutral-200 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-1 transition-transform active:scale-95 shadow cursor-pointer focus:outline-none truncate">
+                <span>👤</span>
+                <span class="truncate">ENTRA SOLO (1)</span>
+              </button>
+              <button onclick="executeManualCheckIn('${pass.id}', 2)" class="py-2.5 px-2 rounded-xl bg-[#12C061] hover:bg-[#0fa653] text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-1 transition-transform active:scale-95 shadow cursor-pointer focus:outline-none truncate">
+                <span>👥</span>
+                <span class="truncate">ENTRAN AMBOS (2)</span>
+              </button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-3.5 flex flex-col gap-3 shadow-md hover:border-neutral-700 transition-colors">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex-1 min-w-0">
+                <h3 class="font-display text-white text-base sm:text-lg font-black tracking-wide uppercase truncate leading-tight">
+                  ${escapeHtmlAttr(pass.holderName)}
+                </h3>
+                <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                  <span class="font-mono text-xs font-bold text-neutral-300">${pass.ticketId}</span>
+                  <span class="text-neutral-600">·</span>
+                  <span class="font-display text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15">${pass.listType}</span>
+                  ${pass.allowsPlusOne ? '<span class="font-display text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#fe97de]/15 border border-[#fe97de]/30 text-[#fe97de]">👥 +1 PERMITIDO</span>' : ''}
+                </div>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                ${statusBadgeHtml}
+              </div>
+            </div>
+            <div class="w-full pt-1">
+              ${buttonsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function executeManualCheckIn(passId, count) {
+      const now = Date.now();
+      const targetPass = manualPassesCache.find(p => p.id === passId);
+      const name = targetPass ? targetPass.holderName : 'Invitado';
+
+      // 1. Háptico
+      triggerScannerHaptic('success');
+
+      // 2. Toast
+      const toast = document.getElementById('manualCheckInToast');
+      const toastText = document.getElementById('manualCheckInToastText');
+      if (toast && toastText) {
+        toastText.innerText = `INGRESO CONFIRMADO: ${name}`;
+        toast.classList.remove('hidden');
+      }
+
+      // 3. Actualizar memoria local
+      if (targetPass) {
+        targetPass.status = 'used';
+        targetPass.checkInCount = count;
+        targetPass.checkedInAt = now;
+        filterManualCheckInList();
+      }
+
+      // 4. Actualizar Firestore
+      if (fbDb && passId) {
+        try {
+          await fbDb.collection('passes').doc(passId).update({
+            status: 'used',
+            checkInCount: count,
+            checkedInAt: now,
+            lastCheckedInAt: now
+          });
+        } catch (e) {
+          console.warn('Actualización Firestore pase manual:', e);
+        }
+      }
+
+      // 5. Cierra el modal y retorna al visor tras 1.2s
+      setTimeout(() => {
+        if (toast) toast.classList.add('hidden');
+        closeManualCheckInModal();
+      }, 1200);
     }
 
     // ==========================================
