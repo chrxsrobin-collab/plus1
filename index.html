@@ -2750,7 +2750,6 @@
                   if (data && data.photoUrl) {
                     updateUserAvatarDom(data.photoUrl);
                   }
-                  currentUserFollowing = (data && Array.isArray(data.following)) ? data.following : [];
                   updatePartnerBadgeDom(Boolean(data && data.isPartner));
                   if (data && data.onboardingCompleted === true) {
                     closeOnboardingScreen();
@@ -2758,7 +2757,6 @@
                     openOnboardingScreen();
                   }
                 } else {
-                  currentUserFollowing = [];
                   updateUserNameDom(defaultName);
                   if (user.photoURL) updateUserAvatarDom(user.photoURL);
                   updatePartnerBadgeDom(false);
@@ -3034,16 +3032,6 @@
                 route: '/passes',
                 vipCutoffTime: d.vipCutoffTime || null
               });
-            });
-          }
-          if (currentUserFollowing && currentUserFollowing.length > 0) {
-            const followSet = new Set(currentUserFollowing);
-            liveEvents.sort((a, b) => {
-              const aF = a.hostUserId && followSet.has(a.hostUserId);
-              const bF = b.hostUserId && followSet.has(b.hostUserId);
-              if (aF && !bF) return -1;
-              if (!aF && bF) return 1;
-              return 0;
             });
           }
           isLoadingEvents = false;
