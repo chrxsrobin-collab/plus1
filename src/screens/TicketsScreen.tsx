@@ -27,7 +27,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Consulta reactiva estricta a Firestore: Solo pases con status == 'active' del usuario actual
+  // Consulta reactiva estricta a Firestore: pases activos / confirmados / aprobados del usuario actual
   useEffect(() => {
     if (!auth.currentUser) {
       setIsLoading(false);
@@ -36,14 +36,14 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
 
     const q = query(
       collection(db, 'passes'),
-      where('userId', '==', auth.currentUser.uid),
-      where('status', '==', 'active')
+      where('userId', '==', auth.currentUser.uid)
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const passes: PassItem[] = snapshot.docs.map((doc) => {
+        const passes: PassItem[] = snapshot.docs
+          .map((doc) => {
           const data = doc.data();
           const rawHolderName = (
             data.rawHolderName ||
@@ -96,7 +96,10 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
             qrCodeValue: data.qrCodeValue || doc.id,
             ...data,
           };
-        });
+        })
+        .filter((p) =>
+          ['active', 'confirmed', 'approved', 'accepted'].includes(p.status)
+        );
 
         setActivePasses(passes);
         setIsLoading(false);
@@ -220,46 +223,54 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
       if (auth.currentUser) {
         const q = query(
           collection(db, 'passes'),
-          where('userId', '==', auth.currentUser.uid),
-          where('status', '==', 'active')
+          where('userId', '==', auth.currentUser.uid)
         );
         const snap = await getDocs(q);
-        const refreshedPasses: PassItem[] = snap.docs.map((d) => {
-          const data = d.data();
-          const rawHolderName = (
-            data.rawHolderName ||
-            data.userName ||
-            data.holderName ||
-            auth.currentUser?.displayName ||
-            'INVITADO'
-          )
-            .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
-            .trim();
+        const refreshedPasses: PassItem[] = snap.docs
+          .map((d) => {
+            const data = d.data();
+            const rawHolderName = (
+              data.rawHolderName ||
+              data.userName ||
+              data.holderName ||
+              auth.currentUser?.displayName ||
+              'INVITADO'
+            )
+              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+              .trim();
 
-          const allowsPlusOne = Boolean(
-            data.allowsPlusOne ??
-              data.withPlusOne ??
-              data.allowPlusOne ??
-              false
+            const allowsPlusOne = Boolean(
+              data.allowsPlusOne ??
+                data.withPlusOne ??
+                data.allowPlusOne ??
+                false
+            );
+
+            return {
+              id: d.id,
+              eventId: data.eventId || '',
+              eventName: data.eventName || data.eventTitle || 'EVENTO +1',
+              title: data.eventName || data.eventTitle || 'EVENTO +1',
+              eventDate: data.eventDate || 'PRÓXIMAMENTE',
+              dateStr: data.eventDate || 'PRÓXIMAMENTE',
+              eventTime: data.eventTime || data.timeRange || '22:00',
+              timeStr: data.eventTime || data.timeRange || '22:00',
+              eventLocation: data.eventLocation || data.location || 'UBICACIÓN RESERVADA',
+              location: data.eventLocation || data.location || 'UBICACIÓN RESERVADA',
+              holderName: rawHolderName,
+              status: (data.status || 'active') as any,
+              qrCodeData: data.qrCodeData || data.qrCode || `PLUS1-PASS-${d.id}`,
+              qrCodeValue: data.qrCodeValue || data.qrCodeData || d.id,
+              ticketType: allowsPlusOne ? '+1 VIP PASS' : 'VIP PASS INDIVIDUAL',
+              allowsPlusOne,
+              imageUrl: data.imageUrl || data.eventImage || undefined,
+              checkInCode: data.checkInCode || d.id.slice(0, 6).toUpperCase(),
+            };
+          })
+          .filter((p) =>
+            ['active', 'confirmed', 'approved', 'accepted'].includes(p.status)
           );
-
-          return {
-            id: d.id,
-            eventId: data.eventId || '',
-            eventName: data.eventName || data.eventTitle || 'EVENTO +1',
-            eventDate: data.eventDate || 'PRÓXIMAMENTE',
-            eventTime: data.eventTime || data.timeRange || '22:00',
-            eventLocation: data.eventLocation || data.location || 'UBICACIÓN RESERVADA',
-            holderName: rawHolderName,
-            status: data.status || 'active',
-            qrCodeData: data.qrCodeData || data.qrCode || `PLUS1-PASS-${d.id}`,
-            ticketType: allowsPlusOne ? '+1 VIP PASS' : 'VIP PASS INDIVIDUAL',
-            allowsPlusOne,
-            imageUrl: data.imageUrl || data.eventImage || undefined,
-            checkInCode: data.checkInCode || d.id.slice(0, 6).toUpperCase(),
-          };
-        });
-        setUserPasses(refreshedPasses);
+        setActivePasses(refreshedPasses);
       }
       showToast('Pases actualizados');
     } catch (err) {

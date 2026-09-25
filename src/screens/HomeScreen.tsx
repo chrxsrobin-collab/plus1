@@ -663,8 +663,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const handleScanQr = async () => {
     const currentUserId = auth.currentUser?.uid;
     if (!currentUserId) {
-      // Usuario no autenticado -> No abrir cámara ni pedir permisos
-      setIsModalOpen(true);
+      handleNavigate('/scanner');
       return;
     }
 
@@ -720,20 +719,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         ...staffEvents.filter((se) => !hostEvents.some((he) => he.id === se.id)),
       ];
 
-      if (allAuthorizedEvents.length === 0) {
-        // CASO A: EL USUARIO NO TIENE EVENTOS COMO HOST NI COMO STAFF
-        // No intentes abrir la cámara ni pidas permisos de video
-        setIsModalOpen(true);
-      } else if (allAuthorizedEvents.length === 1) {
-        // CASO B: EL USUARIO TIENE EXACTAMENTE 1 EVENTO HABILITADO
-        handleNavigate(`/scanner?eventId=${allAuthorizedEvents[0].id}`);
-      } else {
-        // CASO C: TIENE MÁS DE 1 EVENTO
+      if (allAuthorizedEvents.length > 1) {
+        // Múltiples eventos: selector
         setHostEventsToScan(allAuthorizedEvents);
         setIsSelectEventSheetOpen(true);
+      } else if (allAuthorizedEvents.length === 1) {
+        // Exactamente 1 evento habilitado
+        handleNavigate(`/scanner?eventId=${allAuthorizedEvents[0].id}`);
+      } else {
+        // Escáner de cámara directo
+        handleNavigate('/scanner');
       }
     } catch {
-      setIsModalOpen(true);
+      handleNavigate('/scanner');
     }
   };
 
@@ -747,6 +745,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     resetHideTimer();
     if (tab === 'passes') {
       handleNavigate('/passes');
+    } else if (tab === 'scanner') {
+      handleScanQr();
     } else if (tab === 'search') {
       setIsSearchOpen(true);
     }

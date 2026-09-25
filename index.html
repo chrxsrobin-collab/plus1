@@ -286,10 +286,10 @@
         </svg>
       </button>
 
-      <!-- Buscar / Lupa -->
-      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); openSearchEventsModal()" aria-label="Buscar eventos">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      <!-- Escanear QR / Cámara -->
+      <button class="p-1 text-neutral-400 hover:text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none cursor-pointer" onclick="event.stopPropagation(); openScannerScreen()" aria-label="Escanear QR">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
         </svg>
       </button>
     </nav>
@@ -8719,15 +8719,14 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    // Validación de eventos activos antes de abrir el escáner (Anfitrión o Staff de Puerta)
+    // Apertura del escáner de cámara QR (Anfitrión, Staff o validación de pases)
     async function handleScanQrButtonClick() {
-      if (!fbCurrentUser) {
-        // Usuario no autenticado -> No intentar abrir cámara ni pedir permisos
-        openDoorModal();
-        return;
-      }
-
       try {
+        if (!fbCurrentUser) {
+          openScannerScreen();
+          return;
+        }
+
         // 1. Eventos creados por el usuario (Anfitrión)
         const snap = await fbDb.collection('events').where('hostUserId', '==', fbCurrentUser.uid).get();
         const hostEvents = [];
@@ -8778,19 +8777,19 @@
           ...staffEvents.filter(se => !hostEvents.some(he => he.id === se.id))
         ];
 
-        if (allAuthorizedEvents.length === 0) {
-          // CASO A: EL USUARIO NO TIENE EVENTOS COMO HOST NI COMO STAFF
-          openDoorModal();
+        if (allAuthorizedEvents.length > 1) {
+          // Si tiene múltiples eventos, dar opción de elegir
+          openSelectEventToScanModal(allAuthorizedEvents);
         } else if (allAuthorizedEvents.length === 1) {
-          // CASO B: EL USUARIO TIENE EXACTAMENTE 1 EVENTO
+          // Exactamente 1 evento
           openScannerScreen(allAuthorizedEvents[0].id, allAuthorizedEvents[0].title);
         } else {
-          // CASO C: EL USUARIO TIENE MÁS DE 1 EVENTO
-          openSelectEventToScanModal(allAuthorizedEvents);
+          // Escáner directo de cámara para lectura general de pases
+          openScannerScreen();
         }
       } catch (err) {
-        console.warn('Error consultando eventos para escanear:', err);
-        openDoorModal();
+        console.warn('Iniciando escáner en modo directo:', err);
+        openScannerScreen();
       }
     }
 
@@ -8871,6 +8870,14 @@
       if (screen) screen.classList.remove('hidden');
 
       setScannerFeedback(null);
+
+      if (!window.Html5Qrcode) {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        s.onload = () => openScannerScreen(eventId, eventTitle);
+        document.head.appendChild(s);
+        return;
+      }
 
       if (window.Html5Qrcode) {
         try {

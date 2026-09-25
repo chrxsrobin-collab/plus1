@@ -169,7 +169,7 @@ export interface NotificationItem {
   };
 }
 
-export type TabType = 'home' | 'passes' | 'search';
+export type TabType = 'home' | 'passes' | 'scanner' | 'search';
 
 export interface CreateEventFormData {
   artImage?: string | null;

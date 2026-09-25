@@ -59,24 +59,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </svg>
         </button>
 
-        {/* 3. Buscar (Lupa) */}
+        {/* 3. Escanear QR / Cámara */}
         <button
-          onClick={() => onTabSelect('search')}
-          aria-label="Buscar eventos"
-          className="p-2 flex flex-col items-center justify-center transition-transform hover:scale-110 focus:outline-none"
+          onClick={() => onTabSelect('scanner')}
+          aria-label="Escanear QR"
+          className="p-2 flex flex-col items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none"
         >
           <svg
-            className={"w-6 h-6 " + (activeTab === 'search' ? "text-white" : "text-neutral-400")}
-            fill="none"
-            stroke="currentColor"
+            className={"w-6 h-6 " + (activeTab === 'scanner' ? "text-white" : "text-neutral-500")}
+            fill="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2.5}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
+            <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
           </svg>
         </button>
       </motion.nav>
@@ -147,24 +141,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         </svg>
       </button>
 
-      {/* 3. Buscar (Lupa) */}
+      {/* 3. Escanear QR / Cámara */}
       <button
-        onClick={() => onTabSelect('search')}
-        aria-label="Buscar eventos"
+        onClick={() => onTabSelect('scanner')}
+        aria-label="Escanear QR"
         className="p-1 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 focus:outline-none"
       >
         <svg
-          className={"w-5 h-5 transition-colors " + (activeTab === 'search' ? "text-white" : "text-neutral-500 hover:text-neutral-300")}
-          fill="none"
-          stroke="currentColor"
+          className={"w-5 h-5 fill-current transition-colors " + (activeTab === 'scanner' ? "text-white" : "text-neutral-500 hover:text-neutral-300")}
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2.5}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
+          <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
         </svg>
       </button>
     </motion.nav>

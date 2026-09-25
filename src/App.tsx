@@ -124,11 +124,10 @@ export const App: React.FC = () => {
           }
         }, () => {});
 
-        // Escucha en tiempo real de los pases del usuario en la colección 'passes' (estrictamente activos)
+        // Escucha en tiempo real de los pases del usuario en la colección 'passes'
         const passesQuery = query(
           collection(db, 'passes'),
-          where('userId', '==', user.uid),
-          where('status', '==', 'active')
+          where('userId', '==', user.uid)
         );
         unsubPasses = onSnapshot(passesQuery, (snapshot) => {
           const ticketsList: PassItem[] = snapshot.docs
@@ -182,7 +181,7 @@ export const App: React.FC = () => {
                 qrCodeValue: data.qrCodeValue || d.id,
               };
             })
-            .filter((p) => p.status === 'active');
+            .filter((p) => ['active', 'confirmed', 'approved', 'accepted'].includes(p.status));
           setUserTickets(ticketsList);
         }, () => {});
       }
