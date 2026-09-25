@@ -22,85 +22,87 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
   onBack,
   onNavigate,
 }) => {
-  const [userPasses, setUserPasses] = useState<PassItem[]>(() => {
-    return (propTickets || []).filter((t) => t.status === 'active');
-  });
+  const [activePasses, setActivePasses] = useState<PassItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Consulta reactiva estricta a Firestore: Solo pases con status == 'active'
+  // Consulta reactiva estricta a Firestore: Solo pases con status == 'active' del usuario actual
   useEffect(() => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      setIsLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, 'passes'),
       where('userId', '==', auth.currentUser.uid),
-      where('status', '==', 'active') // Solo pases aprobados
+      where('status', '==', 'active')
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const activePasses: PassItem[] = snapshot.docs
-          .map((d) => {
-            const data = d.data();
-            const rawHolderName = (
-              data.rawHolderName ||
-              data.userName ||
-              data.holderName ||
-              auth.currentUser?.displayName ||
-              'INVITADO'
-            )
-              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
-              .trim();
+        const passes: PassItem[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          const rawHolderName = (
+            data.rawHolderName ||
+            data.userName ||
+            data.holderName ||
+            auth.currentUser?.displayName ||
+            'INVITADO'
+          )
+            .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+            .trim();
 
-            const allowsPlusOne = Boolean(
-              data.allowsPlusOne ??
-                data.withPlusOne ??
-                data.allowPlusOne ??
-                false
-            );
+          const allowsPlusOne = Boolean(
+            data.allowsPlusOne ??
+              data.withPlusOne ??
+              data.allowPlusOne ??
+              false
+          );
 
-            const eventImg =
-              data.eventImageUrl ||
-              data.imageUrl ||
-              data.artImage ||
-              data.flyerImage ||
-              '';
+          const eventImg =
+            data.eventImageUrl ||
+            data.imageUrl ||
+            data.artImage ||
+            data.flyerImage ||
+            '';
 
-            const eventName = data.eventTitle || data.title || 'EVENTO +1';
+          const eventName = data.eventTitle || data.title || 'EVENTO +1';
 
-            return {
-              id: d.id,
-              eventId: data.eventId,
-              eventTitle: eventName,
-              eventImageUrl: eventImg,
-              title: eventName,
-              emoji: '',
-              dateStr: data.eventDate || data.dateStr || 'PRÓXIMAMENTE',
-              timeStr: data.eventTime || data.timeStr || '22:00',
-              location: data.eventLocation || data.location || 'CLUB OFICIAL +1',
-              status: 'active' as const,
-              statusText: 'PASE ACTIVO',
-              companionsCount: allowsPlusOne ? 1 : 0,
-              allowsPlusOne,
-              withPlusOne: allowsPlusOne,
-              accentBorderColor: '#12C061',
-              holderName: rawHolderName,
-              listType: 'VIP',
-              ticketId: '#' + d.id.slice(0, 5).toUpperCase(),
-              verifiedProvider: 'VERIFICADO CON GOOGLE',
-              feedbackMessage: data.feedbackMessage,
-              imageUrl: eventImg,
-              qrCodeValue: data.qrCodeValue || d.id,
-            };
-          })
-          .filter((p) => p.status === 'active'); // Regla estricta: solo active
+          return {
+            id: doc.id,
+            eventId: data.eventId,
+            eventTitle: eventName,
+            eventImageUrl: eventImg,
+            title: eventName,
+            emoji: '',
+            dateStr: data.eventDate || data.dateStr || 'PRÓXIMAMENTE',
+            timeStr: data.eventTime || data.timeStr || '22:00',
+            location: data.eventLocation || data.location || 'CLUB OFICIAL +1',
+            status: 'active' as const,
+            statusText: 'PASE ACTIVO',
+            companionsCount: allowsPlusOne ? 1 : 0,
+            allowsPlusOne,
+            withPlusOne: allowsPlusOne,
+            accentBorderColor: '#12C061',
+            holderName: rawHolderName,
+            listType: 'VIP',
+            ticketId: '#' + doc.id.slice(0, 5).toUpperCase(),
+            verifiedProvider: 'VERIFICADO CON GOOGLE',
+            feedbackMessage: data.feedbackMessage,
+            imageUrl: eventImg,
+            qrCodeValue: data.qrCodeValue || doc.id,
+            ...data,
+          };
+        });
 
-        setUserPasses(activePasses);
+        setActivePasses(passes);
+        setIsLoading(false);
 
         // Auto-resolución en segundo plano si algún pase no tenía flyer guardado
-        activePasses.forEach(async (pass) => {
+        passes.forEach(async (pass) => {
           if (!pass.eventImageUrl && pass.eventId) {
             try {
               const evSnap = await getDoc(doc(db, 'events', pass.eventId));
@@ -109,7 +111,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
                 const flyerUrl =
                   evData.imageUrl || evData.artImage || evData.flyerImage || '';
                 if (flyerUrl) {
-                  setUserPasses((prev) =>
+                  setActivePasses((prev) =>
                     prev.map((p) =>
                       p.id === pass.id
                         ? { ...p, eventImageUrl: flyerUrl, imageUrl: flyerUrl }
@@ -124,42 +126,35 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
           }
         });
       },
-      () => {}
+      (error) => {
+        console.error('[TicketsScreen] Error en snapshot de pases activos:', error);
+        setIsLoading(false);
+      }
     );
 
     return () => unsubscribe();
   }, [auth.currentUser]);
 
-  // Si propTickets cambia externamente, filtrar estrictamente activos
-  useEffect(() => {
-    if (propTickets && propTickets.length > 0) {
-      const filtered = propTickets.filter((t) => t.status === 'active');
-      if (filtered.length > 0) {
-        setUserPasses(filtered);
-      }
-    }
-  }, [propTickets]);
-
   // Si se pasa un passId específico, auto-enfocar ese ticket en el carrusel
   useEffect(() => {
-    if (initialPassId && userPasses.length > 0) {
-      const idx = userPasses.findIndex(
+    if (initialPassId && activePasses.length > 0) {
+      const idx = activePasses.findIndex(
         (t) => t.id === initialPassId || t.eventId === initialPassId
       );
       if (idx !== -1) {
         setCurrentIndex(idx);
       }
     }
-  }, [initialPassId, userPasses]);
+  }, [initialPassId, activePasses]);
 
   // Asegurar que el índice no supere el límite de pases disponibles
   useEffect(() => {
-    if (currentIndex >= userPasses.length && userPasses.length > 0) {
-      setCurrentIndex(userPasses.length - 1);
+    if (currentIndex >= activePasses.length && activePasses.length > 0) {
+      setCurrentIndex(activePasses.length - 1);
     }
-  }, [userPasses.length, currentIndex]);
+  }, [activePasses.length, currentIndex]);
 
-  const tickets = userPasses;
+  const tickets = activePasses;
   const activeTicket = tickets[currentIndex] || tickets[0] || null;
 
   const showToast = (msg: string) => {
@@ -310,7 +305,7 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
               MIS TICKETS
             </h1>
             <span className="font-sans text-[11px] text-[#8E8E93] tracking-wider uppercase font-semibold mt-0.5">
-              {userPasses.length} {userPasses.length === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}
+              {activePasses.length} {activePasses.length === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}
             </span>
           </div>
 
@@ -319,7 +314,14 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
         </header>
 
         {/* 2. CARRUSEL 3D COVER FLOW O ESTADO VACÍO */}
-        {userPasses.length === 0 ? (
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center my-auto py-12">
+            <div className="w-8 h-8 border-2 border-[#E87A72] border-t-transparent rounded-full animate-spin mb-3" />
+            <span className="font-sans text-xs text-neutral-400 font-semibold tracking-wider uppercase">
+              Cargando tus pases...
+            </span>
+          </div>
+        ) : activePasses.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

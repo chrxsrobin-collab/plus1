@@ -372,7 +372,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   const feedback = actionFeedback[notif.id] || notif.actionTaken;
                   const isRead = notif.isRead || notif.read || feedback;
                   const isVipRequest = notif.type === 'VIP_REQUEST';
-                  const isVipApproved = notif.type === 'VIP_APPROVED' || notif.type === 'vip_approved';
+                  const isVipApproved = notif.type === 'VIP_APPROVED' || notif.type === 'vip_approved' || (notif.type as string) === 'request_approved';
+                  const isPurchaseSuccess = (notif.type as string) === 'purchase_success' || (notif.type as string) === 'ticket_purchased';
                   const isVipDeclined = notif.type === 'VIP_DECLINED' || (notif.type as string) === 'capacity_reached';
 
                   return (
@@ -437,11 +438,26 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                           )
                         )}
 
-                        {isVipApproved && (
-                          <div className="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
-                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                            </svg>
+                        {(isVipApproved || isPurchaseSuccess) && (
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
+                            {notif.eventImageUrl ? (
+                              <img
+                                src={notif.eventImageUrl}
+                                alt={notif.eventTitle || 'Evento'}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-[#1E2025] text-white font-display font-black text-sm tracking-wider uppercase p-1">
+                                {notif.eventTitle
+                                  ? notif.eventTitle
+                                      .split(/\s+/)
+                                      .slice(0, 2)
+                                      .map((w) => w[0])
+                                      .join('')
+                                      .toUpperCase() || '+1'
+                                  : '+1'}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -538,8 +554,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                           </div>
                         )}
 
-                        {/* ACCIÓN DIRECTA ASISTENTE: VER MI QR (SI FUE APROBADO) */}
-                        {isVipApproved && (
+                        {/* ACCIÓN DIRECTA ASISTENTE: VER MI QR (SI FUE APROBADO O COMPRA EXITOSA) */}
+                        {(isVipApproved || isPurchaseSuccess) && (
                           <div className="mt-2.5">
                             <button
                               onClick={() => {

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { db, auth } from '../lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { CreateEventFormData, AVAILABLE_CATEGORIES, AVAILABLE_EVENT_TAGS } from '../types/home';
 import { LocationPickerModal, Coordinates } from '../components/LocationPickerModal';
 import { ShareEventModal } from '../components/ShareEventModal';
@@ -29,6 +29,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     artImage: null,
     imageUrl: null,
     name: '',
+    description: '',
     startDate: '',
     startTime: '',
     endDate: '',
@@ -36,6 +37,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     location: '',
     coordinates: null,
     privacy: 'public',
+    accessType: 'free',
+    isPaid: false,
+    ticketPrice: '',
     allowPlusOne: true,
     maxCapacity: 150,
     vipCutoffTime: null,
@@ -44,6 +48,21 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
   const [isVipCutoffActive, setIsVipCutoffActive] = useState<boolean>(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [eventHostUserId, setEventHostUserId] = useState<string | null>(null);
+  const [isPartner, setIsPartner] = useState<boolean>(false);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [isProUpgradeModalOpen, setIsProUpgradeModalOpen] = useState<boolean>(false);
+
+  // Escuchar si el usuario actual es Partner (PRO)
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const unsub = onSnapshot(doc(db, 'users', auth.currentUser.uid), (snap) => {
+      if (snap.exists()) {
+        const d = snap.data();
+        setIsPartner(Boolean(d?.isPartner));
+      }
+    });
+    return () => unsub();
+  }, [auth.currentUser]);
 
   // Cargar datos del evento existente desde Firestore cuando se pasa eventId
   useEffect(() => {
@@ -66,10 +85,12 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           }
 
           setEventHostUserId(d.hostUserId || null);
+          const rawAccess = d.accessType || (d.isPaid ? 'paid' : (d.allowsPlusOne ? 'vip_plus_one' : (d.isVip ? 'vip' : 'free')));
           setFormData({
             artImage: d.imageUrl || d.artImage || null,
             imageUrl: d.imageUrl || d.artImage || null,
             name: d.title || '',
+            description: d.description || '',
             startDate: d.date || '',
             startTime: d.startTime || '',
             endDate: d.endDate || d.date || '',
@@ -77,6 +98,9 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             location: d.location || '',
             coordinates: d.coordinates || null,
             privacy: (d.type as 'public' | 'private') || 'public',
+            accessType: rawAccess,
+            isPaid: Boolean(d.isPaid),
+            ticketPrice: d.ticketPrice || '',
             allowPlusOne: d.allowsPlusOne !== undefined ? Boolean(d.allowsPlusOne) : true,
             maxCapacity: d.guestLimit || d.maxCapacity || 150,
             vipCutoffTime: d.vipCutoffTime || null,
@@ -257,6 +281,15 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
       return;
     }
 
+    if (formData.accessType === 'paid') {
+      const priceNum = Number(formData.ticketPrice);
+      if (!formData.ticketPrice || isNaN(priceNum) || priceNum < 20) {
+        setPriceError('El precio mínimo de venta es de 20 Bs');
+        showToast('El precio mínimo de venta es de 20 Bs');
+        return;
+      }
+    }
+
     if (isEditMode && eventId) {
       if (eventHostUserId && auth.currentUser?.uid && eventHostUserId !== auth.currentUser.uid) {
         alert('No tienes permisos para editar este evento.');
@@ -268,12 +301,23 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
     setIsSaving(true);
 
     const calculatedEndTimestamp = computeEventEndTimestamp(formData.startDate, formData.endTime, formData.startTime);
+    const sanitizedDescription = (formData.description || '').trim().slice(0, 500);
+    const resolvedAccessType = formData.accessType || 'free';
+    const isPaidEvent = resolvedAccessType === 'paid';
+    const resolvedPrice = isPaidEvent ? Number(formData.ticketPrice) : 0;
+    const allowsPlusOneResolved = resolvedAccessType === 'vip_plus_one' || (resolvedAccessType === 'free' && formData.allowPlusOne);
+    const isVipResolved = resolvedAccessType === 'vip' || resolvedAccessType === 'vip_plus_one';
 
     try {
       if (isEditMode && eventId) {
         // Actualización atómica en Firestore
         await updateDoc(doc(db, 'events', eventId), {
           title: eventTitle,
+          description: sanitizedDescription,
+          accessType: resolvedAccessType,
+          isPaid: isPaidEvent,
+          ticketPrice: resolvedPrice,
+          isVip: isVipResolved,
           type: formData.privacy,
           tags: selectedTags.length > 0 ? selectedTags : ['previas'],
           date: formData.startDate,
@@ -282,7 +326,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           endTimestamp: calculatedEndTimestamp,
           location: formData.location || 'Por definir',
           coordinates: formData.coordinates || null,
-          allowsPlusOne: formData.allowPlusOne,
+          allowsPlusOne: allowsPlusOneResolved,
           guestLimit: Number(formData.maxCapacity),
           maxCapacity: Number(formData.maxCapacity),
           imageUrl: formData.artImage || null,
@@ -326,6 +370,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
         // Inserción directa en Firestore garantizando sellado con UID del autor y timestamp de finalización
         const docRef = await addDoc(collection(db, 'events'), {
           title: eventTitle,
+          description: sanitizedDescription,
+          accessType: resolvedAccessType,
+          isPaid: isPaidEvent,
+          ticketPrice: resolvedPrice,
+          isVip: isVipResolved,
           type: formData.privacy,
           tags: selectedTags.length > 0 ? selectedTags : ['previas'],
           date: formData.startDate,
@@ -334,7 +383,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
           endTimestamp: calculatedEndTimestamp,
           location: formData.location || 'Por definir',
           coordinates: formData.coordinates || null,
-          allowsPlusOne: formData.allowPlusOne,
+          allowsPlusOne: allowsPlusOneResolved,
           guestLimit: Number(formData.maxCapacity),
           maxCapacity: Number(formData.maxCapacity),
           imageUrl: formData.artImage || null,
@@ -578,6 +627,33 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             />
           </div>
 
+          {/* CAMPO 2.5: DESCRIPCIÓN DEL EVENTO (500 CARACTERES MÁXIMO) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                DESCRIPCIÓN DEL EVENTO
+              </label>
+              <span
+                className={`font-sans text-[11px] font-semibold tracking-wider transition-colors ${
+                  (formData.description || '').length >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'
+                }`}
+              >
+                {(formData.description || '').length}/500
+              </span>
+            </div>
+            <textarea
+              rows={3}
+              maxLength={500}
+              value={formData.description || ''}
+              onChange={(e) => {
+                const val = e.target.value.slice(0, 500);
+                setFormData({ ...formData, description: val });
+              }}
+              placeholder="Detalles, line up, dress code, etc..."
+              className="w-full p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"
+            />
+          </div>
+
           {/* CAMPO 3: FECHA Y HORARIOS (2 COLUMNAS ALINEADAS CON LOS OTROS CAMPOS) */}
           <div className="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
             {/* Columna Inicio */}
@@ -617,61 +693,6 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                 className="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border"
               />
             </div>
-          </div>
-
-          {/* CONTROL: CIERRE DE LISTA VIP (OPCIONAL) */}
-          <div className="w-full">
-            {!isVipCutoffActive && !formData.vipCutoffTime ? (
-              /* ESTADO INACTIVO */
-              <button
-                type="button"
-                onClick={() => {
-                  setIsVipCutoffActive(true);
-                  if (!formData.vipCutoffTime) {
-                    setFormData((prev) => ({ ...prev, vipCutoffTime: '01:00' }));
-                  }
-                }}
-                className="w-full py-2.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] text-[#8E8E93] hover:text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]"
-              >
-                <span>+ DEFINIR HORA DE CIERRE DE LISTA VIP (OPCIONAL)</span>
-              </button>
-            ) : (
-              /* ESTADO ACTIVO */
-              <div className="p-3 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[#E87A72] text-base">⏳</span>
-                    <label className="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
-                      Cierre de Lista: {formData.vipCutoffTime ? formatVipCutoffDisplay(formData.vipCutoffTime) : '01:00 AM'}
-                    </label>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsVipCutoffActive(false);
-                      setFormData((prev) => ({ ...prev, vipCutoffTime: null }));
-                    }}
-                    title="Remover límite de lista VIP"
-                    className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-xs font-bold transition-all active:scale-90 cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="time"
-                    value={formData.vipCutoffTime || '01:00'}
-                    onChange={(e) => setFormData({ ...formData, vipCutoffTime: e.target.value })}
-                    className="w-full h-11 px-3 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors"
-                  />
-                </div>
-
-                <p className="font-sans text-[#8E8E93] text-xs leading-relaxed">
-                  Los pases VIP solicitados solo serán válidos para ingresar hasta esta hora.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) */}
@@ -773,6 +794,253 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
                 ? 'Visible para todos los usuarios en la app y cartelera.'
                 : 'Solo accesible mediante enlace de invitación directo.'}
             </p>
+          </div>
+
+          {/* CAMPO 5.2: TIPO DE ACCESO / MODALIDAD */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                TIPO DE ACCESO / MODALIDAD
+              </label>
+              {!isPartner && (
+                <span className="font-sans text-[10px] font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/30 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                  PLAN FREE
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {/* OPCIÓN 1: FREE PASS */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({ ...prev, accessType: 'free', isPaid: false }));
+                  setPriceError(null);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  formData.accessType === 'free'
+                    ? 'bg-[#12C061]/15 border-[#12C061] text-white shadow-[0_0_12px_rgba(18,192,97,0.2)]'
+                    : 'bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">🎟️</span>
+                  {formData.accessType === 'free' && (
+                    <span className="w-2 h-2 rounded-full bg-[#12C061]"></span>
+                  )}
+                </div>
+                <div className="mt-2">
+                  <span className="font-display text-xs font-black uppercase tracking-wider block text-white">
+                    FREE PASS
+                  </span>
+                  <span className="font-sans text-[10px] text-neutral-400 block mt-0.5">
+                    Entrada libre por solicitud
+                  </span>
+                </div>
+              </button>
+
+              {/* OPCIÓN 2: SOLICITAR VIP */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isPartner) {
+                    setIsProUpgradeModalOpen(true);
+                    return;
+                  }
+                  setFormData((prev) => ({ ...prev, accessType: 'vip', isPaid: false, allowPlusOne: false }));
+                  setPriceError(null);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                  formData.accessType === 'vip'
+                    ? 'bg-[#E87A72]/20 border-[#E87A72] text-white shadow-[0_0_12px_rgba(232,122,114,0.22)]'
+                    : 'bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white'
+                } ${!isPartner ? 'opacity-85' : 'cursor-pointer'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">⭐</span>
+                  {!isPartner ? (
+                    <span className="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
+                      🔒 PRO
+                    </span>
+                  ) : formData.accessType === 'vip' ? (
+                    <span className="w-2 h-2 rounded-full bg-[#E87A72]"></span>
+                  ) : null}
+                </div>
+                <div className="mt-2">
+                  <span className="font-display text-xs font-black uppercase tracking-wider block text-white">
+                    SOLICITAR VIP
+                  </span>
+                  <span className="font-sans text-[10px] text-neutral-400 block mt-0.5">
+                    Pase VIP individual
+                  </span>
+                </div>
+              </button>
+
+              {/* OPCIÓN 3: VIP +1 */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isPartner) {
+                    setIsProUpgradeModalOpen(true);
+                    return;
+                  }
+                  setFormData((prev) => ({ ...prev, accessType: 'vip_plus_one', isPaid: false, allowPlusOne: true }));
+                  setPriceError(null);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                  formData.accessType === 'vip_plus_one'
+                    ? 'bg-[#E87A72]/20 border-[#E87A72] text-white shadow-[0_0_12px_rgba(232,122,114,0.22)]'
+                    : 'bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white'
+                } ${!isPartner ? 'opacity-85' : 'cursor-pointer'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">👥</span>
+                  {!isPartner ? (
+                    <span className="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
+                      🔒 PRO
+                    </span>
+                  ) : formData.accessType === 'vip_plus_one' ? (
+                    <span className="w-2 h-2 rounded-full bg-[#E87A72]"></span>
+                  ) : null}
+                </div>
+                <div className="mt-2">
+                  <span className="font-display text-xs font-black uppercase tracking-wider block text-white">
+                    VIP +1
+                  </span>
+                  <span className="font-sans text-[10px] text-neutral-400 block mt-0.5">
+                    Pase VIP con acompañante
+                  </span>
+                </div>
+              </button>
+
+              {/* OPCIÓN 4: VENDER ENTRADA */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isPartner) {
+                    setIsProUpgradeModalOpen(true);
+                    return;
+                  }
+                  setFormData((prev) => ({ ...prev, accessType: 'paid', isPaid: true }));
+                  if (formData.ticketPrice && Number(formData.ticketPrice) < 20) {
+                    setPriceError('El precio mínimo de venta es de 20 Bs');
+                  }
+                }}
+                className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between ${
+                  formData.accessType === 'paid'
+                    ? 'bg-[#FAB205]/20 border-[#FAB205] text-white shadow-[0_0_12px_rgba(250,178,5,0.22)]'
+                    : 'bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white'
+                } ${!isPartner ? 'opacity-85' : 'cursor-pointer'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">💳</span>
+                  {!isPartner ? (
+                    <span className="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
+                      🔒 PRO
+                    </span>
+                  ) : formData.accessType === 'paid' ? (
+                    <span className="w-2 h-2 rounded-full bg-[#FAB205]"></span>
+                  ) : null}
+                </div>
+                <div className="mt-2">
+                  <span className="font-display text-xs font-black uppercase tracking-wider block text-white">
+                    VENDER ENTRADA
+                  </span>
+                  <span className="font-sans text-[10px] text-neutral-400 block mt-0.5">
+                    Entrada con cobro digital
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* CAMPO CONDICIONAL: PRECIO POR ENTRADA (BS) SI ELIGE VENDER ENTRADA */}
+            {formData.accessType === 'paid' && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2 mt-2"
+              >
+                <label className="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                  PRECIO POR ENTRADA (BS)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="20"
+                    step="1"
+                    value={formData.ticketPrice}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const num = Number(val);
+                      setFormData((prev) => ({ ...prev, ticketPrice: val, isPaid: true }));
+                      if (val && num < 20) {
+                        setPriceError('El precio mínimo de venta es de 20 Bs');
+                      } else {
+                        setPriceError(null);
+                      }
+                    }}
+                    placeholder="Mínimo 20 Bs"
+                    className={`w-full h-11 px-4 rounded-xl bg-[#0E0F12] border text-white font-sans text-sm outline-none transition-colors ${
+                      priceError || (formData.ticketPrice && Number(formData.ticketPrice) < 20)
+                        ? 'border-[#E87A72] focus:border-[#E87A72]'
+                        : 'border-[#26282E] focus:border-[#12C061]'
+                    }`}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-display text-xs font-bold text-neutral-400">
+                    BS
+                  </span>
+                </div>
+
+                {(priceError || (formData.ticketPrice && Number(formData.ticketPrice) < 20)) && (
+                  <p className="font-sans text-xs text-[#E87A72] flex items-center gap-1 font-medium">
+                    <span>⚠️</span> El precio mínimo de venta es de 20 Bs
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </div>
+
+          {/* CONTROL: CIERRE DE LISTA */}
+          <div className="w-full p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-[#E87A72] text-sm">⏳</span>
+              <label className="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
+                Cierre de lista
+              </label>
+            </div>
+
+            {!isVipCutoffActive && !formData.vipCutoffTime ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsVipCutoffActive(true);
+                  setFormData((prev) => ({ ...prev, vipCutoffTime: '01:00' }));
+                }}
+                className="relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#101114] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/50 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-all cursor-pointer active:scale-95 shadow-sm"
+              >
+                <span>+ Definir hora</span>
+              </button>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 bg-[#101114] border border-[#E87A72]/50 rounded-xl px-2.5 py-1 shadow-sm">
+                <input
+                  type="time"
+                  value={formData.vipCutoffTime || '01:00'}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, vipCutoffTime: e.target.value }))}
+                  className="bg-transparent text-[#E87A72] font-display font-black text-xs tracking-wider uppercase outline-none cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsVipCutoffActive(false);
+                    setFormData((prev) => ({ ...prev, vipCutoffTime: null }));
+                  }}
+                  title="Remover límite de lista"
+                  className="w-4 h-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] ml-0.5 transition-all cursor-pointer active:scale-90"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
           </div>
 
           {/* CAMPO 5.5: VIBE / GÉNERO DEL EVENTO (TAG AFFINITY SYSTEM) */}
@@ -882,12 +1150,17 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={handlePublish}
-              disabled={isSaving || isPublished || isDeleting}
+              disabled={
+                isSaving ||
+                isPublished ||
+                isDeleting ||
+                (formData.accessType === 'paid' && (!formData.ticketPrice || Number(formData.ticketPrice) < 20))
+              }
               className={`w-full py-4 px-5 rounded-2xl font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none ${
                 isPublished
                   ? 'bg-neutral-900 text-[#12C061] border border-[#12C061]'
-                  : isSaving
-                  ? 'bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-wait'
+                  : (isSaving || (formData.accessType === 'paid' && (!formData.ticketPrice || Number(formData.ticketPrice) < 20)))
+                  ? 'bg-neutral-800 text-neutral-400 border border-neutral-700 cursor-not-allowed opacity-80'
                   : 'bg-[#12C061] hover:bg-[#0fa854] text-black active:scale-98'
               }`}
             >
@@ -1062,6 +1335,76 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({
               }
             }}
           />
+        )}
+
+        {/* MODAL ACTIVAR MEMBRESÍA PRO (SOCIO +) */}
+        {isProUpgradeModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border-2 border-[#FAB205] p-6 shadow-2xl relative text-center"
+            >
+              <button
+                onClick={() => setIsProUpgradeModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors focus:outline-none"
+              >
+                ✕
+              </button>
+
+              <div className="w-14 h-14 rounded-2xl bg-[#FAB205]/15 border border-[#FAB205]/30 text-[#FAB205] flex items-center justify-center mx-auto mb-3.5 text-2xl shadow-lg">
+                👑
+              </div>
+
+              <h3 className="font-display text-white text-xl sm:text-2xl font-black tracking-wide uppercase mb-2">
+                DESBLOQUEA CON SOCIO +
+              </h3>
+
+              <p className="font-sans text-xs sm:text-sm text-neutral-300 leading-relaxed mb-4">
+                Los pases VIP individuales, VIP +1 y la venta de entradas con cobro digital están disponibles exclusivamente para anfitriones con membresía <strong className="text-[#FAB205]">Socio +</strong>.
+              </p>
+
+              <div className="p-3 rounded-xl bg-black/40 border border-neutral-800 text-left space-y-2 mb-5">
+                <div className="flex items-center gap-2 text-xs font-sans text-neutral-200">
+                  <span className="text-[#12C061]">✓</span>
+                  <span>Gestión de listas VIP y VIP +1</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-sans text-neutral-200">
+                  <span className="text-[#12C061]">✓</span>
+                  <span>Venta de entradas en Bolivianos</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs font-sans text-neutral-200">
+                  <span className="text-[#12C061]">✓</span>
+                  <span>Perfil de Creador / Negocio Pro</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProUpgradeModalOpen(false);
+                    if (onNavigate) {
+                      onNavigate('/profile');
+                    }
+                  }}
+                  className="w-full py-3.5 rounded-xl bg-[#FAB205] hover:bg-[#e5a204] text-black font-display text-base font-black tracking-wider uppercase transition-colors shadow-lg active:scale-95 cursor-pointer"
+                >
+                  ACTIVAR SOCIO +
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsProUpgradeModalOpen(false)}
+                  className="w-full py-2.5 rounded-xl bg-transparent text-neutral-400 hover:text-white font-display text-xs font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                >
+                  CONTINUAR CON FREE PASS
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

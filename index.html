@@ -206,7 +206,7 @@
               HEY, CHRIS G.
             </h1>
             <span class="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase mt-0.5 whitespace-nowrap">
-              EVENTOS HOY
+              TIENES EVENTOS CERCA
             </span>
           </div>
         </div>
@@ -228,12 +228,15 @@
       <!-- NUEVA SECCIÓN: "EVENTOS ESTA SEMANA" (AGENDA CRONOLÓGICA) -->
       <section id="thisWeekEventsSection" class="w-full flex flex-col mt-4">
         <!-- 1. Encabezado de Sección Brutalista -->
-        <div class="w-full flex justify-start mt-6 mb-3">
+        <div class="w-full flex items-center justify-between mt-6 mb-3 px-4">
           <div class="bg-black rounded-none pl-5 pr-5 py-2 inline-flex items-center">
             <span class="font-display text-base text-white tracking-widest uppercase">
               EVENTOS ESTA SEMANA
             </span>
           </div>
+          <span id="thisWeekCityBadge" class="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase bg-black/60 px-3 py-1 rounded-full border border-white/10">
+            📍 Tu Ciudad
+          </span>
         </div>
 
         <!-- 2. Lista Cronológica Agrupada por Día -->
@@ -368,8 +371,8 @@
 
           <!-- Título Principal y Subtítulo -->
           <h3 id="modalTitle" class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-tight"></h3>
-          <div id="modalHostAuthor" class="flex items-center space-x-2 mt-2"></div>
-          <p id="modalSubtitle" class="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1"></p>
+          <div id="modalHostAuthor" class="hidden"></div>
+          <p id="modalSubtitle" class="hidden"></p>
 
           <!-- 2. Metadatos Completos -->
           <div class="mt-3.5 p-3 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
@@ -1508,17 +1511,17 @@
             <input type="text" id="createEventNameInput" placeholder="Ej. FIESTA DE JOSIE 🔥" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
           </div>
 
-          <!-- CAMPO 3: DESCRIPCIÓN DEL PLAN (MÁXIMO 100 CARACTERES) -->
+          <!-- CAMPO 3: DESCRIPCIÓN DEL EVENTO (MÁXIMO 500 CARACTERES) -->
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                DESCRIPCIÓN DEL PLAN
+                DESCRIPCIÓN DEL EVENTO
               </label>
               <span id="createEventDescCounter" class="font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]">
-                0/100
+                0/500
               </span>
             </div>
-            <textarea id="createEventDescInput" rows="2" maxlength="100" oninput="handleCreateEventDescInput(this)" placeholder="De qué va la fiesta, promos o vibe general..." class="w-full p-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"></textarea>
+            <textarea id="createEventDescInput" rows="3" maxlength="500" oninput="handleCreateEventDescInput(this)" placeholder="Detalles, line up, dress code, etc..." class="w-full p-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"></textarea>
           </div>
 
           <!-- CAMPO 4: DRESS CODE (MÁXIMO 30 CARACTERES, OPCIONAL) -->
@@ -1562,45 +1565,6 @@
               </label>
               <input type="time" id="createEventStartTimeInput" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
             </div>
-          </div>
-
-          <!-- CONTROL: CIERRE DE LISTA VIP -->
-          <div class="w-full space-y-1" id="createVipCutoffContainer">
-            <div class="flex items-center justify-between sm:justify-start gap-3">
-              <div class="flex items-center gap-2 shrink-0">
-                <span class="text-[#E87A72] text-sm">⏳</span>
-                <label class="font-display text-white text-xs sm:text-sm font-bold tracking-wider uppercase">
-                  Cierre de lista VIP
-                </label>
-              </div>
-
-              <!-- BOTÓN DISPARADOR INACTIVO -->
-              <button id="createVipCutoffEmptyBtn" type="button" onclick="openVipTimePickerModal()" class="relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/50 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-all cursor-pointer active:scale-95 shadow-sm">
-                <span>+ Definir hora</span>
-              </button>
-
-              <!-- PASTILLA CON HORARIO DEFINIDO (ACTIVO) -->
-              <div id="createVipCutoffActivePill" class="hidden inline-flex items-center gap-1.5 bg-[#16171B] border border-[#E87A72]/50 rounded-xl px-2.5 py-1 shadow-sm">
-                <button type="button" onclick="openVipTimePickerModal()" class="flex items-center gap-1.5 cursor-pointer text-left focus:outline-none" title="Modificar hora de cierre VIP">
-                  <span id="createVipCutoffDisplayLabel" class="font-display font-black text-xs text-[#E87A72] tracking-wider uppercase">
-                    01:00 AM
-                  </span>
-                  <span class="text-neutral-400 hover:text-white text-[10px]">✏️</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="deactivateCreateVipCutoff()"
-                  title="Remover límite de lista VIP"
-                  class="w-4 h-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] ml-0.5 transition-all cursor-pointer active:scale-90"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            <p id="createVipCutoffHelperText" class="hidden font-sans text-[#8E8E93] text-[11px] leading-tight pl-6">
-              Los pases VIP solicitados solo serán válidos para ingresar hasta esta hora.
-            </p>
           </div>
 
           <!-- CAMPO 4: LUGAR / UBICACIÓN (INTERFAZ PROGRESIVA BASADA EN MAPA) -->
@@ -1672,6 +1636,127 @@
             <p id="privacyDescriptionText" class="font-sans text-neutral-400 text-xs px-1">
               Visible para todos los usuarios en la app y cartelera.
             </p>
+          </div>
+
+          <!-- CAMPO 5.2: TIPO DE ACCESO / MODALIDAD -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                TIPO DE ACCESO / MODALIDAD
+              </label>
+              <span id="createEventPlanBadge" class="font-sans text-[10px] font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/30 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                PLAN FREE
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <!-- FREE PASS -->
+              <button type="button" id="accessTypeBtn_free" onclick="setCreateAccessType('free')" class="p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between bg-[#12C061]/15 border-[#12C061] text-white shadow-[0_0_12px_rgba(18,192,97,0.2)]">
+                <div class="flex items-center justify-between">
+                  <span class="text-lg">🎟️</span>
+                  <span id="accessTypeDot_free" class="w-2 h-2 rounded-full bg-[#12C061]"></span>
+                </div>
+                <div class="mt-2">
+                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">FREE PASS</span>
+                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Entrada libre por solicitud</span>
+                </div>
+              </button>
+
+              <!-- SOLICITAR VIP -->
+              <button type="button" id="accessTypeBtn_vip" onclick="setCreateAccessType('vip')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
+                <div class="flex items-center justify-between">
+                  <span class="text-lg">⭐</span>
+                  <span id="accessTypeProBadge_vip" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
+                </div>
+                <div class="mt-2">
+                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">SOLICITAR VIP</span>
+                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Pase VIP individual</span>
+                </div>
+              </button>
+
+              <!-- VIP +1 -->
+              <button type="button" id="accessTypeBtn_vip_plus_one" onclick="setCreateAccessType('vip_plus_one')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
+                <div class="flex items-center justify-between">
+                  <span class="text-lg">👥</span>
+                  <span id="accessTypeProBadge_vip_plus_one" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
+                </div>
+                <div class="mt-2">
+                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">VIP +1</span>
+                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Pase VIP con acompañante</span>
+                </div>
+              </button>
+
+              <!-- VENDER ENTRADA -->
+              <button type="button" id="accessTypeBtn_paid" onclick="setCreateAccessType('paid')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
+                <div class="flex items-center justify-between">
+                  <span class="text-lg">💳</span>
+                  <span id="accessTypeProBadge_paid" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
+                </div>
+                <div class="mt-2">
+                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">VENDER ENTRADA</span>
+                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Entrada con cobro digital</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- CAMPO CONDICIONAL: PRECIO POR ENTRADA (BS) -->
+            <div id="createPaidTicketBox" class="hidden p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2 mt-2">
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                PRECIO POR ENTRADA (BS)
+              </label>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="createTicketPriceInput"
+                  min="20"
+                  step="1"
+                  oninput="handleTicketPriceInput(this)"
+                  placeholder="Mínimo 20 Bs"
+                  class="w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#26282E] focus:border-[#12C061] text-white font-sans text-sm outline-none transition-colors"
+                />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 font-display text-xs font-bold text-neutral-400">
+                  BS
+                </span>
+              </div>
+              <p id="createTicketPriceError" class="hidden font-sans text-xs text-[#E87A72] flex items-center gap-1 font-medium">
+                <span>⚠️</span> El precio mínimo de venta es de 20 Bs
+              </p>
+            </div>
+          </div>
+
+          <!-- CONTROL: CIERRE DE LISTA -->
+          <div class="w-full p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] flex items-center justify-between gap-3" id="createVipCutoffContainer">
+            <div class="flex items-center gap-2 shrink-0 min-w-0">
+              <span class="text-[#E87A72] text-sm">⏳</span>
+              <label class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
+                Cierre de lista
+              </label>
+            </div>
+
+            <!-- BOTÓN DISPARADOR INACTIVO -->
+            <button id="createVipCutoffEmptyBtn" type="button" onclick="openVipTimePickerModal()" class="relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#101114] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/50 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-all cursor-pointer active:scale-95 shadow-sm">
+              <span>+ Definir hora</span>
+            </button>
+
+            <!-- PASTILLA CON HORARIO DEFINIDO (ACTIVO) -->
+            <div id="createVipCutoffActivePill" class="hidden inline-flex items-center gap-1.5 bg-[#101114] border border-[#E87A72]/50 rounded-xl px-2.5 py-1 shadow-sm">
+              <button type="button" onclick="openVipTimePickerModal()" class="flex items-center gap-1.5 cursor-pointer text-left focus:outline-none" title="Modificar hora de cierre">
+                <span id="createVipCutoffDisplayLabel" class="font-display font-black text-xs text-[#E87A72] tracking-wider uppercase">
+                  01:00 AM
+                </span>
+                <span class="text-neutral-400 hover:text-white text-[10px]">✏️</span>
+              </button>
+              <button
+                type="button"
+                onclick="deactivateCreateVipCutoff()"
+                title="Remover límite de lista"
+                class="w-4 h-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] ml-0.5 transition-all cursor-pointer active:scale-90"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p id="createVipCutoffHelperText" class="hidden"></p>
           </div>
 
           <!-- CAMPO 5.5: VIBE / GÉNERO DEL EVENTO (TAG AFFINITY SYSTEM) -->
@@ -2283,10 +2368,8 @@
             <span class="text-xl font-bold leading-none">←</span>
           </button>
           <span id="profileFreeTopTitle" class="font-display text-neutral-400 text-sm font-bold tracking-widest uppercase">MI PERFIL</span>
-          <button onclick="showToast('Ajustes de cuenta')" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none">
-            <svg class="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" />
-            </svg>
+          <button onclick="openPlansBenefitsModal()" aria-label="Planes y beneficios" title="Planes y beneficios" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none font-display font-black text-sm">
+            ?
           </button>
         </header>
 
@@ -2328,7 +2411,7 @@
           <div onclick="openAttendedEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
             <div class="text-xl mb-1">📅</div>
             <span id="profileAttendedCount" class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">0</span>
-            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">EVENTOS</span>
+            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">HISTORIAL</span>
           </div>
           <div onclick="openStreakModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
             <div class="text-xl mb-1">⏱️</div>
@@ -2345,19 +2428,15 @@
           </div>
         </div>
 
-        <!-- 4. SECCIÓN CUENTA -->
-        <div id="profileFreeAccountSection" class="w-full mt-6">
-          <h3 class="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
-            CUENTA
-          </h3>
-
+        <!-- 4. SECCIÓN SUSCRIPCIÓN Y ACCIONES -->
+        <div id="profileFreeAccountSection" class="w-full mt-5">
           <div class="space-y-2.5">
             <div onclick="openSubscriptionModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
               <div class="flex items-center space-x-3.5">
                 <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">💳</div>
                 <div class="text-left">
                   <span id="profileSubAccountText" class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                    HAZTE SOCIO + POR $US 4.99/MES
+                    HAZTE PRO POR $US 9.99/MES
                   </span>
                   <span id="profileSubAccountDesc" class="font-sans text-neutral-400 text-xs block">
                     Diseñado para promotores, clubes y organizadores
@@ -2680,7 +2759,7 @@
 
         <!-- Precio destacado -->
         <h3 class="font-display text-white text-3xl sm:text-4xl font-black tracking-tight uppercase leading-tight">
-          $US 4.99 / MES
+          $US 9.99 / MES
         </h3>
 
         <!-- Público objetivo y propuesta -->
@@ -2730,6 +2809,160 @@
             VOLVER
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL COMPARATIVO PLANES Y BENEFICIOS +1 (BOTÓN ?) -->
+    <div id="plansBenefitsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom flex flex-col max-h-[85vh] overflow-hidden">
+        <button onclick="closePlansBenefitsModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer z-10">
+          ✕
+        </button>
+
+        <div class="flex items-center space-x-2.5 mb-3 shrink-0">
+          <span class="text-xl">✨</span>
+          <h3 class="font-display text-white text-xl font-black tracking-wide uppercase">
+            PLANES Y BENEFICIOS +1
+          </h3>
+        </div>
+
+        <div class="overflow-y-auto pr-1 space-y-4 flex-1">
+          <!-- TARJETA CUENTA FREE -->
+          <div class="p-4 rounded-2xl bg-[#101114] border border-[#26282E] space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="font-display text-base font-black text-white uppercase tracking-wider">
+                CUENTA FREE
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-display text-[10px] font-bold uppercase tracking-wider">
+                ACTUAL
+              </span>
+            </div>
+            <ul class="space-y-1.5 font-sans text-xs text-neutral-300">
+              <li class="flex items-start gap-2">
+                <span class="text-[#12C061]">✓</span>
+                <span>Hasta 2 eventos mensuales (públicos o privados).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#12C061]">✓</span>
+                <span>Hasta 150 invitados por evento.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#12C061]">✓</span>
+                <span>Herramientas de difusión automatizada en WhatsApp e Instagram.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#12C061]">✓</span>
+                <span>Creación de pases QR de ingreso individual o +1.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#12C061]">✓</span>
+                <span>Control de ingreso y escaneo en puerta con QR.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- TARJETA CUENTA PRO -->
+          <div class="p-4 rounded-2xl bg-gradient-to-b from-[#1b1c22] to-[#121316] border border-[#FAB205]/40 space-y-2.5 shadow-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="font-display text-base font-black text-[#FAB205] uppercase tracking-wider">
+                  CUENTA PRO
+                </span>
+                <span class="text-xs">👑</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-[#FAB205]/20 text-[#FAB205] font-display text-[10px] font-black uppercase tracking-wider border border-[#FAB205]/40">
+                $US 9.99/MES
+              </span>
+            </div>
+            <ul class="space-y-1.5 font-sans text-xs text-neutral-200">
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span class="font-semibold text-white">Incluye todo lo de la cuenta Free.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span>Perfil profesional / Fan Page de negocio.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span>Dashboard de estadísticas avanzadas (invitaciones enviadas, ingresos en tiempo real, horas pico).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span>QR zonal para eventos divididos en áreas (General, VIP, Backstage).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span>Hasta 5.000 invitados por evento.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-[#FAB205]">✦</span>
+                <span>Venta de tickets y cobro directo.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-[#26282E] mt-3 shrink-0">
+          <button onclick="closePlansBenefitsModal()" class="w-full py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow cursor-pointer">
+            [ ENTENDIDO ]
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE VERIFICACIÓN DE TELÉFONO PARA PRIMER EVENTO -->
+    <div id="profilePhoneVerificationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div class="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left anim-modal-zoom flex flex-col">
+        <button onclick="closeProfilePhoneVerificationModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer z-10">
+          ✕
+        </button>
+
+        <div class="flex items-center space-x-2.5 mb-2">
+          <span class="text-xl">📱</span>
+          <h3 class="font-display text-white text-lg font-black tracking-wide uppercase">
+            VERIFICA TU IDENTIDAD
+          </h3>
+        </div>
+
+        <p class="font-sans text-neutral-300 text-xs leading-relaxed mb-4">
+          Ingresa tu número de teléfono para publicar tu primer evento y proteger a la comunidad de organizadores +1.
+        </p>
+
+        <form onsubmit="handleSavePhoneVerificationHtml(event)" class="space-y-3">
+          <div>
+            <label class="font-display text-neutral-400 text-[11px] font-bold uppercase tracking-wider block mb-1.5">
+              NÚMERO DE TELÉFONO / WHATSAPP
+            </label>
+            <input
+              type="tel"
+              id="profilePhoneVerificationInput"
+              placeholder="Ej: +591 70000000"
+              class="w-full h-11 px-3.5 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors"
+              autofocus
+            />
+            <p id="profilePhoneVerificationError" class="hidden font-sans text-xs text-[#E87A72] mt-1.5 font-medium">
+              ⚠️ Ingresa un número de teléfono válido
+            </p>
+          </div>
+
+          <div class="pt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onclick="closeProfilePhoneVerificationModal()"
+              class="flex-1 py-3 rounded-xl bg-[#26282E] hover:bg-neutral-800 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+            >
+              CANCELAR
+            </button>
+            <button
+              type="submit"
+              id="profilePhoneVerificationSubmitBtn"
+              class="flex-1 py-3 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs uppercase tracking-wider transition-transform active:scale-95 shadow cursor-pointer"
+            >
+              CONFIRMAR
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -3618,7 +3851,10 @@
             const parts = getDayPartsHtml(event.date);
             const social = getEventSocialData(event);
             const cleanTitle = (event.title || 'SIN TÍTULO').replace(/^FLYER.*?:\s*/i, '').trim();
-            const tagText = (event.tags && event.tags[0]) || (event.theme !== 'custom' ? event.theme : null) || 'VIP';
+            const userCity = window.currentUserCity || 'Tu Ciudad';
+            const rawTag = (event.tags && event.tags[0]) || (event.theme !== 'custom' ? event.theme : null);
+            const tagText = (rawTag && !/dub[aá]i/i.test(rawTag)) ? rawTag : userCity;
+            const displayLoc = (event.location || event.exactAddress || userCity).replace(/\b(club\s+)?dub[aá]i\b/gi, userCity);
 
             return `
               <div
@@ -3650,7 +3886,7 @@
                     ${cleanTitle}
                   </h3>
                   <span class="font-sans text-xs text-zinc-400 truncate mt-0.5">
-                    ${event.location || event.exactAddress || 'Lugar por confirmar'} · ${event.timeRange || (event.startTime ? `${event.startTime} hs` : '22:00')}
+                    ${displayLoc} · ${event.timeRange || (event.startTime ? `${event.startTime} hs` : '22:00')}
                   </span>
                   <div class="flex items-center gap-1.5 mt-1">
                     ${social.remainingSpots <= 30 ? `
@@ -4010,30 +4246,21 @@
 
       if (ctaBtn) {
         if (existingPass && existingPass.status === 'pending') {
-          ctaBtn.innerText = 'SOLICITUD ENVIADA ⏳';
+          ctaBtn.innerText = '⏳ SOLICITUD PENDIENTE';
           ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
           ctaBtn.disabled = true;
           ctaBtn.onclick = null;
         } else if (existingPass && (existingPass.status === 'active' || existingPass.status === 'confirmed')) {
-          ctaBtn.innerText = 'VER MI PASE QR 🎟️';
+          ctaBtn.innerText = '🎟️ PASE ACTIVO EN TU BILLETERA';
           ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => {
             closeEventDetail();
             openTicketsScreen();
           };
-        } else if (existingPass && existingPass.status === 'capacity_reached') {
-          ctaBtn.innerText = 'AFORO COMPLETADO ⏳';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed';
-          ctaBtn.disabled = true;
-          ctaBtn.onclick = null;
-        } else if (isSoldOut) {
-          ctaBtn.innerText = 'LISTA VIP COMPLETA 🔒';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed';
-          ctaBtn.disabled = true;
-          ctaBtn.onclick = null;
         } else {
-          ctaBtn.innerText = 'SOLICITAR VIP';
+          const btnLabel = (event.accessType === 'vip_plus_one' || (event.allowsPlusOne && !event.accessType)) ? 'SOLICITAR VIP +1' : 'SOLICITAR VIP';
+          ctaBtn.innerText = btnLabel;
           ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-98 focus:outline-none cursor-pointer';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => handleRequestVipHtml(event);
@@ -4057,29 +4284,42 @@
       }
       const ctaBtn = document.getElementById('modalCtaBtn');
       if (ctaBtn) {
-        ctaBtn.innerText = 'SOLICITUD ENVIADA ⏳';
+        ctaBtn.innerText = '⏳ SOLICITUD PENDIENTE';
         ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
         ctaBtn.disabled = true;
       }
       try {
         const cleanTitle = (event.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
-        const passRef = await fbDb.collection('passes').add({
-          eventId: event.id || 'evt_' + Date.now(),
-          eventTitle: cleanTitle,
-          eventDate: event.dateDisplay || event.date || '',
-          eventTime: event.timeRange ? event.timeRange.split('—')[0].trim() : (event.startTime || event.time || '22:00'),
-          eventLocation: event.exactAddress || event.location || '',
-          eventImageUrl: event.imageUrl || '',
-          hostUserId: event.hostUserId || '',
-          userId: fbCurrentUser.uid,
-          holderName: fbCurrentUser.displayName || 'Invitado',
-          userName: fbCurrentUser.displayName || 'Invitado',
-          userPhotoUrl: fbCurrentUser.photoURL || '',
-          userAvatar: fbCurrentUser.photoURL || '',
-          accessTier: 'VIP',
-          status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
-          createdAt: Date.now()
-        });
+        const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()));
+        let passId = null;
+
+        if (existingPass && existingPass.id && fbDb) {
+          await fbDb.collection('passes').doc(existingPass.id).update({
+            status: 'pending',
+            updatedAt: Date.now()
+          });
+          existingPass.status = 'pending';
+          passId = existingPass.id;
+        } else if (fbDb) {
+          const passRef = await fbDb.collection('passes').add({
+            eventId: event.id || 'evt_' + Date.now(),
+            eventTitle: cleanTitle,
+            eventDate: event.dateDisplay || event.date || '',
+            eventTime: event.timeRange ? event.timeRange.split('—')[0].trim() : (event.startTime || event.time || '22:00'),
+            eventLocation: event.exactAddress || event.location || '',
+            eventImageUrl: event.imageUrl || '',
+            hostUserId: event.hostUserId || '',
+            userId: fbCurrentUser.uid,
+            holderName: fbCurrentUser.displayName || 'Invitado',
+            userName: fbCurrentUser.displayName || 'Invitado',
+            userPhotoUrl: fbCurrentUser.photoURL || '',
+            userAvatar: fbCurrentUser.photoURL || '',
+            accessTier: 'VIP',
+            status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
+            createdAt: Date.now()
+          });
+          passId = passRef.id;
+        }
 
         // Notificar al anfitrión
         if (event.hostUserId && event.hostUserId !== fbCurrentUser.uid) {
@@ -4334,7 +4574,8 @@
       const dotsContainer = document.getElementById('ticketDotsContainer');
       if (!track) return;
 
-      totalTickets = userTickets.length;
+      const activeTicketsList = (userTickets || []).filter(t => t.status === 'active');
+      totalTickets = activeTicketsList.length;
 
       const countEl = document.getElementById('passScreenTicketsCount');
       if (countEl) {
@@ -4363,7 +4604,7 @@
         return;
       }
 
-      track.innerHTML = userTickets.map((t, idx) => {
+      track.innerHTML = activeTicketsList.map((t, idx) => {
         const isCapReached = t.status === 'capacity_reached';
         const isPending = t.status === 'pending';
         const strokeColor = isCapReached ? '#E87A72' : isPending ? '#FAB205' : (t.accentBorderColor || '#12C061');
@@ -4818,6 +5059,8 @@
         resetCreateEventForm();
       }
 
+      renderCreateAccessTypeUI();
+
       if (screen) {
         screen.classList.remove('hidden');
       }
@@ -4913,11 +5156,11 @@
 
     function handleCreateEventDescInput(el) {
       if (!el) return;
-      if (el.value.length > 100) el.value = el.value.slice(0, 100);
+      if (el.value.length > 500) el.value = el.value.slice(0, 500);
       const counter = document.getElementById('createEventDescCounter');
       if (counter) {
-        counter.innerText = `${el.value.length}/100`;
-        counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+        counter.innerText = `${el.value.length}/500`;
+        counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
       }
     }
 
@@ -4928,6 +5171,101 @@
       if (counter) {
         counter.innerText = `${el.value.length}/30`;
         counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 30 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+      }
+    }
+
+    // ==========================================
+    // SISTEMA DE PLAN Y MODALIDAD DE ACCESO (FREE VS PRO)
+    // ==========================================
+    let createAccessType = 'free';
+    let createTicketPrice = '';
+
+    function isCurrentHostPro() {
+      return Boolean((typeof currentIsPartner !== 'undefined' && currentIsPartner) || (window.currentUser && window.currentUser.isPartner));
+    }
+
+    function setCreateAccessType(type) {
+      const isPro = isCurrentHostPro();
+      if (type !== 'free' && !isPro) {
+        showToast('⭐ Exclusivo para miembros Socio +');
+        if (typeof openSubscriptionModal === 'function') {
+          openSubscriptionModal();
+        }
+        return;
+      }
+
+      createAccessType = type;
+      renderCreateAccessTypeUI();
+
+      if (type === 'vip_plus_one') {
+        if (!createPlusOneEnabled) toggleCreatePlusOne();
+      } else if (type === 'vip') {
+        if (createPlusOneEnabled) toggleCreatePlusOne();
+      }
+    }
+
+    function renderCreateAccessTypeUI() {
+      const isPro = isCurrentHostPro();
+      const planBadge = document.getElementById('createEventPlanBadge');
+      if (planBadge) {
+        if (isPro) {
+          planBadge.innerText = '👑 SOCIO +';
+          planBadge.className = 'font-sans text-[10px] font-bold text-[#FAB205] bg-[#FAB205]/15 border border-[#FAB205]/40 px-2 py-0.5 rounded-md uppercase tracking-wider';
+        } else {
+          planBadge.innerText = 'PLAN FREE';
+          planBadge.className = 'font-sans text-[10px] font-bold text-neutral-400 bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded-md uppercase tracking-wider';
+        }
+      }
+
+      const types = ['free', 'vip', 'vip_plus_one', 'paid'];
+      types.forEach(t => {
+        const btn = document.getElementById(`accessTypeBtn_${t}`);
+        const proBadge = document.getElementById(`accessTypeProBadge_${t}`);
+
+        if (proBadge) {
+          if (!isPro && t !== 'free') {
+            proBadge.classList.remove('hidden');
+          } else {
+            proBadge.classList.add('hidden');
+          }
+        }
+
+        if (btn) {
+          if (createAccessType === t) {
+            if (t === 'paid') {
+              btn.className = 'p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between bg-[#FAB205]/20 border-[#FAB205] text-white shadow-[0_0_12px_rgba(250,178,5,0.22)]';
+            } else if (t === 'free') {
+              btn.className = 'p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between bg-[#12C061]/15 border-[#12C061] text-white shadow-[0_0_12px_rgba(18,192,97,0.2)]';
+            } else {
+              btn.className = 'p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between bg-[#E87A72]/20 border-[#E87A72] text-white shadow-[0_0_12px_rgba(232,122,114,0.22)]';
+            }
+          } else {
+            btn.className = `p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white ${!isPro && t !== 'free' ? 'opacity-85' : 'cursor-pointer'}`;
+          }
+        }
+      });
+
+      const paidBox = document.getElementById('createPaidTicketBox');
+      if (paidBox) {
+        if (createAccessType === 'paid') {
+          paidBox.classList.remove('hidden');
+        } else {
+          paidBox.classList.add('hidden');
+        }
+      }
+    }
+
+    function handleTicketPriceInput(el) {
+      if (!el) return;
+      createTicketPrice = el.value;
+      const num = Number(el.value);
+      const errorMsg = document.getElementById('createTicketPriceError');
+      if (el.value && num < 20) {
+        el.className = 'w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#E87A72] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors';
+        if (errorMsg) errorMsg.classList.remove('hidden');
+      } else {
+        el.className = 'w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#26282E] focus:border-[#12C061] text-white font-sans text-sm outline-none transition-colors';
+        if (errorMsg) errorMsg.classList.add('hidden');
       }
     }
 
@@ -4953,7 +5291,7 @@
       if (nameInput) nameInput.value = '';
       if (descInput) descInput.value = '';
       if (descCounter) {
-        descCounter.innerText = '0/100';
+        descCounter.innerText = '0/500';
         descCounter.className = 'font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]';
       }
       deactivateCreateDressCode();
@@ -4963,6 +5301,14 @@
       handleRemoveArtImage();
       deactivateCreateVipCutoff();
       setCreatePrivacy('public');
+      createAccessType = 'free';
+      createTicketPrice = '';
+      const priceInput = document.getElementById('createTicketPriceInput');
+      if (priceInput) priceInput.value = '';
+      const priceError = document.getElementById('createTicketPriceError');
+      if (priceError) priceError.classList.add('hidden');
+      renderCreateAccessTypeUI();
+
       createCapacity = 150;
       const display = document.getElementById('createCapacityDisplay');
       if (display) display.innerText = createCapacity;
@@ -4991,8 +5337,8 @@
         descInput.value = data.description || '';
         if (descCounter) {
           const len = (data.description || '').length;
-          descCounter.innerText = `${len}/100`;
-          descCounter.className = `font-sans text-[11px] font-semibold tracking-wider ${len >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+          descCounter.innerText = `${len}/500`;
+          descCounter.className = `font-sans text-[11px] font-semibold tracking-wider ${len >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
         }
       }
       if (data.dressCode) {
@@ -5010,6 +5356,13 @@
       }
       updateLocationUI(data.location || '', data.coordinates || null);
       if (data.type) setCreatePrivacy(data.type);
+
+      const rawAccess = data.accessType || (data.isPaid ? 'paid' : (data.allowsPlusOne ? 'vip_plus_one' : (data.isVip ? 'vip' : 'free')));
+      createAccessType = rawAccess;
+      createTicketPrice = data.ticketPrice || '';
+      const priceInputPop = document.getElementById('createTicketPriceInput');
+      if (priceInputPop) priceInputPop.value = createTicketPrice;
+      renderCreateAccessTypeUI();
       if (data.vipCutoffTime) {
         activateCreateVipCutoff(data.vipCutoffTime);
       } else {
@@ -5214,7 +5567,7 @@
       }
 
       const title = document.getElementById('createEventNameInput')?.value.trim();
-      const description = document.getElementById('createEventDescInput')?.value.slice(0, 100) || '';
+      const description = document.getElementById('createEventDescInput')?.value.slice(0, 500) || '';
       const dressCode = createDressCodeActive ? (document.getElementById('createEventDressCodeInput')?.value.trim().slice(0, 30) || '') : null;
       const date = document.getElementById('createEventDateInput')?.value || '';
       const startTime = document.getElementById('createEventStartTimeInput')?.value || '';
@@ -5223,6 +5576,18 @@
       if (!title) {
         showToast('Ingresa el nombre del evento');
         return;
+      }
+
+      if (createAccessType === 'paid') {
+        const pNum = Number(createTicketPrice);
+        if (!createTicketPrice || isNaN(pNum) || pNum < 20) {
+          showToast('El precio mínimo de venta es de 20 Bs');
+          const errorMsg = document.getElementById('createTicketPriceError');
+          if (errorMsg) errorMsg.classList.remove('hidden');
+          const priceInput = document.getElementById('createTicketPriceInput');
+          if (priceInput) priceInput.className = 'w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#E87A72] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors';
+          return;
+        }
       }
 
       const btn = document.getElementById('publishEventBtn');
@@ -5237,6 +5602,10 @@
         title: title,
         description: description,
         dressCode: dressCode,
+        accessType: createAccessType || 'free',
+        isPaid: createAccessType === 'paid',
+        ticketPrice: createAccessType === 'paid' ? Number(createTicketPrice) : 0,
+        isVip: createAccessType === 'vip' || createAccessType === 'vip_plus_one',
         type: createPrivacyMode || 'public',
         date: date,
         startTime: startTime,
@@ -5244,7 +5613,7 @@
         endTimestamp: calculatedEndTimestamp,
         location: location,
         coordinates: createEventCoordinates || null,
-        allowsPlusOne: Boolean(createPlusOneEnabled),
+        allowsPlusOne: createAccessType === 'vip_plus_one' || (createAccessType === 'free' && Boolean(createPlusOneEnabled)),
         maxCapacity: createCapacity || 150,
         tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
         vipCutoffTime: (createVipCutoffActive && createVipCutoffTime) ? createVipCutoffTime : null,
@@ -5263,6 +5632,10 @@
               title: eventPayload.title,
               description: eventPayload.description,
               dressCode: eventPayload.dressCode,
+              accessType: eventPayload.accessType,
+              isPaid: eventPayload.isPaid,
+              ticketPrice: eventPayload.ticketPrice,
+              isVip: eventPayload.isVip,
               type: eventPayload.type,
               tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
               date: eventPayload.date,
@@ -8116,19 +8489,103 @@
         `;
       } else {
         container.innerHTML = `
-          <div class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center shadow-sm">
+          <div onclick="handleCreateEventWithPhoneCheck()" class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] hover:border-[#E87A72]/40 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer transition-colors">
             <span class="text-xl mb-1.5">🎉</span>
-            <p class="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[260px]">
-              ¿ORGANIZAS UNA PREVIA O FIESTA? CREA TU PRIMER EVENTO
+            <p class="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[280px]">
+              ¿ORGANIZAS UN EVENTO, CONFERENCIA O JUNTE? CREA TU PRIMER EVENTO
             </p>
             <button
-              onclick="closeProfileScreen(); openCreateEventScreen()"
+              onclick="event.stopPropagation(); handleCreateEventWithPhoneCheck()"
               class="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
             >
               [ + CREAR EVENTO ]
             </button>
           </div>
         `;
+      }
+    }
+
+    function openPlansBenefitsModal() {
+      const m = document.getElementById('plansBenefitsModal');
+      if (m) m.classList.remove('hidden');
+    }
+
+    function closePlansBenefitsModal() {
+      const m = document.getElementById('plansBenefitsModal');
+      if (m) m.classList.add('hidden');
+    }
+
+    function handleCreateEventWithPhoneCheck() {
+      const hasPhone = Boolean(
+        (window.fbCurrentUser && window.fbCurrentUser.phoneNumber) ||
+        (window.currentProfileData && (window.currentProfileData.phone || window.currentProfileData.phoneNumber))
+      );
+
+      if (!hasPhone) {
+        openProfilePhoneVerificationModal();
+      } else {
+        closeProfileScreen();
+        openCreateEventScreen();
+      }
+    }
+
+    function openProfilePhoneVerificationModal() {
+      const m = document.getElementById('profilePhoneVerificationModal');
+      const input = document.getElementById('profilePhoneVerificationInput');
+      const err = document.getElementById('profilePhoneVerificationError');
+      if (err) err.classList.add('hidden');
+      if (input) input.value = '';
+      if (m) m.classList.remove('hidden');
+    }
+
+    function closeProfilePhoneVerificationModal() {
+      const m = document.getElementById('profilePhoneVerificationModal');
+      if (m) m.classList.add('hidden');
+    }
+
+    async function handleSavePhoneVerificationHtml(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('profilePhoneVerificationInput');
+      const err = document.getElementById('profilePhoneVerificationError');
+      const btn = document.getElementById('profilePhoneVerificationSubmitBtn');
+      const val = (input?.value || '').trim();
+
+      if (!val || val.replace(/\D/g, '').length < 7) {
+        if (err) err.classList.remove('hidden');
+        return;
+      }
+
+      if (err) err.classList.add('hidden');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'GUARDANDO...';
+      }
+
+      try {
+        if (window.fbCurrentUser) {
+          await window.db.collection('users').doc(window.fbCurrentUser.uid).set({
+            phone: val,
+            phoneNumber: val,
+            phoneVerified: true,
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
+        if (!window.currentProfileData) window.currentProfileData = {};
+        window.currentProfileData.phone = val;
+        window.currentProfileData.phoneNumber = val;
+
+        closeProfilePhoneVerificationModal();
+        showToast('✅ Identidad verificada');
+        closeProfileScreen();
+        openCreateEventScreen();
+      } catch (err) {
+        console.error('Error guardando teléfono:', err);
+        showToast('Error al verificar teléfono');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = 'CONFIRMAR';
+        }
       }
     }
 
@@ -9105,15 +9562,19 @@
               </div>
             </div>
           `;
-        } else if (type === 'VIP_APPROVED') {
+        } else if (type === 'VIP_APPROVED' || type === 'PURCHASE_SUCCESS' || type === 'REQUEST_APPROVED') {
+          const flyerHtml = n.eventImageUrl
+            ? `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10">
+                <img src="${escapeHtmlAttr(n.eventImageUrl)}" alt="${escapeHtmlAttr(n.eventTitle || 'Evento')}" class="w-full h-full object-cover" />
+              </div>`
+            : `<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-[#16171B] border border-white/10 flex items-center justify-center bg-[#1E2025] text-white font-display font-black text-sm tracking-wider uppercase p-1">
+                ${escapeHtmlAttr(n.eventTitle ? n.eventTitle.slice(0, 4) : '+1')}
+              </div>`;
+
           innerContent = `
             <div class="flex items-start space-x-3">
               <div class="flex-shrink-0 mt-0.5">
-                <div class="w-9 h-9 rounded-xl bg-[#12C061]/15 border border-[#12C061]/40 flex items-center justify-center text-[#12C061]">
-                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
+                ${flyerHtml}
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">

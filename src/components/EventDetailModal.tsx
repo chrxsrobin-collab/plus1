@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { collection, addDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { ConfirmedAttendee } from '../types/home';
 import { ShareEventModal } from './ShareEventModal';
@@ -24,7 +24,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   onNavigate,
 }) => {
   const selectedEvent = propSelectedEvent || propEvent;
-  const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'capacity_reached' | 'used'>('none');
+  const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'confirmed' | 'capacity_reached' | 'declined' | 'used'>('none');
+  const [existingPassId, setExistingPassId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -54,6 +55,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   useEffect(() => {
     if (!isOpen || !selectedEvent?.id || !auth.currentUser) {
       setPassStatus('none');
+      setExistingPassId(null);
       return;
     }
     const q = query(
@@ -63,9 +65,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     );
     const unsub = onSnapshot(q, (snap) => {
       if (!snap.empty) {
-        const pData = snap.docs[0].data();
+        const pDoc = snap.docs[0];
+        const pData = pDoc.data();
+        setExistingPassId(pDoc.id);
         setPassStatus((pData.status as any) || 'pending');
       } else {
+        setExistingPassId(null);
         setPassStatus('none');
       }
     }, () => {});
@@ -119,23 +124,34 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     if (!auth.currentUser) return;
     setIsSubmitting(true);
     try {
-      const passDocRef = await addDoc(collection(db, 'passes'), {
-        eventId: event.id,
-        eventTitle: event.title,
-        eventDate: event.date || event.dateDisplay || '',
-        eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : ''),
-        eventLocation: event.location || event.exactAddress || '',
-        eventImageUrl: event.imageUrl || '',
-        hostUserId: event.hostUserId || '',
-        userId: auth.currentUser.uid,
-        holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
-        userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
-        userPhotoUrl: auth.currentUser.photoURL || '',
-        userAvatar: auth.currentUser.photoURL || '',
-        accessTier: 'VIP',
-        status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'used'
-        createdAt: Date.now(),
-      });
+      let passId = existingPassId;
+      if (existingPassId) {
+        // Reintentar pase previo rechazado o marcado con cupo lleno
+        await updateDoc(doc(db, 'passes', existingPassId), {
+          status: 'pending',
+          updatedAt: Date.now(),
+        });
+      } else {
+        const passDocRef = await addDoc(collection(db, 'passes'), {
+          eventId: event.id,
+          eventTitle: event.title,
+          eventDate: event.date || event.dateDisplay || '',
+          eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : ''),
+          eventLocation: event.location || event.exactAddress || '',
+          eventImageUrl: event.imageUrl || '',
+          hostUserId: event.hostUserId || '',
+          userId: auth.currentUser.uid,
+          holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+          userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+          userPhotoUrl: auth.currentUser.photoURL || '',
+          userAvatar: auth.currentUser.photoURL || '',
+          accessTier: 'VIP',
+          status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'declined' | 'used'
+          createdAt: Date.now(),
+        });
+        passId = passDocRef.id;
+        setExistingPassId(passId);
+      }
       setPassStatus('pending');
 
       // DISPARADOR A: Notificación reactiva para el ANFITRIÓN
@@ -148,7 +164,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           eventId: event.id,
           eventTitle: event.title,
           eventImageUrl: event.imageUrl || '',
-          passId: passDocRef.id,
+          passId: passId || '',
           senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
           senderId: auth.currentUser.uid,
           senderPhotoUrl: auth.currentUser.photoURL || '',
@@ -241,40 +257,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 {selectedEvent.typeBadge ? `${selectedEvent.typeBadge}: ` : ''}{selectedEvent.title}
               </h3>
 
-              {/* Atribución interactiva del Anfitrión / Creador */}
-              <div 
-                onClick={() => handleOpenHostProfile(selectedEvent.hostUserId)}
-                className="inline-flex items-center gap-2 cursor-pointer group py-1 active:opacity-75 transition-opacity mt-2"
-                title={selectedEvent.hostUserId ? 'Ver perfil del anfitrión' : undefined}
-              >
-                {/* Micro-avatar del anfitrión si existe */}
-                {selectedEvent.hostPhotoUrl ? (
-                  <img 
-                    src={selectedEvent.hostPhotoUrl} 
-                    alt={selectedEvent.hostName || 'Anfitrión'} 
-                    className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-[#26282E] flex items-center justify-center text-[10px] text-[#E87A72] font-bold shrink-0">
-                    {selectedEvent.hostName ? selectedEvent.hostName.charAt(0).toUpperCase() : "+"}
-                  </div>
-                )}
-
-                {/* Texto de atribución clickeable */}
-                <span className="font-sans text-xs tracking-wider text-[#9CA3AF] group-hover:text-white uppercase flex items-center gap-1">
-                  BY <strong className="text-white font-semibold underline decoration-white/30 underline-offset-2">{selectedEvent.hostName || "ANFITRIÓN"}</strong>
-                </span>
-                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">›</span>
-              </div>
-
-              {selectedEvent.subtitle && (
-                <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">
-                  {selectedEvent.subtitle}
-                </p>
-              )}
-
               {/* 2. Metadatos Completos */}
-              <div className="mt-4 p-3.5 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
+              <div className="mt-3.5 p-3.5 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
                 <div className="flex items-center text-white/90 text-xs sm:text-sm font-sans">
                   <span className="w-5 text-center mr-2 text-base">📅</span>
                   <span className="font-display uppercase tracking-wide font-bold">
@@ -392,9 +376,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       disabled
                       className="w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
                     >
-                      SOLICITUD ENVIADA ⏳
+                      ⏳ SOLICITUD PENDIENTE
                     </button>
-                  ) : passStatus === 'active' ? (
+                  ) : (passStatus === 'active' || passStatus === 'confirmed') ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
@@ -404,15 +388,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       }}
                       className="w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98"
                     >
-                      VER MI PASE QR 🎟️
+                      🎟️ PASE ACTIVO EN TU BILLETERA
                     </motion.button>
-                  ) : passStatus === 'capacity_reached' || remainingSpots === 0 ? (
-                    <button
-                      disabled
-                      className="w-full py-3.5 px-4 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-500 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed"
-                    >
-                      {remainingSpots === 0 ? 'LISTA VIP COMPLETA 🔒' : 'AFORO COMPLETADO ⏳'}
-                    </button>
                   ) : (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -420,7 +397,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       onClick={handleRequestVip}
                       className="w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none cursor-pointer active:scale-98"
                     >
-                      SOLICITAR VIP
+                      {(selectedEvent.accessType === 'vip_plus_one' || (selectedEvent.allowsPlusOne && !selectedEvent.accessType)) ? 'SOLICITAR VIP +1' : 'SOLICITAR VIP'}
                     </motion.button>
                   )}
                 </div>

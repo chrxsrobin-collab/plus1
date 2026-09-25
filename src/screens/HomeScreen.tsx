@@ -177,14 +177,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   const [isCheckingScannerEvents, setIsCheckingScannerEvents] = useState<boolean>(false);
 
   // Estado reactivo del perfil del usuario conectado (por cada dispositivo)
-  const [userProfile, setUserProfile] = useState<{ name?: string; following?: string[]; interests?: string[] } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ name?: string; following?: string[]; interests?: string[]; city?: string; location?: string } | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
     const userRef = doc(db, 'users', auth.currentUser.uid);
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setUserProfile(snapshot.data() as { name?: string; following?: string[]; interests?: string[] });
+        const d = snapshot.data();
+        setUserProfile({
+          name: d.name || d.displayName,
+          following: Array.isArray(d.following) ? d.following : [],
+          interests: Array.isArray(d.interests) ? d.interests : [],
+          city: d.city || d.location || null,
+          location: d.location || null,
+        });
       }
     });
     return () => unsubscribe();
@@ -321,6 +328,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   
   const user = propUser || mockUserProfile;
   const userName = userProfile?.name || auth.currentUser?.displayName || (auth.currentUser?.isAnonymous ? "INVITADO #" + auth.currentUser.uid.slice(-4).toUpperCase() : (user.name || 'USUARIO'));
+  const userCity = userProfile?.city || (user as any)?.city || userProfile?.location || (user as any)?.location || 'Tu Ciudad';
   const userPhotoUrl = auth.currentUser?.photoURL || user.avatarUrl;
 
   // Temporizador para auto-ocultar la barra tras 4 segundos de inactividad
@@ -810,7 +818,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
                 HEY, {userName}
               </h1>
               <span className="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase mt-0.5 whitespace-nowrap">
-                EVENTOS HOY
+                TIENES EVENTOS CERCA
               </span>
             </div>
           </div>
@@ -866,13 +874,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         {/* 5. NUEVA SECCIÓN: "EVENTOS ESTA SEMANA" (AGENDA CRONOLÓGICA) */}
         {!isEventsLoading && events.length > 0 && (
           <section className="w-full flex flex-col mt-2">
-            {/* 1. Encabezado de Sección Brutalista */}
-            <div className="w-full flex justify-start mt-6 mb-3">
+            {/* 1. Encabezado de Sección Brutalista con Ciudad Dinámica */}
+            <div className="w-full flex items-center justify-between mt-6 mb-3 px-4">
               <div className="bg-black rounded-none pl-5 pr-5 py-2 inline-flex items-center">
                 <span className="font-display text-base text-white tracking-widest uppercase">
                   EVENTOS ESTA SEMANA
                 </span>
               </div>
+              <span className="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase bg-black/60 px-3 py-1 rounded-full border border-white/10">
+                📍 {userCity}
+              </span>
             </div>
 
             {/* 2. Lista Cronológica Agrupada por Día */}
@@ -892,7 +903,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
                     {group.events.map((event) => {
                       const { dayOfWeek, dayNum } = getDayParts(event.date);
                       const remainingSpots = event.remainingSpots ?? 100;
-                      const tagText = (event.tags && event.tags[0]) || (event.theme !== 'custom' ? event.theme : null) || 'VIP';
+                      const rawTag = (event.tags && event.tags[0]) || (event.theme !== 'custom' ? event.theme : null);
+                      const tagText = (rawTag && !/dub[aá]i/i.test(rawTag))
+                        ? rawTag
+                        : userCity;
 
                       return (
                         <div
@@ -932,7 +946,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
                               {event.title}
                             </h3>
                             <span className="font-sans text-xs text-zinc-400 truncate mt-0.5">
-                              {event.location || event.exactAddress || 'Lugar por confirmar'} · {event.timeRange || (event.startTime ? `${event.startTime} hs` : '22:00')}
+                              {(event.location || event.exactAddress || userCity).replace(/\b(club\s+)?dub[aá]i\b/gi, userCity)} · {event.timeRange || (event.startTime ? `${event.startTime} hs` : '22:00')}
                             </span>
                             <div className="flex items-center gap-1.5 mt-1">
                               {remainingSpots <= 30 ? (

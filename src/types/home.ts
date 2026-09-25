@@ -175,6 +175,7 @@ export interface CreateEventFormData {
   artImage?: string | null;
   imageUrl?: string | null;
   name: string;
+  description?: string;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -182,6 +183,9 @@ export interface CreateEventFormData {
   location: string;
   coordinates?: { lat: number; lng: number } | null;
   privacy: 'public' | 'private';
+  accessType?: 'free' | 'vip' | 'vip_plus_one' | 'paid';
+  isPaid?: boolean;
+  ticketPrice?: number | string;
   allowPlusOne: boolean;
   maxCapacity: number;
   tags?: string[];

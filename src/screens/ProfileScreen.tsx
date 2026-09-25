@@ -292,6 +292,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Modal de Planes y Beneficios +1 (botón ?)
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+
+  // Modal de Verificación de Teléfono para el primer evento
+  const [isPhoneVerificationModalOpen, setIsPhoneVerificationModalOpen] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
   // ----------------------------------------------------
   // ESTADOS DEL DASHBOARD EN VIVO
   // ----------------------------------------------------
@@ -978,6 +987,63 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
+  const handleCreateEventClick = () => {
+    const userPhone = auth.currentUser?.phoneNumber || userProfileData?.phone || userProfileData?.phoneNumber;
+    if (!userPhone) {
+      setPhoneError('');
+      setPhoneInput('');
+      setIsPhoneVerificationModalOpen(true);
+    } else {
+      onNavigate?.('/create-event');
+    }
+  };
+
+  const handleSavePhoneVerification = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanPhone = phoneInput.trim();
+    if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 7) {
+      setPhoneError('Por favor ingresa un número de teléfono válido');
+      return;
+    }
+
+    setIsSavingPhone(true);
+    setPhoneError('');
+
+    try {
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, {
+          phone: cleanPhone,
+          phoneNumber: cleanPhone,
+          phoneVerified: true,
+          updatedAt: Date.now(),
+        }).catch(async () => {
+          await setDoc(userRef, {
+            phone: cleanPhone,
+            phoneNumber: cleanPhone,
+            phoneVerified: true,
+            updatedAt: Date.now(),
+          }, { merge: true });
+        });
+      }
+
+      setUserProfileData((prev: any) => ({
+        ...(prev || {}),
+        phone: cleanPhone,
+        phoneNumber: cleanPhone,
+      }));
+
+      setIsPhoneVerificationModalOpen(false);
+      showToast('✅ Identidad verificada');
+      onNavigate?.('/create-event');
+    } catch (err) {
+      console.error('Error guardando teléfono:', err);
+      setPhoneError('No se pudo verificar el número. Inténtalo de nuevo.');
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
   // Activación inmediata mediante código secreto ("prouser")
   const handleActivateProViaCode = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -1499,15 +1565,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* 1. TOP BAR */}
             <header className="flex items-center justify-between pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2.5 w-full relative z-30">
               {isOwner ? (
-                <button
-                  onClick={onBack || (() => onNavigate?.('/'))}
-                  aria-label="Regresar al inicio"
-                  className="flex items-center space-x-1 focus:outline-none cursor-pointer group transition-transform active:scale-95"
-                >
-                  <span className="font-display text-[#E87A72] text-[32px] sm:text-[34px] font-black tracking-tighter leading-none group-hover:brightness-110">
-                    +1
-                  </span>
-                </button>
+                <div className="flex items-center space-x-2.5">
+                  <button
+                    onClick={onBack || (() => onNavigate?.('/'))}
+                    aria-label="Regresar al inicio"
+                    className="flex items-center space-x-1 focus:outline-none cursor-pointer group transition-transform active:scale-95"
+                  >
+                    <span className="font-display text-[#E87A72] text-[32px] sm:text-[34px] font-black tracking-tighter leading-none group-hover:brightness-110">
+                      +1
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPlansModalOpen(true)}
+                    aria-label="Planes y beneficios"
+                    title="Planes y beneficios"
+                    className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 hover:border-neutral-700 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 cursor-pointer font-display text-sm font-black shadow-sm"
+                  >
+                    ?
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={onBack || (() => onNavigate?.('/'))}
@@ -1682,14 +1759,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center shadow-sm">
+                <div 
+                  onClick={handleCreateEventClick}
+                  className="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] hover:border-[#E87A72]/40 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer transition-colors"
+                >
                   <span className="text-xl mb-1.5">🎉</span>
-                  <p className="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[260px]">
-                    {isOwner ? '¿ORGANIZAS UNA PREVIA O FIESTA? CREA TU PRIMER EVENTO' : 'ESTE ANFITRIÓN NO TIENE EVENTOS ACTIVOS'}
+                  <p className="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[280px]">
+                    {isOwner ? '¿ORGANIZAS UN EVENTO, CONFERENCIA O JUNTE? CREA TU PRIMER EVENTO' : 'ESTE ANFITRIÓN NO TIENE EVENTOS ACTIVOS'}
                   </p>
                   {isOwner && (
                     <button
-                      onClick={() => onNavigate?.('/create-event')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCreateEventClick();
+                      }}
                       className="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
                     >
                       [ + CREAR EVENTO ]
@@ -1710,7 +1793,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {userEvents.length}
                 </span>
                 <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
-                  EVENTOS
+                  HISTORIAL
                 </span>
               </div>
 
@@ -1744,33 +1827,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </div>
             </div>
 
-            {/* SECCIÓN CUENTA (SÓLO SI ES EL PROPIETARIO) */}
+            {/* SECCIÓN DE SUSCRIPCIÓN Y ACCIONES (SÓLO SI ES EL PROPIETARIO) */}
             {isOwner && (
-              <div className="w-full mt-6 mb-6">
-                <h3 className="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
-                  CUENTA
-                </h3>
-
-                <div className="space-y-2.5">
-                  <div
-                    onClick={() => setActiveModal('subscription')}
-                    className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
-                  >
-                    <div className="flex items-center space-x-3.5">
-                      <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
-                        💳
-                      </div>
-                      <div className="text-left">
-                        <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                          HAZTE SOCIO + POR $US 4.99/MES
-                        </span>
-                        <span className="font-sans text-neutral-400 text-xs block">
-                          Diseñado para promotores, clubes y organizadores
-                        </span>
-                      </div>
+              <div className="w-full mt-5 mb-6 space-y-2.5">
+                <div
+                  onClick={() => setActiveModal('subscription')}
+                  className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
+                >
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                      💳
                     </div>
-                    <span className="text-neutral-500 font-bold text-lg">›</span>
+                    <div className="text-left">
+                      <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                        HAZTE PRO POR $US 9.99/MES
+                      </span>
+                      <span className="font-sans text-neutral-400 text-xs block">
+                        Diseñado para promotores, clubes y organizadores
+                      </span>
+                    </div>
                   </div>
+                  <span className="text-neutral-500 font-bold text-lg">›</span>
+                </div>
 
                   <div
                     onClick={handleShareApp}
@@ -2730,6 +2808,201 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             {toastMessage}
           </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ==================================================== */}
+      {/* MODAL: PLANES Y BENEFICIOS +1                        */}
+      {/* ==================================================== */}
+      <AnimatePresence>
+        {isPlansModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col max-h-[85vh] overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() => setIsPlansModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer z-10"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center space-x-2.5 mb-3 shrink-0">
+                <span className="text-xl">✨</span>
+                <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
+                  PLANES Y BENEFICIOS +1
+                </h3>
+              </div>
+
+              <div className="overflow-y-auto pr-1 space-y-4 flex-1">
+                {/* TARJETA CUENTA FREE */}
+                <div className="p-4 rounded-2xl bg-[#101114] border border-[#26282E] space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display text-base font-black text-white uppercase tracking-wider">
+                      CUENTA FREE
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-display text-[10px] font-bold uppercase tracking-wider">
+                      ACTUAL
+                    </span>
+                  </div>
+                  <ul className="space-y-1.5 font-sans text-xs text-neutral-300">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#12C061]">✓</span>
+                      <span>Hasta 2 eventos mensuales (públicos o privados).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#12C061]">✓</span>
+                      <span>Hasta 150 invitados por evento.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#12C061]">✓</span>
+                      <span>Herramientas de difusión automatizada en WhatsApp e Instagram.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#12C061]">✓</span>
+                      <span>Creación de pases QR de ingreso individual o +1.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#12C061]">✓</span>
+                      <span>Control de ingreso y escaneo en puerta con QR.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* TARJETA CUENTA PRO */}
+                <div className="p-4 rounded-2xl bg-gradient-to-b from-[#1b1c22] to-[#121316] border border-[#FAB205]/40 space-y-2.5 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-display text-base font-black text-[#FAB205] uppercase tracking-wider">
+                        CUENTA PRO
+                      </span>
+                      <span className="text-xs">👑</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-[#FAB205]/20 text-[#FAB205] font-display text-[10px] font-black uppercase tracking-wider border border-[#FAB205]/40">
+                      $US 9.99/MES
+                    </span>
+                  </div>
+                  <ul className="space-y-1.5 font-sans text-xs text-neutral-200">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span className="font-semibold text-white">Incluye todo lo de la cuenta Free.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span>Perfil profesional / Fan Page de negocio.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span>Dashboard de estadísticas avanzadas (invitaciones enviadas, ingresos en tiempo real, horas pico).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span>QR zonal para eventos divididos en áreas (General, VIP, Backstage).</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span>Hasta 5.000 invitados por evento.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[#FAB205]">✦</span>
+                      <span>Venta de tickets y cobro directo.</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#26282E] mt-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsPlansModalOpen(false)}
+                  className="w-full py-3 rounded-xl bg-white hover:bg-neutral-200 text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow cursor-pointer"
+                >
+                  [ ENTENDIDO ]
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================================================== */}
+      {/* MODAL: VERIFICACIÓN DE TELÉFONO PARA PRIMER EVENTO  */}
+      {/* ==================================================== */}
+      <AnimatePresence>
+        {isPhoneVerificationModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col"
+            >
+              <button
+                type="button"
+                onClick={() => setIsPhoneVerificationModalOpen(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer z-10"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center space-x-2.5 mb-2">
+                <span className="text-xl">📱</span>
+                <h3 className="font-display text-white text-lg font-black tracking-wide uppercase">
+                  VERIFICA TU IDENTIDAD
+                </h3>
+              </div>
+
+              <p className="font-sans text-neutral-300 text-xs leading-relaxed mb-4">
+                Ingresa tu número de teléfono para publicar tu primer evento y proteger a la comunidad de organizadores +1.
+              </p>
+
+              <form onSubmit={handleSavePhoneVerification} className="space-y-3">
+                <div>
+                  <label className="font-display text-neutral-400 text-[11px] font-bold uppercase tracking-wider block mb-1.5">
+                    NÚMERO DE TELÉFONO / WHATSAPP
+                  </label>
+                  <input
+                    type="tel"
+                    value={phoneInput}
+                    onChange={(e) => {
+                      setPhoneInput(e.target.value);
+                      setPhoneError('');
+                    }}
+                    placeholder="Ej: +591 70000000"
+                    className="w-full h-11 px-3.5 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors"
+                    autoFocus
+                  />
+                  {phoneError && (
+                    <p className="font-sans text-xs text-[#E87A72] mt-1.5 font-medium">
+                      ⚠️ {phoneError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsPhoneVerificationModalOpen(false)}
+                    className="flex-1 py-3 rounded-xl bg-[#26282E] hover:bg-neutral-800 text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    CANCELAR
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingPhone}
+                    className="flex-1 py-3 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs uppercase tracking-wider transition-transform active:scale-95 shadow cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingPhone ? 'GUARDANDO...' : 'CONFIRMAR'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
