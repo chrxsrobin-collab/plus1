@@ -3086,6 +3086,29 @@
 
   <script>
     // ==========================================
+    // UTILIDADES GLOBALES DE ESCAPADO HTML
+    // ==========================================
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function escapeHtmlAttr(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    // ==========================================
     // INICIALIZACIÓN DE FIREBASE (FIRESTORE & AUTH)
     // Sincronización en tiempo real multi-dispositivo (+1)
     // ==========================================
@@ -3209,7 +3232,7 @@
                     const isCapacityReached = data.status === 'capacity_reached' || data.status === 'rejected';
                     const isPending = data.status === 'pending';
                     const isUsed = data.status === 'used';
-                    const isActive = data.status === 'active' || data.status === 'confirmed';
+                    const isActive = data.status === 'active' || data.status === 'confirmed' || data.status === 'approved' || data.status === 'accepted';
 
                     const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
                     const checkInCount = typeof data.checkInCount === 'number' ? data.checkInCount : (isUsed ? (allowsPlusOne ? 2 : 1) : 0);
@@ -4570,168 +4593,138 @@
     let totalTickets = 0;
 
     function renderTicketCoverFlow() {
-      const track = document.getElementById('ticketCoverFlowTrack');
-      const dotsContainer = document.getElementById('ticketDotsContainer');
-      if (!track) return;
+      try {
+        const track = document.getElementById('ticketCoverFlowTrack');
+        const dotsContainer = document.getElementById('ticketDotsContainer');
+        if (!track) return;
 
-      const activeTicketsList = (userTickets || []).filter(t => t.status === 'active');
-      totalTickets = activeTicketsList.length;
+        const activeTicketsList = (userTickets || []).filter(t => 
+          t.status === 'active' || t.status === 'confirmed' || t.status === 'approved' || t.status === 'accepted'
+        );
+        totalTickets = activeTicketsList.length;
 
-      const countEl = document.getElementById('passScreenTicketsCount');
-      if (countEl) {
-        countEl.innerText = `${totalTickets} ${totalTickets === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}`;
-      }
+        const countEl = document.getElementById('passScreenTicketsCount');
+        if (countEl) {
+          countEl.innerText = `${totalTickets} ${totalTickets === 1 ? 'PASE ACTIVO' : 'PASES ACTIVOS'}`;
+        }
 
-      if (totalTickets === 0) {
-        track.innerHTML = `
-          <div class="w-[320px] sm:w-[340px] p-6 sm:p-8 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto">
-            <div class="w-16 h-16 rounded-2xl bg-[#1A1C22] border border-white/10 flex items-center justify-center text-3xl mb-4 shadow-inner">
-              🎟️
-            </div>
-            <h3 class="font-display text-white text-lg sm:text-xl font-bold uppercase tracking-wide leading-tight mb-2">
-              NO TIENES PASES ACTIVOS
-            </h3>
-            <p class="font-sans text-[#9CA3AF] text-xs sm:text-sm leading-relaxed max-w-[280px] mb-6">
-              Cuando un anfitrión apruebe tu solicitud VIP o confirmes asistencia a un evento, tu ticket QR aparecerá aquí listo para entrar.
-            </p>
-            <button onclick="closePassScreen(); handleNavigation('/home');" class="py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer flex items-center space-x-2">
-              <span>EXPLORAR EVENTOS</span>
-              <span>🔍</span>
-            </button>
-          </div>
-        `;
-        if (dotsContainer) dotsContainer.innerHTML = '';
-        return;
-      }
-
-      track.innerHTML = activeTicketsList.map((t, idx) => {
-        const isCapReached = t.status === 'capacity_reached';
-        const isPending = t.status === 'pending';
-        const strokeColor = isCapReached ? '#E87A72' : isPending ? '#FAB205' : (t.accentBorderColor || '#12C061');
-        const badgeLabel = isCapReached ? 'AFORO LLENO' : isPending ? 'SOLICITUD EN ESPERA' : (t.listType || 'PASE ACTIVO');
-        const badgeEmoji = isCapReached ? '⏳' : isPending ? '⏳' : (t.emoji || '🎟️');
-
-        let centerContentHtml = '';
-        if (isCapReached) {
-          centerContentHtml = `
-            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#E87A72]/50 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
-              <span class="text-3xl mb-1.5">⏳</span>
-              <span class="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase mb-1">
-                AFORO VIP COMPLETADO
-              </span>
-              <p class="font-sans text-[11px] text-neutral-300 leading-snug">
-                ${t.feedbackMessage || 'Aforo VIP completado por el momento. ¡Atento a próximas fechas!'}
-              </p>
-              <div class="mt-2.5 px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
-                PRÓXIMA EDICIÓN
+        if (totalTickets === 0) {
+          track.innerHTML = `
+            <div class="w-[320px] sm:w-[340px] p-6 sm:p-8 rounded-[28px] bg-[#16171B] border border-[#26282E] flex flex-col items-center justify-center text-center shadow-xl select-none mx-auto my-auto">
+              <div class="w-16 h-16 rounded-2xl bg-[#1A1C22] border border-white/10 flex items-center justify-center text-3xl mb-4 shadow-inner">
+                🎟️
               </div>
-            </div>
-          `;
-        } else if (isPending) {
-          centerContentHtml = `
-            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#FAB205]/40 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
-              <span class="text-3xl mb-1.5">⏳</span>
-              <span class="font-display text-[#FAB205] text-xs font-black tracking-wider uppercase mb-1">
-                SOLICITUD EN REVISIÓN
-              </span>
-              <p class="font-sans text-[11px] text-neutral-300 leading-snug">
-                Tu solicitud VIP está en espera de aprobación por el anfitrión.
+              <h3 class="font-display text-white text-lg sm:text-xl font-bold uppercase tracking-wide leading-tight mb-2">
+                NO TIENES PASES ACTIVOS
+              </h3>
+              <p class="font-sans text-[#9CA3AF] text-xs sm:text-sm leading-relaxed max-w-[280px] mb-6">
+                Cuando un anfitrión apruebe tu solicitud VIP o confirmes asistencia a un evento, tu ticket QR aparecerá aquí listo para entrar.
               </p>
+              <button onclick="closePassScreen(); handleNavigation('/home');" class="py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer flex items-center space-x-2">
+                <span>EXPLORAR EVENTOS</span>
+                <span>🔍</span>
+              </button>
             </div>
           `;
-        } else {
+          if (dotsContainer) dotsContainer.innerHTML = '';
+          return;
+        }
+
+        track.innerHTML = activeTicketsList.map((t, idx) => {
+          const isCapReached = t.status === 'capacity_reached';
+          const isPending = t.status === 'pending';
+          const strokeColor = isCapReached ? '#E87A72' : isPending ? '#FAB205' : (t.accentBorderColor || '#12C061');
+          const badgeLabel = isCapReached ? 'AFORO LLENO' : isPending ? 'SOLICITUD EN ESPERA' : (t.listType || 'PASE ACTIVO');
+          const badgeEmoji = isCapReached ? '⏳' : isPending ? '⏳' : (t.emoji || '🎟️');
+
+          const cleanHolder = (t.holderName || 'INVITADO')
+            .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+            .trim();
+          const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
+          const rawCode = (t.id || t.ticketId || '56842').replace(/^#/, '').toUpperCase().slice(0, 7);
+          const passCode = rawCode.startsWith('AN') ? rawCode : `AN${rawCode.slice(0, 5)}`;
           const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
-          centerContentHtml = `
-            <div class="relative w-full flex items-center justify-center">
-              <div class="bg-white p-4 rounded-3xl flex items-center justify-center shadow-inner">
-                <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[220px] h-[220px] flex items-center justify-center overflow-hidden">
+
+          return `
+            <div id="ticketCardItem_${idx}" class="cf-ticket absolute origin-center will-change-transform w-[316px] h-[507px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
+              <!-- 1. Fondo fotorrealista de papel perforado: ticket.webp -->
+              <img 
+                src="./assets/images/ticket.webp" 
+                alt="Ticket" 
+                class="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0 filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.9)]" 
+              />
+
+              <!-- 2. Capa de Contenido tipográfico y visual estructurado -->
+              <div class="relative z-10 w-full h-full flex flex-col justify-between pt-6 pb-5 px-5">
+                
+                <!-- PARTE SUPERIOR (Arriba de la línea punteada de perforación: Y: 0..90px) -->
+                <div class="h-[88px] flex flex-col items-center justify-center text-center px-1">
+                  <!-- Nombre del evento = nombre del evento del anfitrión -->
+                  <h2 class="font-display font-black text-xl sm:text-2xl text-black uppercase tracking-tight leading-tight truncate max-w-[260px]">
+                    ${escapeHtml(t.title || t.eventTitle || 'NOMBRE EVENTO')}
+                  </h2>
+                  <!-- Fecha y hora del evento -->
+                  <p class="font-sans text-xs text-neutral-800 font-medium mt-1">
+                    ${escapeHtml(t.dateStr || 'Fecha')} · ${escapeHtml(t.timeStr || 'hora')}
+                  </p>
+                </div>
+
+                <!-- PARTE INFERIOR (Debajo de la línea punteada de perforación) -->
+                <div class="flex-1 flex flex-col items-center justify-between pt-3 pb-0.5">
+                  
+                  <!-- Recuadro contenedor del QR: Blanco con borde redondeado negro y círculos/dots -->
+                  <div class="w-[220px] h-[220px] bg-white rounded-[26px] border-[2.5px] border-black p-2.5 shadow-sm flex items-center justify-center relative overflow-hidden mx-auto">
+                    <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[196px] h-[196px] flex items-center justify-center overflow-hidden">
+                    </div>
+                  </div>
+
+                  <!-- Ubicación del evento del anfitrión con emoji pin rojo -->
+                  <div class="flex items-center justify-center gap-1 text-[11px] font-sans font-semibold text-neutral-800 mt-2.5 max-w-[260px] truncate">
+                    <span class="text-xs">📍</span>
+                    <span class="truncate">${escapeHtml(t.location || t.venue || 'Ubicacion')}</span>
+                  </div>
+
+                  <!-- Nombre de usuario - Tipo de ingreso (Antonio Bold) -->
+                  <div class="font-display font-black text-base sm:text-lg text-black tracking-wide uppercase text-center mt-1.5 truncate max-w-[260px]">
+                    ${escapeHtml(cleanHolder || 'INVITADO')} - ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                  </div>
+
+                  <!-- Número de ticket aleatorio/seguridad y texto 'verificado con google' -->
+                  <div class="text-[9.5px] font-sans font-bold text-neutral-600 tracking-wider uppercase text-center mt-1 mb-1">
+                    #${passCode} · VERIFICADO CON GOOGLE
+                  </div>
+
                 </div>
               </div>
             </div>
           `;
+        }).join('');
+
+        if (dotsContainer) {
+          if (totalTickets <= 1) {
+            dotsContainer.innerHTML = '<div class="w-7 h-1 bg-[#E87A72] rounded-full mx-auto"></div>';
+          } else {
+            dotsContainer.innerHTML = activeTicketsList.map((_, i) => `
+              <button id="dot_t_${i}" onclick="setTicketCoverFlow(${i})" class="${i === currentTicketIndex ? 'w-7 h-1 bg-[#E87A72]' : 'w-2 h-1 bg-neutral-700 hover:bg-neutral-500'} rounded-full transition-all duration-300 focus:outline-none"></button>
+            `).join('');
+          }
         }
 
-        const cleanHolder = (t.holderName || 'INVITADO')
-          .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
-          .trim();
-        const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
-        const rawCode = (t.id || t.ticketId || '56842').replace(/^#/, '').toUpperCase().slice(0, 7);
-        const passCode = rawCode.startsWith('AN') ? rawCode : `AN${rawCode.slice(0, 5)}`;
-        const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
-
-        return `
-          <div id="ticketCardItem_${idx}" class="cf-ticket relative origin-center will-change-transform w-[316px] h-[507px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
-            <!-- 1. Fondo fotorrealista de papel perforado: ticket.webp -->
-            <img 
-              src="./assets/images/ticket.webp" 
-              alt="Ticket" 
-              class="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0 filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.9)]" 
-            />
-
-            <!-- 2. Capa de Contenido tipográfico y visual estructurado -->
-            <div class="relative z-10 w-full h-full flex flex-col justify-between pt-6 pb-5 px-5">
-              
-              <!-- PARTE SUPERIOR (Arriba de la línea punteada de perforación: Y: 0..90px) -->
-              <div class="h-[88px] flex flex-col items-center justify-center text-center px-1">
-                <!-- Nombre del evento = nombre del evento del anfitrión -->
-                <h2 class="font-display font-black text-xl sm:text-2xl text-black uppercase tracking-tight leading-tight truncate max-w-[260px]">
-                  ${escapeHtml(t.title || t.eventTitle || 'NOMBRE EVENTO')}
-                </h2>
-                <!-- Fecha y hora del evento -->
-                <p class="font-sans text-xs text-neutral-800 font-medium mt-1">
-                  ${escapeHtml(t.dateStr || 'Fecha')} · ${escapeHtml(t.timeStr || 'hora')}
-                </p>
-              </div>
-
-              <!-- PARTE INFERIOR (Debajo de la línea punteada de perforación) -->
-              <div class="flex-1 flex flex-col items-center justify-between pt-3 pb-0.5">
-                
-                <!-- Recuadro contenedor del QR: Blanco con borde redondeado negro y círculos/dots -->
-                <div class="w-[220px] h-[220px] bg-white rounded-[26px] border-[2.5px] border-black p-2.5 shadow-sm flex items-center justify-center relative overflow-hidden mx-auto">
-                  <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[196px] h-[196px] flex items-center justify-center overflow-hidden">
-                  </div>
-                </div>
-
-                <!-- Ubicación del evento del anfitrión con emoji pin rojo -->
-                <div class="flex items-center justify-center gap-1 text-[11px] font-sans font-semibold text-neutral-800 mt-2.5 max-w-[260px] truncate">
-                  <span class="text-xs">📍</span>
-                  <span class="truncate">${escapeHtml(t.location || t.venue || 'Ubicacion')}</span>
-                </div>
-
-                <!-- Nombre de usuario - Tipo de ingreso (Antonio Bold) -->
-                <div class="font-display font-black text-base sm:text-lg text-black tracking-wide uppercase text-center mt-1.5 truncate max-w-[260px]">
-                  ${escapeHtml(cleanHolder || 'INVITADO')} - ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
-                </div>
-
-                <!-- Número de ticket aleatorio/seguridad y texto 'verificado con google' -->
-                <div class="text-[9.5px] font-sans font-bold text-neutral-600 tracking-wider uppercase text-center mt-1 mb-1">
-                  #${passCode} · VERIFICADO CON GOOGLE
-                </div>
-
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      if (dotsContainer) {
-        if (totalTickets <= 1) {
-          dotsContainer.innerHTML = '<div class="w-7 h-1 bg-[#E87A72] rounded-full mx-auto"></div>';
-        } else {
-          dotsContainer.innerHTML = userTickets.map((_, i) => `
-            <button id="dot_t_${i}" onclick="setTicketCoverFlow(${i})" class="${i === currentTicketIndex ? 'w-7 h-1 bg-[#E87A72]' : 'w-2 h-1 bg-neutral-700 hover:bg-neutral-500'} rounded-full transition-all duration-300 focus:outline-none"></button>
-          `).join('');
-        }
+        setTicketCoverFlow(currentTicketIndex);
+        updateCoverFlowTicketQrs(activeTicketsList);
+      } catch (err) {
+        console.error('[+1 Tickets] Error en renderTicketCoverFlow:', err);
       }
-
-      setTicketCoverFlow(currentTicketIndex);
-      updateCoverFlowTicketQrs();
     }
 
-    function updateCoverFlowTicketQrs() {
+    function updateCoverFlowTicketQrs(activeList) {
       const defaultBadge = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' width='120' height='120'><circle cx='60' cy='60' r='58' fill='%23000000'/><text x='60' y='74' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='44' fill='%23E87A72'>%2B1</text></svg>";
 
-      userTickets.forEach((t, idx) => {
+      const listToRender = Array.isArray(activeList) ? activeList : (userTickets || []).filter(t => 
+        t.status === 'active' || t.status === 'confirmed' || t.status === 'approved' || t.status === 'accepted'
+      );
+
+      listToRender.forEach((t, idx) => {
         const wrapper = document.getElementById(`ticketCoverFlowQrWrapper_${idx}`);
         if (!wrapper) return;
         const payload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
