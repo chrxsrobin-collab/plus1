@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FullCardCoverFlow } from '../components/FullCardCoverFlow';
 import { ActionFooter } from '../components/ActionFooter';
@@ -22,7 +22,7 @@ import {
   collectionGroup,
 } from 'firebase/firestore';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
-import { TabType, VipFlyerItem, AppNotification, ConfirmedAttendee, EventSocialProof } from '../types/home';
+import { TabType, VipFlyerItem, AppNotification, ConfirmedAttendee, EventSocialProof, UserProfile } from '../types/home';
 import { computeEventEndTimestamp } from '../lib/dateUtils';
 import '../styles/fonts.css';
 
@@ -34,6 +34,67 @@ export const formatCardDate = (dateStr: string) => {
     return `${parts[2]}.${parts[1]}.${year}`;
   }
   return dateStr;
+};
+
+// Utilidad para extraer componentes de fecha y formatear agrupaciones por día
+export const getDayParts = (dateStr?: string) => {
+  if (!dateStr) {
+    return {
+      dayOfWeek: 'HOY',
+      dayNum: '—',
+      dayTitle: 'PRÓXIMAMENTE',
+      fullDateStr: 'Fecha por confirmar',
+      dateKey: '',
+    };
+  }
+
+  const clean = dateStr.trim();
+  let d: Date | null = null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    const [y, m, day] = clean.split('-').map(Number);
+    d = new Date(y, m - 1, day);
+  } else if (/^(\d{1,2})\.(\d{2})\.(\d{2,4})$/.test(clean)) {
+    const match = clean.match(/^(\d{1,2})\.(\d{2})\.(\d{2,4})$/);
+    if (match) {
+      const day = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10) - 1;
+      let y = parseInt(match[3], 10);
+      if (y < 100) y += 2000;
+      d = new Date(y, m, day);
+    }
+  } else {
+    const parsed = new Date(clean);
+    if (!isNaN(parsed.getTime())) d = parsed;
+  }
+
+  if (!d) {
+    return {
+      dayOfWeek: 'PRÓX',
+      dayNum: '—',
+      dayTitle: 'PRÓXIMAMENTE',
+      fullDateStr: dateStr,
+      dateKey: '',
+    };
+  }
+
+  const daysOfWeek = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+  const fullDays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+  const dayOfWeek = daysOfWeek[d.getDay()];
+  const dayNum = String(d.getDate()).padStart(2, '0');
+  const dayNameFull = fullDays[d.getDay()];
+  const monthName = months[d.getMonth()];
+
+  return {
+    dayOfWeek,
+    dayNum,
+    dayNameFull,
+    monthName,
+    dayTitle: `${dayNameFull.toUpperCase()}, ${d.getDate()} DE ${monthName.toUpperCase()}`,
+    fullDateStr: `${dayNameFull}, ${d.getDate()} de ${monthName}`,
+    dateKey: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+  };
 };
 
 // Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
@@ -113,15 +174,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
     return () => unsubscribe();
   }, []);
 
+  const [isCheckingScannerEvents, setIsCheckingScannerEvents] = useState<boolean>(false);
+
   // Estado reactivo del perfil del usuario conectado (por cada dispositivo)
-  const [userProfile, setUserProfile] = useState<{ name?: string; following?: string[] } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ name?: string; following?: string[]; interests?: string[] } | null>(null);
 
   useEffect(() => {
     if (!auth.currentUser) return;
     const userRef = doc(db, 'users', auth.currentUser.uid);
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setUserProfile(snapshot.data() as { name?: string; following?: string[] });
+        setUserProfile(snapshot.data() as { name?: string; following?: string[]; interests?: string[] });
       }
     });
     return () => unsubscribe();
@@ -381,11 +444,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
   };
 
   // Combinar eventos con su prueba social y aforo restante en tiempo real,
-  // con PRIORIDAD ALGORÍTMICA: Eventos de anfitriones seguidos (following) se posicionan primero en el Cover Flow
+  // con prioridad algorítmica: eventos de anfitriones seguidos (currentUser.following) primero
   const eventsWithSocialProof: VipFlyerItem[] = useMemo(() => {
-    const followingSet = new Set<string>(userProfile?.following || propUser?.following || []);
-
-    const mapped = events.map((event) => {
+    const rawEvents = events.map((event) => {
       const proof = socialProofMap[event.id];
       const guestLimit = event.guestLimit || event.maxCapacity || 100;
       if (proof) {
@@ -403,16 +464,119 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       };
     });
 
-    if (followingSet.size === 0) return mapped;
+    const following = userProfile?.following || [];
+    if (!following.length) return rawEvents;
 
-    return [...mapped].sort((a, b) => {
-      const aFollowed = a.hostUserId ? followingSet.has(a.hostUserId) : false;
-      const bFollowed = b.hostUserId ? followingSet.has(b.hostUserId) : false;
+    return [...rawEvents].sort((a, b) => {
+      const aFollowed = a.hostUserId ? following.includes(a.hostUserId) : false;
+      const bFollowed = b.hostUserId ? following.includes(b.hostUserId) : false;
       if (aFollowed && !bFollowed) return -1;
       if (!aFollowed && bFollowed) return 1;
       return 0;
     });
-  }, [events, socialProofMap, userProfile?.following, propUser?.following]);
+  }, [events, socialProofMap, userProfile?.following]);
+
+  const userInterests = useMemo(() => {
+    return (userProfile?.interests || propUser?.interests || []).map((t) => t.toLowerCase());
+  }, [userProfile?.interests, propUser?.interests]);
+
+  // Segmentación: "EVENTOS HOY" (3 a 6 eventos recomendados con filtro de afinidad y relevancia)
+  const todayCoverFlowEvents = useMemo(() => {
+    if (!eventsWithSocialProof.length) return [];
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    // Calcular puntaje de afinidad y relevancia para cada evento
+    const scoredEvents = eventsWithSocialProof.map((evt) => {
+      let score = 0;
+      const evtTags = (evt.tags || []).map((t) => t.toLowerCase());
+      const theme = (evt.theme || '').toLowerCase();
+      const title = (evt.title || '').toLowerCase();
+      const desc = (evt.description || '').toLowerCase();
+
+      // Afinidad con tags de intereses del usuario
+      userInterests.forEach((interest) => {
+        if (evtTags.some((t) => t.includes(interest) || interest.includes(t))) score += 10;
+        if (theme.includes(interest)) score += 8;
+        if (title.includes(interest)) score += 6;
+        if (desc.includes(interest)) score += 4;
+      });
+
+      // Timeliness: Ocurre hoy / esta noche
+      const isToday = evt.date === todayStr || evt.isTonight;
+      if (isToday) score += 25;
+
+      // Anfitrión seguido
+      const following = userProfile?.following || [];
+      if (evt.hostUserId && following.includes(evt.hostUserId)) score += 12;
+
+      return { evt, score, isToday };
+    });
+
+    // Ordenar: primero mayor puntaje, luego fecha más próxima
+    scoredEvents.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (a.evt.date || '').localeCompare(b.evt.date || '');
+    });
+
+    // Limitar carrusel entre 3 y 6 tarjetas
+    const limit = Math.min(6, Math.max(3, Math.min(scoredEvents.length, 6)));
+    return scoredEvents.slice(0, limit).map((s) => s.evt);
+  }, [eventsWithSocialProof, userInterests, userProfile?.following]);
+
+  // Segmentación: "EVENTOS ESTA SEMANA" (agenda cronológica agrupada por días, excluyendo los del Cover Flow)
+  const thisWeekGroupedEvents = useMemo(() => {
+    const coverFlowIds = new Set(todayCoverFlowEvents.map((e) => e.id));
+    const remainingEvents = eventsWithSocialProof.filter((e) => !coverFlowIds.has(e.id));
+
+    // Filtrar eventos de los próximos 7 días (o si hay pocos, mostrar los activos disponibles)
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const in7Days = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
+
+    const upcomingEvents = remainingEvents.filter((e) => {
+      if (!e.date) return true;
+      const dParts = getDayParts(e.date);
+      if (dParts.dateKey) {
+        const [y, m, day] = dParts.dateKey.split('-').map(Number);
+        const evDate = new Date(y, m - 1, day);
+        return evDate >= now && evDate <= in7Days;
+      }
+      return true;
+    });
+
+    const listToDisplay = upcomingEvents.length > 0 ? upcomingEvents : remainingEvents;
+
+    // Ordenar cronológicamente ascendente
+    const sorted = [...listToDisplay].sort((a, b) => {
+      const dateA = a.date || '9999-99-99';
+      const dateB = b.date || '9999-99-99';
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return (a.startTime || '22:00').localeCompare(b.startTime || '22:00');
+    });
+
+    // Agrupar por día
+    const groups: { dayKey: string; dayTitle: string; events: VipFlyerItem[] }[] = [];
+    const groupMap = new Map<string, { dayKey: string; dayTitle: string; events: VipFlyerItem[] }>();
+
+    sorted.forEach((evt) => {
+      const parts = getDayParts(evt.date);
+      const key = parts.dateKey || parts.dayOfWeek;
+      if (!groupMap.has(key)) {
+        const newGroup = {
+          dayKey: key,
+          dayTitle: parts.dayTitle,
+          events: [],
+        };
+        groupMap.set(key, newGroup);
+        groups.push(newGroup);
+      }
+      groupMap.get(key)!.events.push(evt);
+    });
+
+    return groups;
+  }, [eventsWithSocialProof, todayCoverFlowEvents]);
 
   const handleApplyVip = (flyerId: string) => {
     const targetEvt = eventsWithSocialProof.find((e) => e.id === flyerId);
@@ -645,14 +809,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
               <h1 className="font-display text-[22px] text-white tracking-wide uppercase leading-tight whitespace-nowrap">
                 HEY, {userName}
               </h1>
-              <span className="font-sans text-[11px] text-zinc-400 font-medium tracking-wider uppercase mt-0.5 whitespace-nowrap">
-                TIENES EVENTOS CERCA
+              <span className="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase mt-0.5 whitespace-nowrap">
+                EVENTOS HOY
               </span>
             </div>
           </div>
         </header>
 
-        {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS O ESTADO VACÍO */}
+        {/* 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (EVENTOS HOY) O ESTADO VACÍO */}
         <motion.main
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -687,7 +851,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
             </motion.div>
           ) : (
             <FullCardCoverFlow
-              flyers={eventsWithSocialProof}
+              flyers={todayCoverFlowEvents}
               userPasses={userPasses}
               onRequestVip={handleRequestVipDirect}
               onApplyVipClick={handleApplyVip}
@@ -699,8 +863,113 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
           )}
         </motion.main>
 
-        {/* 5. BARRA DE ACCIÓN FLOTANTE: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] (INMEDIATAMENTE DEBAJO DEL CARRUSEL) */}
-        <div className="pt-2 pb-2">
+        {/* 5. NUEVA SECCIÓN: "EVENTOS ESTA SEMANA" (AGENDA CRONOLÓGICA) */}
+        {!isEventsLoading && events.length > 0 && (
+          <section className="w-full flex flex-col mt-2">
+            {/* 1. Encabezado de Sección Brutalista */}
+            <div className="w-full flex justify-start mt-6 mb-3">
+              <div className="bg-black rounded-none pl-5 pr-5 py-2 inline-flex items-center">
+                <span className="font-display text-base text-white tracking-widest uppercase">
+                  EVENTOS ESTA SEMANA
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Lista Cronológica Agrupada por Día */}
+            {thisWeekGroupedEvents.length > 0 ? (
+              <div className="w-full flex flex-col">
+                {thisWeekGroupedEvents.map((group) => (
+                  <div key={group.dayKey} className="w-full mb-3">
+                    {/* Subencabezado de día */}
+                    <div className="px-5 mb-2 flex items-center gap-2">
+                      <span className="font-display text-xs text-[#E87A72] font-black uppercase tracking-wider">
+                        {group.dayTitle}
+                      </span>
+                      <div className="h-px flex-1 bg-white/10" />
+                    </div>
+
+                    {/* Fila / Tarjeta Horizontal */}
+                    {group.events.map((event) => {
+                      const { dayOfWeek, dayNum } = getDayParts(event.date);
+                      const remainingSpots = event.remainingSpots ?? 100;
+                      const tagText = (event.tags && event.tags[0]) || (event.theme !== 'custom' ? event.theme : null) || 'VIP';
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="bg-[#16171B] border border-[#26282E] rounded-xl p-2.5 flex items-center gap-3 mb-2.5 mx-4 active:scale-[0.99] transition-transform cursor-pointer hover:border-white/20 shadow-md"
+                        >
+                          {/* Columna Día (Izquierda): Micro-badge vertical en Antonio Bold */}
+                          <div className="w-12 h-14 rounded-lg bg-black/60 border border-[#26282E] flex flex-col items-center justify-center shrink-0">
+                            <span className="font-display text-[11px] text-[#E87A72] font-black uppercase tracking-wider leading-none">
+                              {dayOfWeek}
+                            </span>
+                            <span className="font-display text-lg text-white font-black leading-tight mt-0.5">
+                              {dayNum}
+                            </span>
+                          </div>
+
+                          {/* Miniatura Cuadrada: Foto/flyer del evento */}
+                          {event.imageUrl ? (
+                            <img
+                              src={event.imageUrl}
+                              alt={event.title}
+                              className="w-14 h-14 rounded-lg object-cover bg-zinc-800 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-zinc-800 border border-white/5 flex items-center justify-center text-xl shrink-0">
+                              🎪
+                            </div>
+                          )}
+
+                          {/* Información Central */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h3 className="font-display text-sm font-black text-white uppercase truncate tracking-wide leading-tight">
+                              {event.title}
+                            </h3>
+                            <span className="font-sans text-xs text-zinc-400 truncate mt-0.5">
+                              {event.location || event.exactAddress || 'Lugar por confirmar'} · {event.timeRange || (event.startTime ? `${event.startTime} hs` : '22:00')}
+                            </span>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {remainingSpots <= 30 ? (
+                                <span className="text-[10px] font-display text-[#E87A72] bg-[#E87A72]/15 px-1.5 py-0.5 rounded font-black tracking-wider uppercase">
+                                  🔥 {remainingSpots > 0 ? `ÚLTIMOS ${remainingSpots} CUPOS` : 'AGOTADO'}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-sans text-zinc-400 bg-white/5 px-1.5 py-0.5 rounded font-medium tracking-wider uppercase">
+                                  {tagText}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Flecha / Acción (Derecha) */}
+                          <span className="text-sm text-[#9CA3AF] shrink-0 font-bold pr-1">›</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mx-4 p-4 rounded-xl bg-[#16171B]/60 border border-dashed border-[#26282E] text-center mb-4">
+                <span className="font-display text-xs text-zinc-400 uppercase tracking-wider font-bold">
+                  NO HAY MÁS EVENTOS PROGRAMADOS ESTA SEMANA
+                </span>
+                <p className="font-sans text-[11px] text-zinc-500 mt-1">
+                  Revisa los eventos destacados de hoy arriba
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* 6. DOCK DE ACCIÓN INFERIOR: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] */}
+        <div className="w-full mt-6 mb-24 pb-[90px]">
           <ActionFooter
             onCreateEventClick={handleCreateEvent}
             onScanQrClick={handleScanQr}
@@ -728,7 +997,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
       <SelectEventToScanSheet
         isOpen={isSelectEventSheetOpen}
         events={hostEventsToScan}
-        onClose={() => setIsEventSelectSheetOpen(false)}
+        onClose={() => setIsSelectEventSheetOpen(false)}
         onSelectEvent={handleSelectEventForScan}
       />
 

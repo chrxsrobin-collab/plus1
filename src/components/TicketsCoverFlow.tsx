@@ -37,7 +37,7 @@ export const TicketsCoverFlow: React.FC<TicketsCoverFlowProps> = ({
     <div className="relative w-full overflow-visible select-none flex flex-col items-center">
       {/* Contenedor Cover Flow con perspectiva para los boletos físicos */}
       <div
-        className="relative w-full h-[450px] flex items-center justify-center py-2"
+        className="relative w-full h-[475px] sm:h-[505px] flex items-center justify-center py-2"
         style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
       >
         <motion.div

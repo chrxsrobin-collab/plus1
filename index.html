@@ -1312,7 +1312,7 @@
         <main class="flex-1 flex flex-col items-center justify-center my-auto py-1">
           <div
             id="ticketCoverFlowTrack"
-            class="relative w-full h-[520px] flex items-center justify-center py-2"
+            class="relative w-full h-[475px] sm:h-[505px] flex items-center justify-center py-2"
             style="perspective: 1200px; transform-style: preserve-3d;"
           >
             <!-- Renderizado dinámicamente vía renderTicketCoverFlow() -->
@@ -4364,14 +4364,11 @@
       track.innerHTML = userTickets.map((t, idx) => {
         const isCapReached = t.status === 'capacity_reached';
         const isPending = t.status === 'pending';
-        const strokeColor = isCapReached ? '#E87A72' : isPending ? '#FAB205' : (t.accentBorderColor || '#12C061');
-        const badgeLabel = isCapReached ? 'AFORO LLENO' : isPending ? 'SOLICITUD EN ESPERA' : (t.listType || 'PASE ACTIVO');
-        const badgeEmoji = isCapReached ? '⏳' : isPending ? '⏳' : (t.emoji || '🎟️');
 
         let centerContentHtml = '';
         if (isCapReached) {
           centerContentHtml = `
-            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#E87A72]/50 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
+            <div class="w-[210px] sm:w-[220px] bg-[#16171B] border-2 border-[#E87A72] rounded-[24px] p-4 shadow-xl flex flex-col items-center justify-center text-center">
               <span class="text-3xl mb-1.5">⏳</span>
               <span class="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase mb-1">
                 AFORO VIP COMPLETADO
@@ -4386,7 +4383,7 @@
           `;
         } else if (isPending) {
           centerContentHtml = `
-            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#FAB205]/40 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
+            <div class="w-[210px] sm:w-[220px] bg-[#16171B] border-2 border-[#FAB205] rounded-[24px] p-4 shadow-xl flex flex-col items-center justify-center text-center">
               <span class="text-3xl mb-1.5">⏳</span>
               <span class="font-display text-[#FAB205] text-xs font-black tracking-wider uppercase mb-1">
                 SOLICITUD EN REVISIÓN
@@ -4397,12 +4394,13 @@
             </div>
           `;
         } else {
-          const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
+          const passPayload = t.qrCodeValue || `plus1://pass/${t.id || 'TEST_PASS_123'}`;
           centerContentHtml = `
-            <div class="relative w-full flex items-center justify-center">
-              <div class="bg-white p-4 rounded-3xl flex items-center justify-center shadow-inner">
-                <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[220px] h-[220px] flex items-center justify-center overflow-hidden">
-                </div>
+            <div class="w-[212px] h-[212px] sm:w-[224px] sm:h-[224px] bg-white border-[2.5px] border-black rounded-[26px] p-2.5 sm:p-3 flex items-center justify-center relative shadow-sm">
+              <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[182px] h-[182px] flex items-center justify-center overflow-hidden">
+              </div>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black flex items-center justify-center shadow-md pointer-events-none select-none border border-black">
+                <span class="font-display font-black text-xs text-[#E87A72] tracking-tight leading-none">+1</span>
               </div>
             </div>
           `;
@@ -4412,55 +4410,33 @@
           .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
           .trim();
         const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
-        const passCode = (t.id || t.ticketId || '0000').replace(/^#/, '').slice(0, 5).toUpperCase();
+        const tierLabel = t.listType || (allowsPlusOne ? 'PASE +1' : 'VIP');
+        const eventTitle = (t.title || t.eventTitle || 'NOMBRE EVENTO').replace(/^FLYER.*?:\s*/i, '').trim();
 
         return `
-          <div class="cf-ticket absolute origin-center will-change-transform w-[320px] h-[510px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
-            <svg viewBox="0 0 320 510" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible filter drop-shadow-2xl">
-              <path d="M 18 0 H 302 A 18 18 0 0 1 320 18 V 93 A 12 12 0 0 0 320 117 V 492 A 18 18 0 0 1 302 510 H 18 A 18 18 0 0 1 0 492 V 117 A 12 12 0 0 0 0 93 V 18 A 18 18 0 0 1 18 0 Z"
-                    fill="#121316" stroke="${strokeColor}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" />
-              <line x1="14" y1="105" x2="306" y2="105" stroke="#262A32" stroke-width="1.5" stroke-dasharray="5 5" />
-              <line x1="18" y1="422" x2="302" y2="422" stroke="#1F2228" stroke-width="1" stroke-dasharray="4 4" />
-            </svg>
-            <div class="relative z-10 w-full h-full flex flex-col justify-between p-4 pt-4 pb-3.5">
-              <div class="h-[88px] flex flex-col justify-between text-center px-1">
-                <div class="flex items-center justify-start">
-                  <span class="text-[10px] font-display font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full border text-[${strokeColor}] border-[${strokeColor}]/40 bg-[${strokeColor}]/15">
-                    VIP
-                  </span>
-                </div>
-                <h3 class="font-display text-white text-xl sm:text-2xl font-black tracking-tight uppercase leading-none truncate px-1 mt-1">
-                  ${t.title}
-                </h3>
-                <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-300">
-                  <span class="font-bold text-white">${t.dateStr}</span>
-                  <span>·</span>
-                  <span class="text-neutral-400">${t.timeStr}</span>
-                </div>
+          <div class="cf-ticket absolute origin-center will-change-transform w-[285px] sm:w-[305px] h-[458px] sm:h-[490px] flex-shrink-0 cursor-pointer select-none transition-all duration-300 ease-out filter drop-shadow-[0_18px_40px_rgba(0,0,0,0.95)]" onclick="handleTicketCardTap(${idx})">
+            <img src="./assets/images/ticket.webp" alt="Boleto +1" class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none" />
+            <div class="relative z-10 w-full h-full flex flex-col justify-between px-6 pt-3 pb-3">
+              
+              <!-- ZONA SUPERIOR: [NOMBRE EVENTO] -->
+              <div class="h-[78px] sm:h-[84px] flex items-center justify-center text-center px-2 pt-2">
+                <h2 class="font-display text-black text-xl sm:text-[23px] font-black tracking-tight uppercase leading-tight line-clamp-2">
+                  ${eventTitle}
+                </h2>
               </div>
-              <div class="flex-1 flex flex-col items-center justify-center py-2 relative">
+
+              <!-- ZONA CENTRAL: CÓDIGO QR / ESTADOS -->
+              <div class="flex-1 flex flex-col items-center justify-center px-2 py-1 relative">
                 ${centerContentHtml}
-                <div class="flex items-center space-x-1 text-neutral-400 text-xs font-sans mt-2">
-                  <span class="text-[11px]">📍</span>
-                  <span class="truncate max-w-[210px]">${t.location || t.venue}</span>
-                </div>
-                ${t.vipCutoffTime ? `
-                  <div class="mt-1 px-2.5 py-0.5 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 flex items-center space-x-1 text-[9px] font-display font-black text-[#E87A72] uppercase tracking-wider">
-                    <span>⏳</span>
-                    <span>VIP VÁLIDO HASTA: ${formatVipCutoffDisplay(t.vipCutoffTime)}</span>
-                  </div>
-                ` : ''}
               </div>
-              <div class="h-[68px] flex flex-col justify-center text-center px-2">
-                <div class="font-display text-white text-lg tracking-wider uppercase truncate">
-                  ${cleanHolder || 'USUARIO'} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
-                </div>
-                <div class="flex items-center justify-center space-x-1.5 text-[11px] font-sans text-neutral-400 mt-1">
-                  <span class="font-mono font-bold text-neutral-300">#${passCode}</span>
-                  <span>·</span>
-                  <span class="uppercase tracking-wider">${t.verifiedProvider || 'VERIFICADO CON GOOGLE'}</span>
-                </div>
+
+              <!-- ZONA INFERIOR: [NOMBRE USUARIO] - [TIPO DE INGRESO] -->
+              <div class="h-[58px] sm:h-[64px] flex items-center justify-center text-center px-2 pb-2">
+                <p class="font-display text-black text-xs sm:text-[13px] font-black tracking-wide uppercase truncate">
+                  ${cleanHolder} - ${tierLabel}
+                </p>
               </div>
+
             </div>
           </div>
         `;
@@ -4477,41 +4453,33 @@
     }
 
     function updateCoverFlowTicketQrs() {
-      const defaultBadge = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' width='120' height='120'><circle cx='60' cy='60' r='58' fill='%230E0F12' stroke='%23FFFFFF' stroke-width='4'/><text x='60' y='74' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='44' fill='%23E87A72'>%2B1</text></svg>";
-
       userTickets.forEach((t, idx) => {
         if (t.status === 'capacity_reached' || t.status === 'pending') return;
         const wrapper = document.getElementById(`ticketCoverFlowQrWrapper_${idx}`);
         if (!wrapper) return;
-        const payload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
+        const payload = t.qrCodeValue || `plus1://pass/${t.id || 'TEST_PASS_123'}`;
 
         if (typeof window.QRCodeStyling !== 'undefined') {
           wrapper.innerHTML = '';
           const qrCode = new window.QRCodeStyling({
-            width: 220,
-            height: 220,
+            width: 182,
+            height: 182,
             type: 'svg',
             data: payload,
-            image: t.eventImageUrl || defaultBadge,
             dotsOptions: {
-              color: '#0E0F12',
-              type: 'dots'
+              color: '#000000',
+              type: 'square'
             },
             backgroundOptions: {
               color: '#FFFFFF'
             },
-            imageOptions: {
-              crossOrigin: 'anonymous',
-              margin: 6,
-              imageSize: 0.28
-            },
             cornersSquareOptions: {
-              type: 'extra-rounded',
-              color: '#0E0F12'
+              type: 'square',
+              color: '#000000'
             },
             cornersDotOptions: {
-              type: 'dot',
-              color: '#0E0F12'
+              type: 'square',
+              color: '#000000'
             },
             qrOptions: {
               errorCorrectionLevel: 'H'
@@ -4519,7 +4487,7 @@
           });
           qrCode.append(wrapper);
         } else if (typeof window.QRCode !== 'undefined' && typeof window.QRCode.toString === 'function') {
-          window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0 }, function(err, svg) {
+          window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0, color: { dark: '#000000', light: '#ffffff' } }, function(err, svg) {
             if (!err && svg) {
               wrapper.innerHTML = svg;
               const svgEl = wrapper.querySelector('svg');

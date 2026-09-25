@@ -334,11 +334,11 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
             </main>
 
             {/* 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS */}
-            <div className="w-full pt-2 pb-2">
+            <div className="w-full pt-2 pb-2 flex justify-center">
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDownloadCopy}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none cursor-pointer mb-2"
+                className="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none cursor-pointer mb-2"
               >
                 <span className="text-lg leading-none">⬇</span>
                 <span>GUARDAR COPIA EN FOTOS</span>

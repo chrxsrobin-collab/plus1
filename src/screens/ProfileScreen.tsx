@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  UserProfile,
-  CreatedEventItem,
-  NotificationItem,
-  BUSINESS_CATEGORIES,
-  BusinessCategoryType,
-} from '../types/home';
+import { UserProfile, CreatedEventItem, NotificationItem } from '../types/home';
 import { mockUserProfile, mockNotifications } from '../data/mockData';
 import { db, auth } from '../lib/firebase';
 import {
@@ -19,6 +13,9 @@ import {
   updateDoc,
   getDoc,
   getDocs,
+  arrayUnion,
+  arrayRemove,
+  increment,
 } from 'firebase/firestore';
 import { signOut, updateProfile } from 'firebase/auth';
 import { computeEventEndTimestamp } from '../lib/dateUtils';
@@ -27,19 +24,47 @@ import { PullToRefresh } from '../components/PullToRefresh';
 import '../styles/fonts.css';
 
 export interface ProfileScreenProps {
-  userId?: string;
   user?: UserProfile;
+  profileUserId?: string;
   onBack?: () => void;
   onNavigate?: (route: string) => void;
   onUpdateName?: (newName: string) => void;
   onUpdateAvatar?: (newAvatarUrl: string) => void;
 }
 
-// Helper universal de compresión de imágenes tipo canvas
-const compressImage = (file: File, maxDim: number, quality: number = 0.8): Promise<string> => {
+export type BusinessCategoryType =
+  | 'club'
+  | 'promotor'
+  | 'cafe'
+  | 'teatro'
+  | 'cine'
+  | 'salon_eventos'
+  | 'conferencista'
+  | 'pub'
+  | 'gimnasio';
+
+export interface BusinessCategoryItem {
+  id: BusinessCategoryType;
+  label: string;
+  icon: string;
+}
+
+export const BUSINESS_CATEGORIES: BusinessCategoryItem[] = [
+  { id: 'club', label: 'Club', icon: '🪩' },
+  { id: 'promotor', label: 'Promotor', icon: '🎫' },
+  { id: 'cafe', label: 'Café', icon: '☕' },
+  { id: 'teatro', label: 'Teatro', icon: '🎭' },
+  { id: 'cine', label: 'Cine', icon: '🎬' },
+  { id: 'salon_eventos', label: 'Salón de Eventos', icon: '🎪' },
+  { id: 'conferencista', label: 'Conferencia', icon: '🎤' },
+  { id: 'pub', label: 'Pub', icon: '🍻' },
+  { id: 'gimnasio', label: 'Gimnasio', icon: '💪' },
+];
+
+const compressImageFile = (file: File, maxDim = 800, quality = 0.8): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -59,16 +84,16 @@ const compressImage = (file: File, maxDim: number, quality: number = 0.8): Promi
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('Canvas context no disponible'));
+        if (!ctx) return reject(new Error('Canvas context error'));
         ctx.drawImage(img, 0, 0, width, height);
-        let base64 = canvas.toDataURL('image/webp', quality);
-        if (!base64.startsWith('data:image/webp')) {
-          base64 = canvas.toDataURL('image/jpeg', quality);
+        let compressed = canvas.toDataURL('image/webp', quality);
+        if (!compressed.startsWith('data:image/webp')) {
+          compressed = canvas.toDataURL('image/jpeg', quality);
         }
-        resolve(base64);
+        resolve(compressed);
       };
       img.onerror = reject;
-      img.src = e.target?.result as string;
+      img.src = event.target?.result as string;
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -191,21 +216,39 @@ const DialGauge: React.FC<DialProps> = ({ label, value, percent, color, isLarge 
 };
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
-  userId,
   user = mockUserProfile,
+  profileUserId,
   onBack,
   onNavigate,
   onUpdateName,
   onUpdateAvatar,
 }) => {
-  const currentAuthUser = auth.currentUser;
-  const targetUserId = userId || currentAuthUser?.uid;
-  const isOwner = Boolean(currentAuthUser?.uid && (!userId || userId === currentAuthUser.uid));
-
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<
-    'account' | 'wristbands' | 'event_selector' | 'events' | 'streak' | 'store' | 'subscription' | null
+    'account' | 'wristbands' | 'event_selector' | 'events' | 'streak' | 'store' | 'subscription' | 'category_picker' | 'live_dashboard' | null
   >(null);
+
+  // targetUserId: el usuario del perfil que estamos viendo
+  const targetUserId = profileUserId || auth.currentUser?.uid || user.id || 'current_user';
+  const isOwner = !profileUserId || profileUserId === auth.currentUser?.uid;
+
+  // Estados del creador / anfitrión
+  const [profileData, setProfileData] = useState<any>(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>('');
+  const [businessCategory, setBusinessCategory] = useState<string>('club');
+  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
+  const [followersCount, setFollowersCount] = useState<number>(0);
+
+  // Estado del usuario visitante (siguiendo)
+  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>([]);
+  const [isFollowingPending, setIsFollowingPending] = useState(false);
+
+  // Uploaders y preview
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   // Lista de eventos creados por el anfitrión
   const [userEvents, setUserEvents] = useState<CreatedEventItem[]>([]);
@@ -224,11 +267,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState<number>(9);
 
-  // Estado del perfil del usuario consultado (targetUserId)
+  // Estado del perfil del usuario (para el modal de cuenta)
   const [userProfileData, setUserProfileData] = useState<any>(null);
   const [displayName, setDisplayName] = useState<string>(() => {
     return (
-      (isOwner ? currentAuthUser?.displayName : null) ||
+      auth.currentUser?.displayName ||
+      (auth.currentUser?.isAnonymous ? 'INVITADO #' + auth.currentUser.uid.slice(-4).toUpperCase() : null) ||
       user.name ||
       'CHRIS G.'
     );
@@ -240,30 +284,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // Avatar y uploader
   const [avatarUrl, setAvatarUrl] = useState<string>(() => {
     return (
-      (isOwner ? currentAuthUser?.photoURL : null) ||
+      auth.currentUser?.photoURL ||
       user.avatarUrl ||
       './assets/images/foto_perfil.webp'
     );
   });
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // ----------------------------------------------------
-  // ESTADOS PÁGINA DE NEGOCIO / CREADOR PRO
-  // ----------------------------------------------------
-  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>('');
-  const [businessCategory, setBusinessCategory] = useState<string>('club');
-  const [galleryPhotos, setGalleryPhotos] = useState<string[]>([]);
-  const [followersCount, setFollowersCount] = useState<number>(0);
-  const [currentUserFollowing, setCurrentUserFollowing] = useState<string[]>([]);
-  const [isUploadingCover, setIsUploadingCover] = useState<boolean>(false);
-  const [isUploadingGallery, setIsUploadingGallery] = useState<boolean>(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState<boolean>(false);
-  const [selectedLightboxPhoto, setSelectedLightboxPhoto] = useState<string | null>(null);
-  const [showLiveDashboard, setShowLiveDashboard] = useState<boolean>(false);
-
-  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
-  const galleryFileInputRef = useRef<HTMLInputElement | null>(null);
 
   // ----------------------------------------------------
   // ESTADOS DEL DASHBOARD EN VIVO
@@ -322,77 +349,91 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setSelectedEventIndex((prev) => (prev < userEvents.length - 1 ? prev + 1 : 0));
   };
 
-  // Escucha reactiva del perfil del anfitrión consultado (targetUserId)
+  // 1. Escucha del perfil que se está visualizando (targetUserId)
   useEffect(() => {
     if (!targetUserId) return;
-    const userRef = doc(db, 'users', targetUserId);
-    const unsubUser = onSnapshot(userRef, (snap) => {
+    const targetRef = doc(db, 'users', targetUserId);
+    const unsubTarget = onSnapshot(targetRef, (snap) => {
       if (snap.exists()) {
         const d = snap.data();
-        setUserProfileData(d);
+        setProfileData(d);
         if (d.name) {
           setDisplayName(d.name);
           setEditNameValue(d.name);
         }
         if (d.photoUrl) {
           setAvatarUrl(d.photoUrl);
-        } else if (isOwner && currentAuthUser?.photoURL) {
-          setAvatarUrl(currentAuthUser.photoURL);
+        } else if (isOwner && auth.currentUser?.photoURL) {
+          setAvatarUrl(auth.currentUser.photoURL);
         }
-        if (d.coverPhotoUrl) setCoverPhotoUrl(d.coverPhotoUrl);
-        if (d.businessCategory) setBusinessCategory(d.businessCategory);
-        if (Array.isArray(d.galleryPhotos)) setGalleryPhotos(d.galleryPhotos);
-        if (typeof d.followersCount === 'number') setFollowersCount(d.followersCount);
+        if (d.coverPhotoUrl) {
+          setCoverPhotoUrl(d.coverPhotoUrl);
+        }
+        if (d.businessCategory) {
+          setBusinessCategory(d.businessCategory);
+        }
+        if (Array.isArray(d.galleryPhotos)) {
+          setGalleryPhotos(d.galleryPhotos);
+        }
+        if (d.followersCount !== undefined) {
+          setFollowersCount(Number(d.followersCount) || 0);
+        }
       }
-    });
+    }, (err) => console.warn('Target user listener note:', err));
 
-    return () => unsubUser();
-  }, [targetUserId, isOwner, currentAuthUser]);
+    return () => unsubTarget();
+  }, [targetUserId, isOwner]);
 
-  // Escucha reactiva del usuario conectado (para lista de anfitriones que sigue y alertas)
+  // 2. Escucha del usuario conectado (para su lista following y notificaciones)
   useEffect(() => {
-    if (!currentAuthUser) return;
-    const currentRef = doc(db, 'users', currentAuthUser.uid);
-    const unsubCurrent = onSnapshot(currentRef, (snap) => {
+    if (!auth.currentUser) return;
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const unsubUser = onSnapshot(userRef, (snap) => {
       if (snap.exists()) {
         const d = snap.data();
+        setUserProfileData(d);
         if (Array.isArray(d.following)) {
           setCurrentUserFollowing(d.following);
+        }
+        if (isOwner) {
+          if (d.name) {
+            setDisplayName(d.name);
+            setEditNameValue(d.name);
+          }
+          if (d.photoUrl) setAvatarUrl(d.photoUrl);
+          if (d.coverPhotoUrl) setCoverPhotoUrl(d.coverPhotoUrl);
+          if (d.businessCategory) setBusinessCategory(d.businessCategory);
+          if (Array.isArray(d.galleryPhotos)) setGalleryPhotos(d.galleryPhotos);
         }
       }
     });
 
     const notifsQuery = query(
       collection(db, 'notifications'),
-      where('userId', '==', currentAuthUser.uid),
+      where('userId', '==', auth.currentUser.uid),
       where('read', '==', false)
     );
-    const unsubNotifs = onSnapshot(
-      notifsQuery,
-      (snap) => {
-        const count = snap.docs.length;
-        setUnreadNotifCount(count > 0 ? count : 9);
-      },
-      () => {}
-    );
+    const unsubNotifs = onSnapshot(notifsQuery, (snap) => {
+      const count = snap.docs.length;
+      setUnreadNotifCount(count > 0 ? count : 9);
+    }, () => {});
 
     return () => {
-      unsubCurrent();
+      unsubUser();
       unsubNotifs();
     };
-  }, [currentAuthUser]);
+  }, [auth.currentUser, isOwner]);
 
-  // Escucha reactiva en tiempo real de eventos creados por el anfitrión (targetUserId)
+  // 3. Escucha reactiva en tiempo real de eventos del anfitrión
   useEffect(() => {
     if (!targetUserId) {
       setUserEvents([]);
       return;
     }
 
-    const q = query(
-      collection(db, 'events'),
-      where('hostUserId', '==', targetUserId)
-    );
+    const q = isOwner
+      ? query(collection(db, 'events'), where('hostUserId', '==', targetUserId))
+      : query(collection(db, 'events'), where('hostUserId', '==', targetUserId), where('type', '==', 'public'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -421,7 +462,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
 
     return () => unsubscribe();
-  }, [targetUserId]);
+  }, [targetUserId, isOwner]);
 
   // Escucha reactiva en tiempo real de pases usados (eventos asistidos por el usuario)
   useEffect(() => {
@@ -698,10 +739,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  // Manejo de subida de foto de portada (Cover Panorámico)
-  const handleCoverPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const isPartner = Boolean(
+    isOwner
+      ? (profileData?.isPartner ?? userProfileData?.isPartner ?? user?.isPartner)
+      : profileData?.isPartner
+  );
+
+  const isFollowing = useMemo(() => {
+    return Boolean(targetUserId && currentUserFollowing.includes(targetUserId));
+  }, [targetUserId, currentUserFollowing]);
+
+  const currentCategory = useMemo(() => {
+    return BUSINESS_CATEGORIES.find((c) => c.id === businessCategory) || BUSINESS_CATEGORIES[0];
+  }, [businessCategory]);
+
+  // Manejo de portada superior
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !isOwner || !currentAuthUser) return;
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       showToast('Por favor selecciona una imagen válida');
@@ -710,42 +765,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
     setIsUploadingCover(true);
     try {
-      const compressedBase64 = await compressImage(file, 1200, 0.85);
-      setCoverPhotoUrl(compressedBase64);
+      const compressed = await compressImageFile(file, 1080, 0.82);
+      setCoverPhotoUrl(compressed);
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        try {
+          await updateDoc(userRef, { coverPhotoUrl: compressed });
+        } catch {
+          await setDoc(userRef, { coverPhotoUrl: compressed }, { merge: true });
+        }
+      }
       showToast('✦ Foto de portada actualizada');
-
-      const userRef = doc(db, 'users', currentAuthUser.uid);
-      await setDoc(userRef, { coverPhotoUrl: compressedBase64, updatedAt: Date.now() }, { merge: true });
     } catch (err) {
-      console.error('Error al subir portada:', err);
-      showToast('Error al actualizar portada');
+      console.error('Error portada:', err);
+      showToast('Error al subir imagen de portada');
     } finally {
       setIsUploadingCover(false);
-      if (coverFileInputRef.current) coverFileInputRef.current.value = '';
+      if (coverInputRef.current) coverInputRef.current.value = '';
     }
   };
 
-  // Selección de Ramo Comercial
-  const handleSelectBusinessCategory = async (catId: BusinessCategoryType) => {
-    if (!isOwner || !currentAuthUser) return;
-    setBusinessCategory(catId);
-    setIsCategoryModalOpen(false);
-
-    const catObj = BUSINESS_CATEGORIES.find((c) => c.id === catId);
-    showToast(`Ramo actualizado a ${catObj?.label || catId}`);
-
-    try {
-      const userRef = doc(db, 'users', currentAuthUser.uid);
-      await setDoc(userRef, { businessCategory: catId, updatedAt: Date.now() }, { merge: true });
-    } catch (err) {
-      console.error('Error al guardar categoría comercial:', err);
-    }
-  };
-
-  // Subida de foto a la Galería (máximo 6 fotos)
-  const handleGalleryPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Manejo de fotos de galería
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !isOwner || !currentAuthUser) return;
+    if (!file) return;
 
     if (!file.type.startsWith('image/')) {
       showToast('Por favor selecciona una imagen válida');
@@ -753,112 +796,139 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
 
     if (galleryPhotos.length >= 6) {
-      showToast('Límite de 6 fotos alcanzado');
+      showToast('Límite alcanzado: máximo 6 fotos en la galería');
       return;
     }
 
     setIsUploadingGallery(true);
     try {
-      const compressedBase64 = await compressImage(file, 800, 0.8);
-      const updatedGallery = [...galleryPhotos, compressedBase64];
-      setGalleryPhotos(updatedGallery);
-      showToast('Foto añadida a la galería');
-
-      const userRef = doc(db, 'users', currentAuthUser.uid);
-      await setDoc(userRef, { galleryPhotos: updatedGallery, updatedAt: Date.now() }, { merge: true });
+      const compressed = await compressImageFile(file, 800, 0.8);
+      const updated = [...galleryPhotos, compressed].slice(0, 6);
+      setGalleryPhotos(updated);
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        try {
+          await updateDoc(userRef, { galleryPhotos: updated });
+        } catch {
+          await setDoc(userRef, { galleryPhotos: updated }, { merge: true });
+        }
+      }
+      showToast('✦ Foto agregada a tu galería');
     } catch (err) {
-      console.error('Error al subir foto a la galería:', err);
-      showToast('Error al añadir foto');
+      console.error('Error galería:', err);
+      showToast('Error al procesar foto para galería');
     } finally {
       setIsUploadingGallery(false);
-      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+      if (galleryInputRef.current) galleryInputRef.current.value = '';
     }
   };
 
-  // Eliminar foto de la Galería
-  const handleDeleteGalleryPhoto = async (index: number) => {
-    if (!isOwner || !currentAuthUser) return;
-    const updatedGallery = galleryPhotos.filter((_, i) => i !== index);
-    setGalleryPhotos(updatedGallery);
-    showToast('Foto eliminada de la galería');
-
+  const handleDeleteGalleryPhoto = async (indexToDelete: number) => {
+    if (!isOwner) return;
     try {
-      const userRef = doc(db, 'users', currentAuthUser.uid);
-      await setDoc(userRef, { galleryPhotos: updatedGallery, updatedAt: Date.now() }, { merge: true });
+      const updated = galleryPhotos.filter((_, idx) => idx !== indexToDelete);
+      setGalleryPhotos(updated);
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, { galleryPhotos: updated });
+      }
+      showToast('Foto eliminada de la galería');
+      setSelectedPhoto(null);
     } catch (err) {
-      console.error('Error al eliminar foto:', err);
+      console.error('Error eliminando foto:', err);
+      showToast('Error al eliminar foto');
     }
   };
 
-  // Seguimiento dinámico de Anfitrión (Follow / Unfollow)
-  const isFollowing = useMemo(() => {
-    if (!targetUserId) return false;
-    return currentUserFollowing.includes(targetUserId);
-  }, [currentUserFollowing, targetUserId]);
+  // Selección de categoría comercial
+  const handleSelectCategory = async (catId: BusinessCategoryType) => {
+    if (!isOwner) return;
+    try {
+      setBusinessCategory(catId);
+      if (auth.currentUser) {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        try {
+          await updateDoc(userRef, { businessCategory: catId });
+        } catch {
+          await setDoc(userRef, { businessCategory: catId }, { merge: true });
+        }
+      }
+      const catObj = BUSINESS_CATEGORIES.find((c) => c.id === catId);
+      showToast(`✦ Ramo actualizado: ${catObj?.label || catId}`);
+      setActiveModal(null);
+    } catch (err) {
+      console.error('Error categoría:', err);
+      showToast('Error al guardar categoría');
+    }
+  };
 
+  // Seguir / Dejar de seguir al anfitrión
   const handleToggleFollow = async () => {
-    if (!currentAuthUser) {
+    if (!auth.currentUser) {
       showToast('Inicia sesión para seguir anfitriones');
       return;
     }
-    if (!targetUserId || isOwner) return;
+    if (isOwner || !targetUserId || isFollowingPending) return;
 
-    const isCurrentlyFollowing = currentUserFollowing.includes(targetUserId);
-    const newFollowing = isCurrentlyFollowing
-      ? currentUserFollowing.filter((id) => id !== targetUserId)
-      : [...currentUserFollowing, targetUserId];
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(15);
+      } catch {}
+    }
 
-    const newFollowersCount = Math.max(0, (followersCount || 0) + (isCurrentlyFollowing ? -1 : 1));
-
-    // Actualización reactiva optimista local
-    setCurrentUserFollowing(newFollowing);
-    setFollowersCount(newFollowersCount);
-    showToast(isCurrentlyFollowing ? 'Dejaste de seguir a este anfitrión' : '¡Ahora sigues a este anfitrión! ⚡');
+    setIsFollowingPending(true);
+    const visitorUid = auth.currentUser.uid;
+    const visitorRef = doc(db, 'users', visitorUid);
+    const hostRef = doc(db, 'users', targetUserId);
 
     try {
-      // 1. Guardar following en documento del visitante
-      await setDoc(
-        doc(db, 'users', currentAuthUser.uid),
-        { following: newFollowing, updatedAt: Date.now() },
-        { merge: true }
-      );
-
-      // 2. Guardar contador en documento del anfitrión
-      await setDoc(
-        doc(db, 'users', targetUserId),
-        { followersCount: newFollowersCount, updatedAt: Date.now() },
-        { merge: true }
-      );
+      if (isFollowing) {
+        await updateDoc(visitorRef, {
+          following: arrayRemove(targetUserId),
+        });
+        await updateDoc(hostRef, {
+          followersCount: increment(-1),
+        }).catch(() => {});
+        setCurrentUserFollowing((prev) => prev.filter((id) => id !== targetUserId));
+        setFollowersCount((prev) => Math.max(0, prev - 1));
+        showToast('Dejaste de seguir a este anfitrión');
+      } else {
+        await updateDoc(visitorRef, {
+          following: arrayUnion(targetUserId),
+        });
+        await updateDoc(hostRef, {
+          followersCount: increment(1),
+        }).catch(() => {});
+        setCurrentUserFollowing((prev) => [...prev, targetUserId]);
+        setFollowersCount((prev) => prev + 1);
+        showToast('✦ ¡Ahora sigues a este anfitrión!');
+      }
     } catch (err) {
       console.error('Error toggling follow:', err);
-      showToast('Error al sincronizar seguimiento');
+      showToast('Error al actualizar seguimiento');
+    } finally {
+      setIsFollowingPending(false);
     }
   };
-
-  const isPartner = Boolean(userProfileData?.isPartner ?? (isOwner ? user?.isPartner : false));
 
   // Pull-to-Refresh: Sincronización manual en tiempo real desde Firestore
   const handleRefresh = async () => {
     try {
-      if (targetUserId) {
+      if (auth.currentUser) {
         // 1. Re-consultar perfil
-        const userRef = doc(db, 'users', targetUserId);
+        const userRef = doc(db, 'users', auth.currentUser.uid);
         const snap = await getDoc(userRef);
         if (snap.exists()) {
           const d = snap.data();
           setUserProfileData(d);
           if (d.name) setDisplayName(d.name);
           if (d.photoUrl) setAvatarUrl(d.photoUrl);
-          if (d.coverPhotoUrl) setCoverPhotoUrl(d.coverPhotoUrl);
-          if (d.businessCategory) setBusinessCategory(d.businessCategory);
-          if (Array.isArray(d.galleryPhotos)) setGalleryPhotos(d.galleryPhotos);
-          if (typeof d.followersCount === 'number') setFollowersCount(d.followersCount);
         }
 
-        // 2. Re-consultar eventos creados por el anfitrión
+        // 2. Re-consultar eventos creados
         const qEvents = query(
           collection(db, 'events'),
-          where('hostUserId', '==', targetUserId)
+          where('hostUserId', '==', auth.currentUser.uid)
         );
         const evSnap = await getDocs(qEvents);
         const now = Date.now();
@@ -984,240 +1054,206 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         className="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-4 sm:px-5"
       >
         
-        {/* ==================================================== */}
-        {/* VISTA A: PÁGINA DE NEGOCIO / CREADOR (isPartner === true) */}
-        {/* VISTA B: PERFIL PERSONAL FREE (isPartner === false) */}
-        {/* ==================================================== */}
         {isPartner ? (
-          <div className="w-full flex flex-col">
+          /* ==================================================== */
+          /* EXPERIENCIA PRO / SOCIO + : PÁGINA DE NEGOCIO/CREADOR */
+          /* ==================================================== */
+          <div className="w-full flex flex-col items-center">
             {/* A. COVER PANORÁMICO SUPERIOR */}
-            <div className="h-44 sm:h-52 -mx-4 sm:-mx-5 w-[calc(100%+2rem)] sm:w-[calc(100%+2.5rem)] relative bg-[#181A1E] overflow-hidden select-none border-b border-[#26282E]">
-              {/* Botón Volver */}
-              <button
-                onClick={onBack || (() => onNavigate?.('/'))}
-                aria-label="Regresar"
-                className="absolute top-3 left-3 z-30 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:text-[#E87A72] transition-colors cursor-pointer active:scale-95 shadow-lg"
-              >
-                ‹
-              </button>
-
-              {/* Botón Notificaciones si es dueño */}
-              {isOwner && (
-                <button
-                  onClick={() => setIsNotificationsOpen(true)}
-                  aria-label="Notificaciones"
-                  className="absolute top-3 right-14 z-30 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center hover:text-[#E87A72] transition-colors cursor-pointer active:scale-95 shadow-lg"
-                >
-                  <span className="text-sm">🔔</span>
-                  {unreadNotifCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 bg-[#EF4444] text-white font-display text-[9px] font-black rounded-full flex items-center justify-center border border-black leading-none">
-                      {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
-                    </span>
-                  )}
-                </button>
-              )}
-
-              {/* Icono Flotante para Cambiar Portada (Solo Dueño) */}
-              {isOwner && (
-                <button
-                  onClick={() => coverFileInputRef.current?.click()}
-                  disabled={isUploadingCover}
-                  aria-label="Cambiar foto de portada"
-                  className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white hover:text-[#E87A72] transition-colors cursor-pointer shadow-lg active:scale-95 flex items-center justify-center"
-                  title="Cambiar foto de portada"
-                >
-                  {isUploadingCover ? (
-                    <div className="w-4 h-4 rounded-full border-2 border-[#E87A72] border-t-transparent animate-spin" />
-                  ) : (
-                    <span className="text-sm">📷</span>
-                  )}
-                </button>
-              )}
-
-              {/* Imagen de Portada o Placeholder Brutalista */}
+            <div className="h-44 sm:h-52 w-full relative bg-[#181A1E] overflow-hidden -mx-4 sm:-mx-5 rounded-b-3xl">
               {coverPhotoUrl ? (
                 <img
                   src={coverPhotoUrl}
-                  alt="Portada del negocio"
+                  alt="Portada del anfitrión"
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-[#181A1E] flex flex-col items-center justify-center text-center p-4 relative">
-                  <div
-                    className="absolute inset-0 opacity-15 pointer-events-none"
-                    style={{
-                      backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
-                  <span className="text-3xl mb-1 filter drop-shadow opacity-50">🎪</span>
-                  <span className="font-display text-xs text-neutral-400 font-bold uppercase tracking-widest">
-                    PORTADA DE ANFITRIÓN +1
+                <div
+                  className="w-full h-full bg-cover bg-center opacity-60 flex items-center justify-center relative"
+                  style={{
+                    backgroundImage: "url('./assets/images/fondo_iniciob.webp')",
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <span className="relative z-10 font-display text-white/30 text-2xl font-black uppercase tracking-widest">
+                    PORTADA +1
                   </span>
                 </div>
               )}
 
-              {/* Degradado inferior de sombra sutil */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+              {/* Botón de volver y acciones superiores flotantes */}
+              <div className="absolute top-0 inset-x-0 pt-[max(0.75rem,env(safe-area-inset-top,0px))] px-4 flex items-center justify-between z-20">
+                <button
+                  onClick={onBack || (() => onNavigate?.('/'))}
+                  aria-label="Regresar"
+                  className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-lg"
+                >
+                  <span className="text-lg font-bold">‹</span>
+                </button>
 
-              {/* Input oculto para subir portada */}
+                <div className="flex items-center space-x-2">
+                  {/* Compartir perfil */}
+                  <button
+                    onClick={handleShareApp}
+                    aria-label="Compartir perfil"
+                    className="w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-transform active:scale-90 cursor-pointer shadow-lg"
+                  >
+                    <span className="text-sm">↗</span>
+                  </button>
+
+                  {/* Si es el dueño: botón de subir/cambiar portada */}
+                  {isOwner && (
+                    <button
+                      onClick={() => coverInputRef.current?.click()}
+                      disabled={isUploadingCover}
+                      aria-label="Cambiar portada"
+                      className="h-9 px-3 rounded-full bg-black/70 hover:bg-black/90 text-white backdrop-blur-md border border-white/20 flex items-center space-x-1.5 transition-transform active:scale-95 cursor-pointer shadow-lg text-xs font-display font-bold tracking-wider"
+                    >
+                      <span>📷</span>
+                      <span className="hidden sm:inline">EDITAR PORTADA</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Input oculto de portada */}
               {isOwner && (
                 <input
                   type="file"
-                  ref={coverFileInputRef}
+                  ref={coverInputRef}
                   accept="image/*"
                   className="hidden"
-                  onChange={handleCoverPhotoChange}
+                  onChange={handleCoverChange}
                 />
               )}
             </div>
 
             {/* B. AVATAR SUPERPUESTO Y NOMBRE */}
-            <div className="flex flex-col items-center text-center relative z-20">
-              <div className="-mt-14 sm:-mt-16 w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#0B0C0E] bg-[#16171B] overflow-hidden z-10 shadow-xl relative group">
-                <img
-                  src={avatarUrl || user?.avatarUrl || './assets/images/foto_perfil.webp'}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                />
+            <div className="relative -mt-14 sm:-mt-16 z-20 flex flex-col items-center">
+              <div className="relative group">
+                <div
+                  onClick={() => {
+                    if (isOwner) fileInputRef.current?.click();
+                  }}
+                  className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#0B0C0E] bg-[#16171B] overflow-hidden shadow-2xl p-[3px] ${
+                    isOwner ? 'cursor-pointer active:scale-95 transition-transform' : ''
+                  }`}
+                  style={{
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.8), 0 0 0 2px #E87A72',
+                  }}
+                >
+                  <img
+                    src={avatarUrl || user.avatarUrl || './assets/images/foto_perfil.webp'}
+                    alt={displayName}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
 
                 {isOwner && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    aria-label="Cambiar foto de perfil"
-                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-base cursor-pointer"
+                    aria-label="Cambiar avatar"
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#E87A72] border-2 border-[#0B0C0E] flex items-center justify-center text-black shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all"
                   >
-                    📷
+                    <span className="text-xs">📷</span>
                   </button>
                 )}
               </div>
 
-              {isOwner && (
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarChange}
-                />
-              )}
-
-              {/* Nombre del perfil en Antonio Bold */}
-              <div className="flex items-center justify-center space-x-2 mt-2">
-                <h2 className="font-display text-2xl sm:text-3xl text-white uppercase text-center tracking-wide leading-tight">
-                  {displayName}
-                </h2>
-                {isOwner && (
-                  <button
-                    onClick={() => {
-                      setEditNameValue(displayName);
-                      setIsEditingName(true);
-                    }}
-                    aria-label="Editar nombre"
-                    className="w-6 h-6 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] flex items-center justify-center text-[#9CA3AF] hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer"
-                  >
-                    <svg className="w-3 h-3 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Badge Socio Oficial */}
-              <div className="mt-1 flex items-center justify-center">
-                <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#FAB205]/20 to-[#E87A72]/20 border border-[#FAB205]/40 text-[#FAB205] font-display text-[10px] font-black tracking-wider uppercase">
-                  ✦ SOCIO OFICIAL +
-                </span>
-              </div>
+              {/* Nombre de usuario */}
+              <h1 className="font-display text-2xl sm:text-3xl text-white uppercase text-center mt-2.5 tracking-wide font-black truncate max-w-[320px] px-2">
+                {displayName}
+              </h1>
 
               {/* C. SELECTOR / BADGE DE RAMO COMERCIAL */}
-              <div className="mt-1.5 flex items-center justify-center">
-                {isOwner ? (
-                  <button
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    className="px-3.5 py-1 bg-[#26282E] hover:bg-[#32353D] text-zinc-300 hover:text-white font-sans text-xs uppercase tracking-wider rounded-full inline-flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-neutral-700/60 shadow-sm"
-                    title="Presiona para cambiar tu ramo comercial"
-                  >
-                    <span>{BUSINESS_CATEGORIES.find((c) => c.id === businessCategory)?.icon || '🪩'}</span>
-                    <span>{BUSINESS_CATEGORIES.find((c) => c.id === businessCategory)?.label || 'Club'}</span>
-                    <span className="text-[10px] text-zinc-400">▾</span>
-                  </button>
-                ) : (
-                  <div className="px-3 py-1 bg-[#26282E] text-zinc-300 font-sans text-xs uppercase tracking-wider rounded-full inline-flex items-center gap-1.5 border border-neutral-700/60">
-                    <span>{BUSINESS_CATEGORIES.find((c) => c.id === businessCategory)?.icon || '🪩'}</span>
-                    <span>{BUSINESS_CATEGORIES.find((c) => c.id === businessCategory)?.label || 'Club'}</span>
-                  </div>
-                )}
-              </div>
+              {isOwner ? (
+                <button
+                  onClick={() => setActiveModal('category_picker')}
+                  className="px-3.5 py-1 bg-[#26282E] hover:bg-[#32353D] text-zinc-300 hover:text-white font-sans text-xs uppercase tracking-wider rounded-full mt-1.5 flex items-center space-x-1.5 transition-colors cursor-pointer border border-zinc-700/50"
+                  title="Cambiar ramo comercial"
+                >
+                  <span>{currentCategory?.icon || '🪩'}</span>
+                  <span className="font-semibold">{currentCategory?.label || 'Club'}</span>
+                  <span className="text-[10px] text-zinc-400">▾</span>
+                </button>
+              ) : (
+                <div className="px-3 py-1 bg-[#26282E] text-zinc-300 font-sans text-xs uppercase tracking-wider rounded-full mt-1.5 flex items-center space-x-1.5">
+                  <span>{currentCategory?.icon || '🪩'}</span>
+                  <span className="font-semibold">{currentCategory?.label || 'Club'}</span>
+                </div>
+              )}
+            </div>
 
-              {/* Contador de seguidores */}
-              <div className="mt-1.5 text-center">
-                <span className="font-display text-xs sm:text-sm font-black text-[#9CA3AF] tracking-widest uppercase">
-                  👥 {followersCount} SEGUIDORES
-                </span>
-              </div>
-
-              {/* D. BOTÓN DE ACCIÓN DINÁMICO (COLOR SALMÓN #E87A72) */}
-              <div className="w-full max-w-xs mx-auto mt-4 px-2">
-                {isOwner ? (
-                  <button
-                    onClick={() => setShowLiveDashboard((prev) => !prev)}
-                    className="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer"
-                  >
-                    <span>📊</span>
-                    <span>{showLiveDashboard ? 'OCULTAR DASHBOARD' : 'MIS EVENTOS CREADOS'}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleToggleFollow}
-                    className={`w-full h-12 rounded-2xl font-display font-black text-sm tracking-wider uppercase flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all cursor-pointer ${
-                      isFollowing
-                        ? 'bg-[#26282E] hover:bg-neutral-800 text-white border border-neutral-700'
-                        : 'bg-[#E87A72] hover:bg-[#d66f67] text-black'
-                    }`}
-                  >
-                    <span>{isFollowing ? '✓' : '+'}</span>
-                    <span>{isFollowing ? 'SIGUIENDO ✓' : 'SEGUIR'}</span>
-                  </button>
-                )}
-              </div>
+            {/* D. BOTÓN DE ACCIÓN DINÁMICO (SALMÓN #E87A72) */}
+            <div className="w-full max-w-xs mx-auto mt-4 px-2">
+              {isOwner ? (
+                <button
+                  onClick={() => setActiveModal('live_dashboard')}
+                  className="w-full h-12 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 flex items-center justify-center space-x-2 cursor-pointer"
+                >
+                  <span>🎪</span>
+                  <span>MIS EVENTOS CREADOS</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={isFollowingPending}
+                  className={`w-full h-12 rounded-2xl font-display font-black text-sm tracking-wider uppercase transition-all active:scale-95 shadow-lg flex items-center justify-center space-x-2 cursor-pointer ${
+                    isFollowing
+                      ? 'bg-[#26282E] hover:bg-[#32353D] text-white border border-[#3E424B]'
+                      : 'bg-[#E87A72] hover:bg-[#d66f67] text-black shadow-[#E87A72]/20'
+                  }`}
+                >
+                  {isFollowing ? (
+                    <>
+                      <span>SIGUIENDO</span>
+                      <span className="text-base leading-none">✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base leading-none">+</span>
+                      <span>SEGUIR</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* E. GALERÍA DE FOTOS DEL ANFITRIÓN (HASTA 6 FOTOS) */}
-            <div className="w-full mt-6 px-1">
-              <div className="text-left mb-2 px-1">
-                <h3 className="font-display text-white text-lg sm:text-xl font-black tracking-wider uppercase">
-                  GALERÍA DE EVENTOS
+            <div className="w-full mt-6">
+              <div className="px-4 mb-2 text-left">
+                <h3 className="font-display text-white text-xl sm:text-2xl font-black uppercase tracking-wider">
+                  GALERÍA
                 </h3>
-                <p className="font-sans text-[#8E8E93] text-xs">
+                <p className="font-sans text-xs sm:text-sm text-[#8E8E93] font-medium tracking-wide">
                   Muestra cómo se viven tus noches
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mt-3 mb-6 w-full">
-                {[0, 1, 2, 3, 4, 5].map((idx) => {
-                  const photo = galleryPhotos[idx];
+              {/* Grid 3x2 responsivo */}
+              <div className="grid grid-cols-3 gap-2 px-4 mt-3 mb-6 w-full">
+                {[0, 1, 2, 3, 4, 5].map((index) => {
+                  const photo = galleryPhotos[index];
                   if (photo) {
                     return (
                       <div
-                        key={idx}
-                        onClick={() => setSelectedLightboxPhoto(photo)}
+                        key={index}
+                        onClick={() => setSelectedPhoto(photo)}
                         className="aspect-square rounded-xl bg-[#16171B] border border-[#26282E] overflow-hidden relative group cursor-pointer shadow-md"
                       >
                         <img
                           src={photo}
-                          alt={`Galería ${idx + 1}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          alt={`Galería ${index + 1}`}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         />
                         {isOwner && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteGalleryPhoto(idx);
+                              handleDeleteGalleryPhoto(index);
                             }}
-                            aria-label="Eliminar foto"
-                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/80 border border-white/20 text-white hover:text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-lg"
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 hover:bg-red-600 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                            title="Eliminar de galería"
                           >
                             ✕
                           </button>
@@ -1225,60 +1261,51 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       </div>
                     );
                   }
-
                   if (isOwner) {
                     return (
-                      <div
-                        key={idx}
-                        onClick={() => galleryFileInputRef.current?.click()}
-                        className="aspect-square rounded-xl bg-[#16171B]/60 hover:bg-[#16171B] border border-dashed border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-center text-zinc-500 hover:text-[#E87A72] cursor-pointer transition-colors active:scale-95 shadow-sm"
+                      <button
+                        key={index}
+                        onClick={() => galleryInputRef.current?.click()}
+                        disabled={isUploadingGallery}
+                        className="aspect-square rounded-xl bg-[#16171B] hover:bg-[#1C1E24] border border-dashed border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-center transition-colors group cursor-pointer"
                       >
-                        <span className="text-2xl font-bold leading-none">+</span>
-                        <span className="text-[10px] font-sans font-semibold mt-1 uppercase">Añadir</span>
-                      </div>
+                        <span className="text-xl text-neutral-400 group-hover:text-[#E87A72] transition-colors leading-none">+</span>
+                        <span className="font-sans text-[10px] text-neutral-500 uppercase mt-1 font-bold">Subir</span>
+                      </button>
                     );
                   }
-
                   return (
                     <div
-                      key={idx}
-                      className="aspect-square rounded-xl bg-[#16171B]/30 border border-[#26282E]/40 flex items-center justify-center text-neutral-700"
+                      key={index}
+                      className="aspect-square rounded-xl bg-[#16171B]/30 border border-[#26282E]/30 flex items-center justify-center"
                     >
-                      <span className="text-sm">📸</span>
+                      <span className="text-neutral-700 text-base">📷</span>
                     </div>
                   );
                 })}
               </div>
 
+              {/* Input oculto para galería */}
               {isOwner && (
                 <input
                   type="file"
-                  ref={galleryFileInputRef}
+                  ref={galleryInputRef}
                   accept="image/*"
                   className="hidden"
-                  onChange={handleGalleryPhotoUpload}
+                  onChange={handleGalleryUpload}
                 />
               )}
             </div>
 
             {/* EVENTOS PÚBLICOS DEL ANFITRIÓN */}
-            <div className="w-full mt-2 mb-6 px-1">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="font-display text-white text-lg font-black tracking-wider uppercase">
-                  EVENTOS ({userEvents.length})
-                </h3>
-                {isOwner && (
-                  <button
-                    onClick={() => onNavigate?.('/create-event')}
-                    className="text-[#E87A72] hover:underline font-display text-xs font-bold uppercase tracking-wider cursor-pointer"
-                  >
-                    + NUEVO EVENTO
-                  </button>
-                )}
-              </div>
-
-              {userEvents.length > 0 ? (
-                <div className="space-y-2.5">
+            {userEvents.length > 0 && (
+              <div className="w-full px-4 mb-6">
+                <div className="mb-2.5 text-left">
+                  <h3 className="font-display text-white text-lg font-black uppercase tracking-wider">
+                    {isOwner ? 'TUS EVENTOS' : 'PRÓXIMOS EVENTOS'}
+                  </h3>
+                </div>
+                <div className="space-y-2">
                   {userEvents.map((evt) => (
                     <div
                       key={evt.id}
@@ -1291,21 +1318,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             {evt.title}
                           </h4>
                           <span className="font-sans text-xs text-[#9CA3AF] font-medium block mt-0.5">
-                            {evt.dateStr} · 👥 {evt.guestsCount || 0} CONFIRMADOS
+                            👥 {evt.guestsCount || 0} CONFIRMADOS · {evt.dateStr}
                           </span>
                         </div>
                       </div>
                       {isOwner ? (
                         <button
                           onClick={() => onNavigate?.(`/create-event?edit=${evt.id}`)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#26282E] hover:bg-neutral-800 text-white hover:text-[#E87A72] font-display text-xs font-bold tracking-wider uppercase transition-colors shrink-0 cursor-pointer border border-neutral-700/60"
+                          className="px-3.5 py-1.5 rounded-xl bg-[#26282E] hover:bg-neutral-800 text-white hover:text-[#E87A72] font-display text-xs font-bold tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer border border-neutral-700/60"
                         >
                           EDITAR
                         </button>
                       ) : (
                         <button
                           onClick={() => onNavigate?.(`/vip/${evt.id}`)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black tracking-wider uppercase transition-transform active:scale-95 shrink-0 cursor-pointer shadow-md"
+                          className="px-3.5 py-1.5 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer"
                         >
                           VER PASE
                         </button>
@@ -1313,180 +1340,210 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] text-center text-xs text-neutral-400">
-                  No hay eventos programados en este momento.
-                </div>
-              )}
-            </div>
-
-            {/* DASHBOARD ANALÍTICO EN VIVO (SOLO DUEÑO Y SI SHOWLIVEDASHBOARD) */}
-            {isOwner && showLiveDashboard && (
-              <div id="liveAnalyticsDashboard" className="w-full mt-4 mb-6">
-                {/* --- TOP SELECTOR DE EVENTO --- */}
-                <div className="w-full flex items-center justify-between px-2 mb-3">
-                  <button onClick={handlePrevEvent} className="text-zinc-400 hover:text-white p-1 text-xl font-bold cursor-pointer">‹</button>
-                  <div className="flex items-center space-x-2 truncate px-2">
-                    <h2
-                      onClick={() => setActiveModal('event_selector')}
-                      className="font-display text-xl text-white tracking-wider uppercase cursor-pointer hover:text-[#E87A72] transition-colors truncate text-center"
-                    >
-                      {activeEvent?.title || 'MÉXICO TEQUILA & DESMADRE'}
-                    </h2>
-                    {activeEvent?.id && !activeEvent.id.startsWith('demo_') && (
-                      <button
-                        onClick={() => onNavigate?.(`/create-event?edit=${activeEvent.id}`)}
-                        className="px-2 py-0.5 rounded-lg bg-[#26282E] hover:bg-neutral-700 text-[#E87A72] font-display text-[10px] font-bold tracking-wider uppercase transition-colors shrink-0 cursor-pointer"
-                        title="Editar evento"
-                      >
-                        EDITAR
-                      </button>
-                    )}
-                  </div>
-                  <button onClick={handleNextEvent} className="text-zinc-400 hover:text-white p-1 text-xl font-bold cursor-pointer">›</button>
-                </div>
-
-                {/* --- CARD 1: ASISTENCIA (DIALES RADIALES Y GRÁFICA) --- */}
-                <div className="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4 mb-4">
-                  <div className="border-b border-[#26282E] pb-2 mb-4 text-center">
-                    <span className="font-display text-lg text-white tracking-wider">ASISTENCIA EN VIVO</span>
-                  </div>
-
-                  {/* 3 Diales / Medidores Circulares */}
-                  <div className="grid grid-cols-3 gap-2 text-center mb-6">
-                    {/* Dial Naranja - Invitaciones */}
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-20 h-20 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                          <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path className="text-[#F17D02]" strokeDasharray="75, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <span className="absolute font-display text-xl text-white">{liveInvitesCount || 100}</span>
-                      </div>
-                      <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INVITACIONES</span>
-                      <span className="font-sans text-[10px] text-[#F17D02] font-bold">+100%</span>
-                    </div>
-
-                    {/* Dial Verde - Ingresos */}
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-20 h-20 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                          <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path className="text-[#22C55E]" strokeDasharray="80, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <span className="absolute font-display text-xl text-white">{liveIngresosCount || 100}</span>
-                      </div>
-                      <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INGRESOS</span>
-                      <span className="font-sans text-[10px] text-[#22C55E] font-bold">+100%</span>
-                    </div>
-
-                    {/* Dial Celeste - Cortesías */}
-                    <div className="flex flex-col items-center">
-                      <div className="relative w-20 h-20 flex items-center justify-center">
-                        <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                          <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path className="text-[#00A3FF]" strokeDasharray="60, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <span className="absolute font-display text-xl text-white">{liveCortesiasCount || 100}</span>
-                      </div>
-                      <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">CORTESÍAS</span>
-                      <span className="font-sans text-[10px] text-[#00A3FF] font-bold">+100%</span>
-                    </div>
-                  </div>
-
-                  {/* Gráfica de Barras por Horas (Peak Hours) */}
-                  <div className="w-full border-t border-[#26282E] pt-4">
-                    <div className="h-28 flex items-end justify-between px-2 gap-2 border-b border-[#26282E] pb-1">
-                      <div className="w-6 bg-zinc-800 h-2 rounded-t-sm" />
-                      <div className="w-6 bg-zinc-800 h-3 rounded-t-sm" />
-                      <div className="w-6 bg-zinc-800 h-2 rounded-t-sm" />
-                      <div className="w-6 bg-zinc-800 h-4 rounded-t-sm" />
-                      <div className="w-6 bg-[#22C55E]/40 border border-[#22C55E] h-14 rounded-t-sm" />
-                      <div className="w-6 bg-[#22C55E] h-24 rounded-t-sm" />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-zinc-500 font-sans mt-2 px-1">
-                      <span>12 AM</span>
-                      <span>4 AM</span>
-                      <span>8 AM</span>
-                      <span>12 PM</span>
-                      <span>4 PM</span>
-                      <span>8 PM</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* --- CARD 2: COVERS GENERAL (VENTA EN PUERTA) --- */}
-                <div className="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4 mb-6">
-                  <div className="border-b border-[#26282E] pb-2 mb-3 text-center flex items-center justify-between">
-                    <div className="w-6" />
-                    <span className="font-display text-sm text-zinc-300 tracking-wider">COVERS GENERAL</span>
-                    <button
-                      onClick={openWristbandsModal}
-                      title="Configurar manillas"
-                      className="text-zinc-400 hover:text-white p-1 text-xs cursor-pointer"
-                    >
-                      ⚙️
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#8B24C7] flex items-center justify-center text-white text-xs font-bold">
-                        🎟️
-                      </div>
-                      <div>
-                        <div className="font-sans text-xs font-bold text-white uppercase">
-                          COVER ({coverPrice || 50}BS C/U)
-                        </div>
-                        <div className="font-sans text-xs text-zinc-400">x {soldBandsCount || 16}</div>
-                      </div>
-                    </div>
-                    <div className="font-display text-lg text-white">
-                      Bs.{totalCollectedFormatted || '800,00'}
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-[#26282E]/50">
-                    <button
-                      onClick={openWristbandsModal}
-                      className="w-full py-2 px-3 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-[#26282E] hover:border-[#8B24C7]/60 text-white font-display text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer"
-                    >
-                      <span>⚙️</span>
-                      <span>HABILITAR / ASIGNAR MANILLAS</span>
-                    </button>
-                  </div>
-                </div>
               </div>
+            )}
+
+            {/* SECCIONES EXCLUSIVAS DEL DUEÑO PRO */}
+            {isOwner && (
+              <>
+                {/* 3 TARJETAS DE MÉTRICAS */}
+                <div className="grid grid-cols-3 gap-2.5 w-full px-4 mt-2">
+                  <div
+                    onClick={() => setActiveModal('events')}
+                    className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
+                  >
+                    <div className="text-xl mb-1">📅</div>
+                    <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
+                      {userEvents.length > 0 ? userEvents.length : 10}
+                    </span>
+                    <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+                      EVENTOS
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveModal('streak')}
+                    className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
+                  >
+                    <div className="text-xl mb-1">🔥</div>
+                    <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
+                      3
+                    </span>
+                    <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+                      RACHA
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={() => setActiveModal('store')}
+                    className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
+                  >
+                    <div className="text-xl mb-1">🪙</div>
+                    <span className="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
+                      380
+                    </span>
+                    <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
+                      PLUSCOINS
+                    </span>
+                  </div>
+                </div>
+
+                {/* BOTÓN DIRECTO AL DASHBOARD EN VIVO Y SECCIÓN CUENTA (SOLO PROPIETARIO) */}
+                {isOwner && (
+                  <>
+                    <div className="w-full px-4 mt-4">
+                      <button
+                        onClick={() => setActiveModal('live_dashboard')}
+                        className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#16171B] via-[#1E2026] to-[#16171B] border border-[#FAB205]/40 hover:border-[#FAB205] flex items-center justify-between shadow-xl transition-all active:scale-98 cursor-pointer"
+                      >
+                        <div className="flex items-center space-x-3 text-left">
+                          <span className="text-2xl">📊</span>
+                          <div>
+                            <h4 className="font-display text-white text-sm font-black tracking-wider uppercase">
+                              DASHBOARD ANALÍTICO EN VIVO
+                            </h4>
+                            <span className="font-sans text-[11px] text-zinc-400">
+                              Diales radiales, horas pico y control de puerta
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[#FAB205] text-lg font-bold">›</span>
+                      </button>
+                    </div>
+
+                    {/* SECCIÓN CUENTA */}
+                    <div className="w-full mt-6 mb-6 px-4">
+                      <h3 className="font-display text-white text-lg font-black tracking-wider uppercase mb-3 text-left">
+                        CUENTA
+                      </h3>
+
+                      <div className="rounded-2xl bg-[#16171B] border border-[#26282E] divide-y divide-[#26282E] overflow-hidden text-left shadow-lg">
+                        {/* Editar nombre */}
+                        <div
+                          onClick={() => {
+                            setEditNameValue(displayName);
+                            setIsEditingName(true);
+                          }}
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-800/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">👤</span>
+                            <div>
+                              <div className="font-display text-white text-sm font-bold uppercase tracking-wide">
+                                NOMBRE DE PERFIL
+                              </div>
+                              <div className="font-sans text-xs text-neutral-400">{displayName}</div>
+                            </div>
+                          </div>
+                          <span className="text-neutral-500 font-bold text-lg">›</span>
+                        </div>
+
+                        {/* Membresía Socio + */}
+                        <div
+                          onClick={() => showToast('⭐ Membresía Activa · Plan Negocios & Promotores')}
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-800/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">👑</span>
+                            <div>
+                              <div className="font-display text-white text-sm font-bold uppercase tracking-wide flex items-center space-x-1.5">
+                                <span>SOCIO +</span>
+                                <span className="px-2 py-0.5 rounded-full bg-[#FAB205]/20 text-[#FAB205] text-[10px] font-black border border-[#FAB205]/40">
+                                  ACTIVO
+                                </span>
+                              </div>
+                              <div className="font-sans text-xs text-neutral-400">Página de negocio & analytics</div>
+                            </div>
+                          </div>
+                          <span className="text-neutral-500 font-bold text-lg">›</span>
+                        </div>
+
+                        {/* Compartir App */}
+                        <div
+                          onClick={handleShareApp}
+                          className="p-4 flex items-center justify-between cursor-pointer hover:bg-neutral-800/50 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">📲</span>
+                            <div>
+                              <div className="font-display text-white text-sm font-bold uppercase tracking-wide">
+                                COMPARTIR PERFIL
+                              </div>
+                              <div className="font-sans text-xs text-neutral-400">Invita a tus seguidores a +1</div>
+                            </div>
+                          </div>
+                          <span className="text-neutral-500 font-bold text-lg">›</span>
+                        </div>
+                      </div>
+
+                      {/* Cerrar Sesión */}
+                      <div className="mt-8 text-center pb-4">
+                        <button
+                          onClick={handleLogout}
+                          className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0"
+                        >
+                          CERRAR SESIÓN
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
             )}
           </div>
         ) : (
           /* ==================================================== */
-          /* VISTA B: PERFIL PERSONAL FREE (isPartner === false)    */
+          /* EXPERIENCIA FREE: PERFIL ESTÁNDAR                   */
           /* ==================================================== */
-          <div className="w-full flex flex-col">
-            {/* 1. TOP BAR (+1 LOGO A LA IZQUIERDA · CAMPANA DERECHA) */}
+          <div className="w-full flex flex-col items-center">
+            {/* 1. TOP BAR */}
             <header className="flex items-center justify-between pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-2.5 w-full relative z-30">
-              <button
-                onClick={onBack || (() => onNavigate?.('/'))}
-                aria-label="Regresar al inicio"
-                className="flex items-center space-x-1 focus:outline-none cursor-pointer group transition-transform active:scale-95"
-              >
-                <span className="font-display text-[#E87A72] text-[32px] sm:text-[34px] font-black tracking-tighter leading-none group-hover:brightness-110">
-                  +1
-                </span>
-              </button>
+              {isOwner ? (
+                <button
+                  onClick={onBack || (() => onNavigate?.('/'))}
+                  aria-label="Regresar al inicio"
+                  className="flex items-center space-x-1 focus:outline-none cursor-pointer group transition-transform active:scale-95"
+                >
+                  <span className="font-display text-[#E87A72] text-[32px] sm:text-[34px] font-black tracking-tighter leading-none group-hover:brightness-110">
+                    +1
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={onBack || (() => onNavigate?.('/'))}
+                  aria-label="Regresar"
+                  className="flex items-center space-x-2 text-white/90 hover:text-white transition-opacity active:scale-95 cursor-pointer"
+                >
+                  <span className="w-9 h-9 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg font-bold shadow-md">
+                    ‹
+                  </span>
+                  <span className="font-display text-xs font-bold tracking-wider text-neutral-400 uppercase">
+                    VOLVER
+                  </span>
+                </button>
+              )}
 
               <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setIsNotificationsOpen(true)}
-                  aria-label="Notificaciones"
-                  className="relative w-9 h-9 rounded-full bg-neutral-900/90 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer"
-                >
-                  <span className="text-base">🔔</span>
-                  {unreadNotifCount > 0 && (
+                {isOwner ? (
+                  <button
+                    onClick={() => setIsNotificationsOpen(true)}
+                    aria-label="Notificaciones"
+                    className="relative w-9 h-9 rounded-full bg-neutral-900/90 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer"
+                  >
+                    <span className="text-base">🔔</span>
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#EF4444] text-white font-display text-[10px] font-black rounded-full flex items-center justify-center border-2 border-black shadow-md leading-none">
                       {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                     </span>
-                  )}
-                </button>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleShareApp}
+                    aria-label="Compartir perfil"
+                    className="w-9 h-9 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-transform active:scale-90 cursor-pointer shadow-md"
+                  >
+                    <span className="text-sm">↗</span>
+                  </button>
+                )}
               </div>
             </header>
 
@@ -1494,8 +1551,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <div className="flex flex-col items-center text-center mt-2">
               <div className="relative group">
                 <div
-                  onClick={() => isOwner && fileInputRef.current?.click()}
-                  className="w-24 h-24 rounded-full p-[2px] border-2 border-[#E87A72] bg-[#16171B] shadow-xl overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                  onClick={() => {
+                    if (isOwner) fileInputRef.current?.click();
+                  }}
+                  className={`w-24 h-24 rounded-full p-[2px] border-2 border-[#E87A72] bg-[#16171B] shadow-xl overflow-hidden ${
+                    isOwner ? 'cursor-pointer active:scale-95 transition-transform' : ''
+                  }`}
                 >
                   <img
                     src={avatarUrl || user?.avatarUrl || './assets/images/foto_perfil.webp'}
@@ -1504,22 +1565,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   />
                 </div>
                 {isOwner && (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    aria-label="Cambiar foto de perfil"
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#E87A72] border-2 border-black flex items-center justify-center text-black shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all"
-                  >
-                    <span className="text-xs">📷</span>
-                  </button>
-                )}
-                {isOwner && (
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      aria-label="Cambiar foto de perfil"
+                      className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#E87A72] border-2 border-black flex items-center justify-center text-black shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                    >
+                      <span className="text-xs">📷</span>
+                    </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                  </>
                 )}
               </div>
 
@@ -1542,10 +1603,39 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </button>
                 )}
               </div>
+
+              {!isOwner && (
+                <button
+                  onClick={handleToggleFollow}
+                  disabled={isFollowingPending}
+                  className={`mt-3 px-6 h-10 rounded-full font-display font-black text-xs tracking-wider uppercase transition-all active:scale-95 shadow-md flex items-center justify-center space-x-1.5 cursor-pointer ${
+                    isFollowing
+                      ? 'bg-[#26282E] hover:bg-[#32353D] text-white border border-[#3E424B]'
+                      : 'bg-[#E87A72] hover:bg-[#d66f67] text-black shadow-[#E87A72]/20'
+                  }`}
+                >
+                  {isFollowing ? (
+                    <>
+                      <span>SIGUIENDO</span>
+                      <span className="text-sm leading-none">✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm leading-none">+</span>
+                      <span>SEGUIR</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            {/* BLOQUE COMPACTO DE EVENTOS PARA USUARIOS FREE */}
+            {/* BLOQUE DE EVENTOS DEL ANFITRIÓN */}
             <div className="w-full mt-4">
+              <div className="mb-2 text-left px-1">
+                <span className="font-display text-xs font-black tracking-widest text-neutral-400 uppercase">
+                  {isOwner ? 'TUS EVENTOS' : 'EVENTOS DEL ANFITRIÓN'}
+                </span>
+              </div>
               {userEvents.length > 0 ? (
                 <div className="space-y-2">
                   {userEvents.slice(0, 3).map((evt) => (
@@ -1574,9 +1664,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       ) : (
                         <button
                           onClick={() => onNavigate?.(`/vip/${evt.id}`)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black tracking-wider uppercase transition-transform active:scale-95 shrink-0 cursor-pointer shadow-md"
+                          className="px-3.5 py-1.5 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-xs font-black tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer"
                         >
-                          VER
+                          VER PASE
                         </button>
                       )}
                     </div>
@@ -1587,143 +1677,132 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       onClick={() => setActiveModal('events')}
                       className="w-full py-2.5 rounded-xl bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] text-zinc-400 hover:text-white font-display text-xs font-bold tracking-wider uppercase transition-colors text-center cursor-pointer"
                     >
-                      MIS EVENTOS CREADOS ({userEvents.length}) ›
+                      {isOwner ? `MIS EVENTOS CREADOS (${userEvents.length}) ›` : `MÁS EVENTOS (${userEvents.length}) ›`}
                     </button>
                   )}
                 </div>
-              ) : isOwner ? (
+              ) : (
                 <div className="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center shadow-sm">
                   <span className="text-xl mb-1.5">🎉</span>
                   <p className="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[260px]">
-                    ¿ORGANIZAS UNA PREVIA O FIESTA? CREA TU PRIMER EVENTO
+                    {isOwner ? '¿ORGANIZAS UNA PREVIA O FIESTA? CREA TU PRIMER EVENTO' : 'ESTE ANFITRIÓN NO TIENE EVENTOS ACTIVOS'}
                   </p>
-                  <button
-                    onClick={() => onNavigate?.('/create-event')}
-                    className="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
-                  >
-                    [ + CREAR EVENTO ]
-                  </button>
+                  {isOwner && (
+                    <button
+                      onClick={() => onNavigate?.('/create-event')}
+                      className="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
+                    >
+                      [ + CREAR EVENTO ]
+                    </button>
+                  )}
                 </div>
-              ) : null}
-            </div>
-          </div>
-        )}
-
-        {/* ==================================================== */}
-        {/* 3. FILA HORIZONTAL DE LAS 3 TARJETAS DE MÉTRICAS     */}
-        {/* (Solo para el dueño de la cuenta)                    */}
-        {/* ==================================================== */}
-        {isOwner && (
-          <div className="grid grid-cols-3 gap-2.5 w-full mt-4">
-            {/* Tarjeta 1: EVENTOS */}
-            <div
-              onClick={() => setActiveModal('events')}
-              className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
-            >
-              <div className="text-xl mb-1">📅</div>
-              <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
-                {attendedPasses.length > 0 ? attendedPasses.length : 10}
-              </span>
-              <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
-                EVENTOS
-              </span>
+              )}
             </div>
 
-            {/* Tarjeta 2: RACHA */}
-            <div
-              onClick={() => setActiveModal('streak')}
-              className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
-            >
-              <div className="text-xl mb-1">⏱️</div>
-              <div className="flex items-center justify-center space-x-1 my-1">
-                <span className="text-2xl filter drop-shadow">🔥</span>
-                <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none">
-                  3
+            {/* 3 TARJETAS DE MÉTRICAS */}
+            <div className="grid grid-cols-3 gap-2.5 w-full mt-4">
+              <div
+                onClick={() => setActiveModal('events')}
+                className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
+              >
+                <div className="text-xl mb-1">📅</div>
+                <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">
+                  {userEvents.length}
+                </span>
+                <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+                  EVENTOS
                 </span>
               </div>
-              <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
-                RACHA
-              </span>
-            </div>
 
-            {/* Tarjeta 3: PLUSCOINS */}
-            <div
-              onClick={() => setActiveModal('store')}
-              className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
-            >
-              <div className="text-xl mb-1">⭐</div>
-              <span className="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
-                380
-              </span>
-              <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
-                PLUSCOINS
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* ==================================================== */}
-        {/* 5. SECCIÓN CUENTA (Solo para el dueño de la cuenta)  */}
-        {/* ==================================================== */}
-        {isOwner && (
-          <div className="w-full mt-4 mb-6">
-            <h3 className="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
-              CUENTA
-            </h3>
-
-            <div className="space-y-2.5">
-              {/* Botón Suscripción */}
               <div
-                onClick={() => setActiveModal('subscription')}
-                className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
+                onClick={() => setActiveModal('streak')}
+                className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-orange-500/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
               >
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
-                    💳
-                  </div>
-                  <div className="text-left">
-                    <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                      {isPartner ? 'GESTIONAR SUSCRIPCIÓN SOCIO +' : 'HAZTE SOCIO + POR $US 4.99/MES'}
-                    </span>
-                    <span className="font-sans text-neutral-400 text-xs block">
-                      Diseñado para promotores, clubes y organizadores
-                    </span>
-                  </div>
+                <div className="text-xl mb-1">⏱️</div>
+                <div className="flex items-center justify-center space-x-1 my-1">
+                  <span className="text-2xl filter drop-shadow">🔥</span>
+                  <span className="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none">
+                    3
+                  </span>
                 </div>
-                <span className="text-neutral-500 font-bold text-lg">›</span>
+                <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">
+                  RACHA
+                </span>
               </div>
 
-              {/* Botón Compartir App */}
               <div
-                onClick={handleShareApp}
-                className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
+                onClick={() => setActiveModal('store')}
+                className="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95"
               >
-                <div className="flex items-center space-x-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
-                    🔗
-                  </div>
-                  <div className="text-left">
-                    <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                      COMPARTIR APP
-                    </span>
-                    <span className="font-sans text-neutral-400 text-xs block">
-                      Invita a tus amigos y gana 50 Pluscoins
-                    </span>
-                  </div>
-                </div>
-                <span className="text-neutral-500 font-bold text-lg">›</span>
+                <div className="text-xl mb-1">⭐</div>
+                <span className="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">
+                  380
+                </span>
+                <span className="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">
+                  PLUSCOINS
+                </span>
               </div>
             </div>
 
-            {/* 6. PIE DE PANTALLA: CERRAR SESIÓN */}
-            <div className="mt-8 text-center pb-4">
-              <button
-                onClick={handleLogout}
-                className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0"
-              >
-                CERRAR SESIÓN
-              </button>
-            </div>
+            {/* SECCIÓN CUENTA (SÓLO SI ES EL PROPIETARIO) */}
+            {isOwner && (
+              <div className="w-full mt-6 mb-6">
+                <h3 className="font-display text-white text-lg font-black tracking-wider uppercase mb-3 px-1 text-left">
+                  CUENTA
+                </h3>
+
+                <div className="space-y-2.5">
+                  <div
+                    onClick={() => setActiveModal('subscription')}
+                    className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                        💳
+                      </div>
+                      <div className="text-left">
+                        <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                          HAZTE SOCIO + POR $US 4.99/MES
+                        </span>
+                        <span className="font-sans text-neutral-400 text-xs block">
+                          Diseñado para promotores, clubes y organizadores
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-neutral-500 font-bold text-lg">›</span>
+                  </div>
+
+                  <div
+                    onClick={handleShareApp}
+                    className="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98"
+                  >
+                    <div className="flex items-center space-x-3.5">
+                      <div className="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">
+                        🔗
+                      </div>
+                      <div className="text-left">
+                        <span className="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
+                          COMPARTIR LA APP
+                        </span>
+                        <span className="font-sans text-neutral-400 text-xs block">
+                          Invita amigos y gana Pluscoins
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-neutral-500 font-bold text-lg">›</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 text-center pb-4">
+                  <button
+                    onClick={handleLogout}
+                    className="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0"
+                  >
+                    CERRAR SESIÓN
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1733,6 +1812,266 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       {/* MODAL: CONFIGURACIÓN DE COVERS Y MANILLAS EN PUERTA */}
       {/* ==================================================== */}
       <AnimatePresence>
+        {/* ==================================================== */}
+        {/* MODAL: SELECTOR DE RAMO COMERCIAL                   */}
+        {/* ==================================================== */}
+        {activeModal === 'category_picker' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col"
+            >
+              <button
+                onClick={() => setActiveModal(null)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center space-x-2.5 mb-1">
+                <span className="text-xl">🏷️</span>
+                <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
+                  RAMO COMERCIAL
+                </h3>
+              </div>
+              <p className="font-sans text-neutral-400 text-xs mb-4">
+                Selecciona la categoría que define a tu negocio o perfil creador:
+              </p>
+
+              <div className="grid grid-cols-3 gap-2">
+                {BUSINESS_CATEGORIES.map((cat) => {
+                  const isSelected = businessCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleSelectCategory(cat.id)}
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#E87A72]/15 border-[#E87A72] text-white shadow-md'
+                          : 'bg-[#181A1E] border-[#26282E] text-zinc-300 hover:bg-[#202228] hover:text-white'
+                      }`}
+                    >
+                      <span className="text-2xl mb-1">{cat.icon}</span>
+                      <span className="font-display text-xs font-bold uppercase tracking-wider leading-tight">
+                        {cat.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* MODAL: DASHBOARD ANALÍTICO EN VIVO                  */}
+        {/* ==================================================== */}
+        {activeModal === 'live_dashboard' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-md max-h-[90vh] rounded-[28px] bg-[#121316] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col overflow-y-auto no-scrollbar"
+            >
+              {/* Encabezado */}
+              <div className="flex items-center justify-between pb-3 border-b border-[#26282E] mb-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl">📊</span>
+                  <div>
+                    <h3 className="font-display text-white text-xl font-black tracking-wide uppercase leading-none">
+                      DASHBOARD EN VIVO
+                    </h3>
+                    <span className="font-sans text-[11px] text-zinc-400">
+                      Métricas y control en tiempo real
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Selector de evento activo */}
+              <div className="w-full flex items-center justify-between px-2 mb-4 bg-[#16171B] p-2.5 rounded-2xl border border-[#26282E]">
+                <button onClick={handlePrevEvent} className="text-zinc-400 hover:text-white p-1 text-xl font-bold cursor-pointer">‹</button>
+                <div className="flex items-center space-x-2 truncate px-2">
+                  <h2
+                    onClick={() => setActiveModal('event_selector')}
+                    className="font-display text-base sm:text-lg text-white tracking-wider uppercase cursor-pointer hover:text-[#E87A72] transition-colors truncate text-center"
+                  >
+                    {activeEvent?.title || 'MÉXICO TEQUILA & DESMADRE'}
+                  </h2>
+                  {activeEvent?.id && !activeEvent.id.startsWith('demo_') && (
+                    <button
+                      onClick={() => onNavigate?.(`/create-event?edit=${activeEvent.id}`)}
+                      className="px-2 py-0.5 rounded-lg bg-[#26282E] hover:bg-neutral-700 text-[#E87A72] font-display text-[10px] font-bold tracking-wider uppercase transition-colors shrink-0 cursor-pointer"
+                      title="Editar evento"
+                    >
+                      EDITAR
+                    </button>
+                  )}
+                </div>
+                <button onClick={handleNextEvent} className="text-zinc-400 hover:text-white p-1 text-xl font-bold cursor-pointer">›</button>
+              </div>
+
+              {/* CARD 1: ASISTENCIA (DIALES RADIALES Y GRÁFICA) */}
+              <div className="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4 mb-4">
+                <div className="border-b border-[#26282E] pb-2 mb-4 text-center">
+                  <span className="font-display text-lg text-white tracking-wider">ASISTENCIA</span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center mb-6">
+                  {/* Invitaciones */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-20 h-20 flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-[#F17D02]" strokeDasharray="75, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span className="absolute font-display text-xl text-white">{liveInvitesCount || 100}</span>
+                    </div>
+                    <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INVITACIONES</span>
+                    <span className="font-sans text-[10px] text-[#F17D02] font-bold">+100%</span>
+                  </div>
+
+                  {/* Ingresos */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-20 h-20 flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-[#22C55E]" strokeDasharray="80, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span className="absolute font-display text-xl text-white">{liveIngresosCount || 100}</span>
+                    </div>
+                    <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">INGRESOS</span>
+                    <span className="font-sans text-[10px] text-[#22C55E] font-bold">+100%</span>
+                  </div>
+
+                  {/* Cortesías */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative w-20 h-20 flex items-center justify-center">
+                      <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-[#26282E]" strokeWidth="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-[#38BDF8]" strokeDasharray="60, 100" strokeWidth="3" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span className="absolute font-display text-xl text-white">{liveCortesiasCount || 100}</span>
+                    </div>
+                    <span className="font-sans text-[10px] tracking-wider text-zinc-400 mt-1 uppercase">CORTESÍAS</span>
+                    <span className="font-sans text-[10px] text-[#38BDF8] font-bold">+100%</span>
+                  </div>
+                </div>
+
+                {/* Gráfica de Barras por Horas (Peak Hours) */}
+                <div className="w-full border-t border-[#26282E] pt-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-sans text-xs text-zinc-400 uppercase font-medium">HORAS PICO (INGRESOS / HORA)</span>
+                    <span className="font-sans text-[10px] text-zinc-500">22:00 - 04:00</span>
+                  </div>
+                  <div className="h-20 flex items-end justify-between gap-1 pt-2 px-1">
+                    {(hourlyDistribution.length > 0 ? hourlyDistribution : [2, 8, 25, 45, 15, 5]).map((val, idx) => {
+                      const hourLabels = ['22h', '23h', '00h', '01h', '02h', '03h'];
+                      const heightPercent = Math.max(8, Math.min(100, Math.round((val / maxBarValue) * 100)));
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group">
+                          <div className="text-[9px] text-zinc-400 mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {val}
+                          </div>
+                          <div
+                            style={{ height: `${heightPercent}%` }}
+                            className="w-full bg-[#E87A72]/80 hover:bg-[#E87A72] rounded-t transition-all"
+                          />
+                          <span className="text-[9px] text-zinc-500 mt-1 font-mono">{hourLabels[idx] || `${idx}h`}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD 2: COVERS GENERAL (VENTA EN PUERTA) */}
+              <div className="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-display text-sm tracking-wider text-white uppercase">COVERS GENERAL (EN PUERTA)</span>
+                  <span className="font-sans text-xs text-zinc-400">Total recaudado</span>
+                </div>
+                <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-[#26282E]">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#8B24C7]/20 border border-[#8B24C7]/40 flex items-center justify-center text-sm">
+                      🎟️
+                    </div>
+                    <div>
+                      <div className="font-sans text-xs font-bold text-white uppercase">
+                        COVER ({coverPrice || 50}BS C/U)
+                      </div>
+                      <div className="font-sans text-xs text-zinc-400">x {soldBandsCount || 16}</div>
+                    </div>
+                  </div>
+                  <div className="font-display text-lg text-white">
+                    Bs.{totalCollectedFormatted || '800,00'}
+                  </div>
+                </div>
+                <div className="mt-3 pt-2 border-t border-[#26282E]/50">
+                  <button
+                    onClick={openWristbandsModal}
+                    className="w-full py-2 px-3 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-[#26282E] hover:border-[#8B24C7]/60 text-white font-display text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center space-x-1.5 active:scale-98 cursor-pointer"
+                  >
+                    <span>⚙️</span>
+                    <span>HABILITAR / ASIGNAR MANILLAS</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ==================================================== */}
+        {/* MODAL: VISTA PREVIA DE FOTO DE GALERÍA               */}
+        {/* ==================================================== */}
+        {selectedPhoto && (
+          <div
+            onClick={() => setSelectedPhoto(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-[24px] bg-[#16171B] border border-[#26282E] p-3 shadow-2xl relative text-left flex flex-col overflow-hidden"
+            >
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/80 border border-white/20 flex items-center justify-center text-white cursor-pointer"
+              >
+                ✕
+              </button>
+
+              <div className="w-full aspect-square rounded-2xl overflow-hidden bg-black mb-3">
+                <img src={selectedPhoto} alt="Foto ampliada" className="w-full h-full object-cover" />
+              </div>
+
+              {isOwner && (
+                <button
+                  onClick={() => {
+                    const idx = galleryPhotos.indexOf(selectedPhoto);
+                    if (idx !== -1) handleDeleteGalleryPhoto(idx);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 border border-red-500/40 text-red-400 font-display text-xs font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                >
+                  ELIMINAR DE MI GALERÍA
+                </button>
+              )}
+            </motion.div>
+          </div>
+        )}
+
         {activeModal === 'wristbands' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
@@ -2363,90 +2702,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {isActivatingPro ? 'ACTIVANDO...' : '[ ACTIVAR MEMBRESÍA SOCIO + ]'}
                 </button>
               </form>
-            </motion.div>
-          </div>
-        )}
-
-        {/* ==================================================== */}
-        {/* MODAL: SELECTOR DE RAMO COMERCIAL (BUSINESS CATEGORY)*/}
-        {/* ==================================================== */}
-        {isCategoryModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 15 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-5 shadow-2xl relative text-left flex flex-col"
-            >
-              <button
-                onClick={() => setIsCategoryModalOpen(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-
-              <div className="flex items-center space-x-2.5 mb-1">
-                <span className="text-xl">🏷️</span>
-                <h3 className="font-display text-white text-xl font-black tracking-wide uppercase">
-                  RAMO COMERCIAL
-                </h3>
-              </div>
-              <p className="font-sans text-neutral-400 text-xs mb-4">
-                Selecciona la categoría que mejor representa a tu espacio o proyecto:
-              </p>
-
-              <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1">
-                {BUSINESS_CATEGORIES.map((cat) => {
-                  const isSelected = businessCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => handleSelectBusinessCategory(cat.id)}
-                      className={`p-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer active:scale-95 ${
-                        isSelected
-                          ? 'bg-[#E87A72]/20 border-[#E87A72] text-white shadow-md'
-                          : 'bg-neutral-900/80 hover:bg-neutral-800 border-[#26282E] text-zinc-300'
-                      }`}
-                    >
-                      <span className="text-xl">{cat.icon}</span>
-                      <span className="font-display text-xs font-bold uppercase tracking-wider truncate">
-                        {cat.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* ==================================================== */}
-        {/* MODAL: LIGHTBOX DE FOTO DE GALERÍA                   */}
-        {/* ==================================================== */}
-        {selectedLightboxPhoto && (
-          <div
-            onClick={() => setSelectedLightboxPhoto(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-pointer"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative max-w-lg w-full max-h-[85vh] rounded-2xl overflow-hidden bg-[#16171B] border border-[#26282E] shadow-2xl flex flex-col"
-            >
-              <button
-                onClick={() => setSelectedLightboxPhoto(null)}
-                className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/70 border border-white/20 text-white flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
-              >
-                ✕
-              </button>
-              <img
-                src={selectedLightboxPhoto}
-                alt="Vista previa de galería"
-                className="w-full h-auto max-h-[80vh] object-contain"
-              />
             </motion.div>
           </div>
         )}

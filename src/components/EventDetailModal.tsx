@@ -44,6 +44,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     setIsShareModalOpen(true);
   };
 
+  const handleOpenHostProfile = (hostUserId?: string) => {
+    if (!hostUserId) return;
+    onClose();
+    onNavigate?.(`/profile/${hostUserId}`);
+  };
+
   // Escucha del estado individual del pase del usuario
   useEffect(() => {
     if (!isOpen || !selectedEvent?.id || !auth.currentUser) {
@@ -235,32 +241,31 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 {selectedEvent.typeBadge ? `${selectedEvent.typeBadge}: ` : ''}{selectedEvent.title}
               </h3>
 
-              {/* Atribución del Anfitrión / Creador */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedEvent.hostUserId) {
-                    onClose();
-                    onNavigate?.(`/profile/${selectedEvent.hostUserId}`);
-                  }
-                }}
-                className="flex items-center space-x-2 mt-2 group text-left cursor-pointer transition-opacity hover:opacity-90"
+              {/* Atribución interactiva del Anfitrión / Creador */}
+              <div 
+                onClick={() => handleOpenHostProfile(selectedEvent.hostUserId)}
+                className="inline-flex items-center gap-2 cursor-pointer group py-1 active:opacity-75 transition-opacity mt-2"
+                title={selectedEvent.hostUserId ? 'Ver perfil del anfitrión' : undefined}
               >
+                {/* Micro-avatar del anfitrión si existe */}
                 {selectedEvent.hostPhotoUrl ? (
-                  <img
-                    src={selectedEvent.hostPhotoUrl}
-                    alt={selectedEvent.hostName || 'Anfitrión'}
-                    className="w-[20px] h-[20px] rounded-full object-cover border border-white/20 shrink-0"
+                  <img 
+                    src={selectedEvent.hostPhotoUrl} 
+                    alt={selectedEvent.hostName || 'Anfitrión'} 
+                    className="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0"
                   />
                 ) : (
-                  <div className="w-[20px] h-[20px] rounded-full bg-[#26282E] border border-white/10 flex items-center justify-center shrink-0 text-[9px] text-[#E87A72] font-display font-black">
-                    {(selectedEvent.hostName || 'A').slice(0, 1).toUpperCase()}
+                  <div className="w-5 h-5 rounded-full bg-[#26282E] flex items-center justify-center text-[10px] text-[#E87A72] font-bold shrink-0">
+                    {selectedEvent.hostName ? selectedEvent.hostName.charAt(0).toUpperCase() : "+"}
                   </div>
                 )}
-                <span className="font-display text-xs sm:text-sm font-bold tracking-wider text-[#9CA3AF] uppercase flex items-center gap-1">
-                  BY <span className="text-[#E87A72] group-hover:underline">{selectedEvent.hostName || 'ANFITRIÓN'}</span>
+
+                {/* Texto de atribución clickeable */}
+                <span className="font-sans text-xs tracking-wider text-[#9CA3AF] group-hover:text-white uppercase flex items-center gap-1">
+                  BY <strong className="text-white font-semibold underline decoration-white/30 underline-offset-2">{selectedEvent.hostName || "ANFITRIÓN"}</strong>
                 </span>
-              </button>
+                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">›</span>
+              </div>
 
               {selectedEvent.subtitle && (
                 <p className="font-sans text-[#E87A72] text-xs sm:text-sm font-semibold mt-1">

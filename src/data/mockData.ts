@@ -10,6 +10,10 @@ export const mockUserProfile: UserProfile = {
   eventsCount: 14,
   streakCount: 4,
   plusPoints: 380,
+  businessCategory: 'club',
+  galleryPhotos: [],
+  followersCount: 142,
+  following: [],
 };
 
 export const mockNotifications: NotificationItem[] = [

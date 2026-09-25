@@ -97,34 +97,11 @@ export interface UserProfile {
   interests?: string[];
   onboardingCompleted?: boolean;
   coverPhotoUrl?: string;
-  businessCategory?: BusinessCategoryType | string;
+  businessCategory?: 'club' | 'promotor' | 'cafe' | 'teatro' | 'cine' | 'salon_eventos' | 'conferencista' | 'pub' | 'gimnasio';
   galleryPhotos?: string[];
   followersCount?: number;
   following?: string[];
 }
-
-export type BusinessCategoryType =
-  | 'club'
-  | 'promotor'
-  | 'cafe'
-  | 'teatro'
-  | 'cine'
-  | 'salon_eventos'
-  | 'conferencista'
-  | 'pub'
-  | 'gimnacio';
-
-export const BUSINESS_CATEGORIES: { id: BusinessCategoryType; label: string; icon: string }[] = [
-  { id: 'club', label: 'Club', icon: '🪩' },
-  { id: 'promotor', label: 'Promotor', icon: '🎟️' },
-  { id: 'cafe', label: 'Café', icon: '☕' },
-  { id: 'teatro', label: 'Teatro', icon: '🎭' },
-  { id: 'cine', label: 'Cine', icon: '🍿' },
-  { id: 'salon_eventos', label: 'Salón de Eventos', icon: '🏛️' },
-  { id: 'conferencista', label: 'Conferencia', icon: '🎤' },
-  { id: 'pub', label: 'Pub', icon: '🍻' },
-  { id: 'gimnacio', label: 'Gimnasio', icon: '🥊' },
-];
 
 export interface CreatedEventItem {
   id: string;
