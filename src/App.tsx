@@ -13,6 +13,7 @@ import EventManagerScreen from './screens/EventManagerScreen';
 import ExploreScreen from './screens/ExploreScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import EventInviteModal from './components/EventInviteModal';
+import DevScreenConsole from './components/DevScreenConsole';
 import { PassItem, UserProfile } from './types/home';
 import { mockMamacitaPass, mockUserProfile } from './data/mockData';
 
@@ -349,6 +350,34 @@ export const App: React.FC = () => {
   return (
     <div className="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden">
       {renderScreen()}
+      <DevScreenConsole
+        currentRoute={currentRoute}
+        onNavigate={handleNavigate}
+        isPartner={userProfile.isPartner}
+        onTogglePartner={(val) => setUserProfile((prev) => ({ ...prev, isPartner: val }))}
+        onAddDemoTicket={() => {
+          const demo: PassItem = {
+            id: 'DEMO_' + Math.floor(10000 + Math.random() * 90000),
+            eventId: 'pepe-birthday',
+            eventTitle: 'NEON CARNIVAL 2026',
+            title: 'NEON CARNIVAL 2026',
+            emoji: '🎟️',
+            dateStr: 'VIERNES 26 SEP',
+            timeStr: '23:00',
+            location: 'CLUB THEATRON · SALA VIP',
+            status: 'active',
+            statusText: 'PASE ACTIVO',
+            companionsCount: 1,
+            allowsPlusOne: true,
+            withPlusOne: true,
+            holderName: userProfile.name || 'CRIS G.',
+            ticketId: '#AN56842',
+            verifiedProvider: 'VERIFICADO CON GOOGLE',
+            qrCodeValue: 'plus1://pass/DEMO_56842',
+          };
+          setUserTickets((prev) => [demo, ...prev]);
+        }}
+      />
     </div>
   );
 };

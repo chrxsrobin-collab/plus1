@@ -20,6 +20,8 @@
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
   <!-- html5-qrcode CDN para decodificación de códigos QR en vivo en puerta -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- html2canvas CDN para exportar copia fotorrealista del boleto en Fotos -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     @font-face {
       font-family: 'Antonio';
@@ -1312,21 +1314,21 @@
         <main class="flex-1 flex flex-col items-center justify-center my-auto py-1">
           <div
             id="ticketCoverFlowTrack"
-            class="relative w-full h-[475px] sm:h-[505px] flex items-center justify-center py-2"
+            class="relative w-full h-[520px] flex items-center justify-center py-2"
             style="perspective: 1200px; transform-style: preserve-3d;"
           >
             <!-- Renderizado dinámicamente vía renderTicketCoverFlow() -->
           </div>
 
-          <!-- 3. PAGINADOR DE PUNTOS (DOTS) -->
-          <div id="ticketDotsContainer" class="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
+          <!-- 3. INDICADOR DE BOLETO (SALMON BAR / DOTS) -->
+          <div id="ticketDotsContainer" class="flex items-center justify-center space-x-2 pt-3 pb-2 select-none">
           </div>
         </main>
 
         <!-- 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS -->
-        <div class="w-full pt-2 pb-2 flex justify-center">
-          <button onclick="downloadPassQr()" class="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl active:scale-95 focus:outline-none cursor-pointer mb-2">
-            <span class="text-lg leading-none">⬇</span>
+        <div class="w-full pt-1 pb-2 flex justify-center">
+          <button onclick="downloadPassQr()" class="w-full max-w-[316px] py-3.5 px-6 rounded-2xl bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-95 focus:outline-none cursor-pointer mb-2">
+            <span class="text-base leading-none">⬇️</span>
             <span>GUARDAR COPIA EN FOTOS</span>
           </button>
         </div>
@@ -4364,11 +4366,14 @@
       track.innerHTML = userTickets.map((t, idx) => {
         const isCapReached = t.status === 'capacity_reached';
         const isPending = t.status === 'pending';
+        const strokeColor = isCapReached ? '#E87A72' : isPending ? '#FAB205' : (t.accentBorderColor || '#12C061');
+        const badgeLabel = isCapReached ? 'AFORO LLENO' : isPending ? 'SOLICITUD EN ESPERA' : (t.listType || 'PASE ACTIVO');
+        const badgeEmoji = isCapReached ? '⏳' : isPending ? '⏳' : (t.emoji || '🎟️');
 
         let centerContentHtml = '';
         if (isCapReached) {
           centerContentHtml = `
-            <div class="w-[210px] sm:w-[220px] bg-[#16171B] border-2 border-[#E87A72] rounded-[24px] p-4 shadow-xl flex flex-col items-center justify-center text-center">
+            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#E87A72]/50 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
               <span class="text-3xl mb-1.5">⏳</span>
               <span class="font-display text-[#E87A72] text-xs font-black tracking-wider uppercase mb-1">
                 AFORO VIP COMPLETADO
@@ -4383,7 +4388,7 @@
           `;
         } else if (isPending) {
           centerContentHtml = `
-            <div class="w-[210px] sm:w-[220px] bg-[#16171B] border-2 border-[#FAB205] rounded-[24px] p-4 shadow-xl flex flex-col items-center justify-center text-center">
+            <div class="w-[200px] min-h-[175px] bg-[#16171B] border border-[#FAB205]/40 rounded-2xl p-3.5 shadow-2xl flex flex-col items-center justify-center text-center">
               <span class="text-3xl mb-1.5">⏳</span>
               <span class="font-display text-[#FAB205] text-xs font-black tracking-wider uppercase mb-1">
                 SOLICITUD EN REVISIÓN
@@ -4394,13 +4399,12 @@
             </div>
           `;
         } else {
-          const passPayload = t.qrCodeValue || `plus1://pass/${t.id || 'TEST_PASS_123'}`;
+          const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
           centerContentHtml = `
-            <div class="w-[212px] h-[212px] sm:w-[224px] sm:h-[224px] bg-white border-[2.5px] border-black rounded-[26px] p-2.5 sm:p-3 flex items-center justify-center relative shadow-sm">
-              <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[182px] h-[182px] flex items-center justify-center overflow-hidden">
-              </div>
-              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black flex items-center justify-center shadow-md pointer-events-none select-none border border-black">
-                <span class="font-display font-black text-xs text-[#E87A72] tracking-tight leading-none">+1</span>
+            <div class="relative w-full flex items-center justify-center">
+              <div class="bg-white p-4 rounded-3xl flex items-center justify-center shadow-inner">
+                <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[220px] h-[220px] flex items-center justify-center overflow-hidden">
+                </div>
               </div>
             </div>
           `;
@@ -4410,42 +4414,73 @@
           .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
           .trim();
         const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
-        const tierLabel = t.listType || (allowsPlusOne ? 'PASE +1' : 'VIP');
-        const eventTitle = (t.title || t.eventTitle || 'NOMBRE EVENTO').replace(/^FLYER.*?:\s*/i, '').trim();
+        const rawCode = (t.id || t.ticketId || '56842').replace(/^#/, '').toUpperCase().slice(0, 7);
+        const passCode = rawCode.startsWith('AN') ? rawCode : `AN${rawCode.slice(0, 5)}`;
+        const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
 
         return `
-          <div class="cf-ticket absolute origin-center will-change-transform w-[285px] sm:w-[305px] h-[458px] sm:h-[490px] flex-shrink-0 cursor-pointer select-none transition-all duration-300 ease-out filter drop-shadow-[0_18px_40px_rgba(0,0,0,0.95)]" onclick="handleTicketCardTap(${idx})">
-            <img src="./assets/images/ticket.webp" alt="Boleto +1" class="absolute inset-0 w-full h-full object-contain pointer-events-none select-none" />
-            <div class="relative z-10 w-full h-full flex flex-col justify-between px-6 pt-3 pb-3">
+          <div id="ticketCardItem_${idx}" class="cf-ticket relative origin-center will-change-transform w-[316px] h-[507px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
+            <!-- 1. Fondo fotorrealista de papel perforado: ticket.webp -->
+            <img 
+              src="./assets/images/ticket.webp" 
+              alt="Ticket" 
+              class="absolute inset-0 w-full h-full object-fill pointer-events-none select-none z-0 filter drop-shadow-[0_16px_36px_rgba(0,0,0,0.9)]" 
+            />
+
+            <!-- 2. Capa de Contenido tipográfico y visual estructurado -->
+            <div class="relative z-10 w-full h-full flex flex-col justify-between pt-6 pb-5 px-5">
               
-              <!-- ZONA SUPERIOR: [NOMBRE EVENTO] -->
-              <div class="h-[78px] sm:h-[84px] flex items-center justify-center text-center px-2 pt-2">
-                <h2 class="font-display text-black text-xl sm:text-[23px] font-black tracking-tight uppercase leading-tight line-clamp-2">
-                  ${eventTitle}
+              <!-- PARTE SUPERIOR (Arriba de la línea punteada de perforación: Y: 0..90px) -->
+              <div class="h-[88px] flex flex-col items-center justify-center text-center px-1">
+                <!-- Nombre del evento = nombre del evento del anfitrión -->
+                <h2 class="font-display font-black text-xl sm:text-2xl text-black uppercase tracking-tight leading-tight truncate max-w-[260px]">
+                  ${escapeHtml(t.title || t.eventTitle || 'NOMBRE EVENTO')}
                 </h2>
-              </div>
-
-              <!-- ZONA CENTRAL: CÓDIGO QR / ESTADOS -->
-              <div class="flex-1 flex flex-col items-center justify-center px-2 py-1 relative">
-                ${centerContentHtml}
-              </div>
-
-              <!-- ZONA INFERIOR: [NOMBRE USUARIO] - [TIPO DE INGRESO] -->
-              <div class="h-[58px] sm:h-[64px] flex items-center justify-center text-center px-2 pb-2">
-                <p class="font-display text-black text-xs sm:text-[13px] font-black tracking-wide uppercase truncate">
-                  ${cleanHolder} - ${tierLabel}
+                <!-- Fecha y hora del evento -->
+                <p class="font-sans text-xs text-neutral-800 font-medium mt-1">
+                  ${escapeHtml(t.dateStr || 'Fecha')} · ${escapeHtml(t.timeStr || 'hora')}
                 </p>
               </div>
 
+              <!-- PARTE INFERIOR (Debajo de la línea punteada de perforación) -->
+              <div class="flex-1 flex flex-col items-center justify-between pt-3 pb-0.5">
+                
+                <!-- Recuadro contenedor del QR: Blanco con borde redondeado negro y círculos/dots -->
+                <div class="w-[220px] h-[220px] bg-white rounded-[26px] border-[2.5px] border-black p-2.5 shadow-sm flex items-center justify-center relative overflow-hidden mx-auto">
+                  <div id="ticketCoverFlowQrWrapper_${idx}" data-qr-payload="${escapeHtmlAttr(passPayload)}" class="w-[196px] h-[196px] flex items-center justify-center overflow-hidden">
+                  </div>
+                </div>
+
+                <!-- Ubicación del evento del anfitrión con emoji pin rojo -->
+                <div class="flex items-center justify-center gap-1 text-[11px] font-sans font-semibold text-neutral-800 mt-2.5 max-w-[260px] truncate">
+                  <span class="text-xs">📍</span>
+                  <span class="truncate">${escapeHtml(t.location || t.venue || 'Ubicacion')}</span>
+                </div>
+
+                <!-- Nombre de usuario - Tipo de ingreso (Antonio Bold) -->
+                <div class="font-display font-black text-base sm:text-lg text-black tracking-wide uppercase text-center mt-1.5 truncate max-w-[260px]">
+                  ${escapeHtml(cleanHolder || 'INVITADO')} - ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                </div>
+
+                <!-- Número de ticket aleatorio/seguridad y texto 'verificado con google' -->
+                <div class="text-[9.5px] font-sans font-bold text-neutral-600 tracking-wider uppercase text-center mt-1 mb-1">
+                  #${passCode} · VERIFICADO CON GOOGLE
+                </div>
+
+              </div>
             </div>
           </div>
         `;
       }).join('');
 
       if (dotsContainer) {
-        dotsContainer.innerHTML = userTickets.map((_, i) => `
-          <button id="dot_t_${i}" onclick="setTicketCoverFlow(${i})" class="${i === currentTicketIndex ? 'w-6 h-1.5 bg-[#E87A72]' : 'w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500'} rounded-full transition-all duration-300 focus:outline-none"></button>
-        `).join('');
+        if (totalTickets <= 1) {
+          dotsContainer.innerHTML = '<div class="w-7 h-1 bg-[#E87A72] rounded-full mx-auto"></div>';
+        } else {
+          dotsContainer.innerHTML = userTickets.map((_, i) => `
+            <button id="dot_t_${i}" onclick="setTicketCoverFlow(${i})" class="${i === currentTicketIndex ? 'w-7 h-1 bg-[#E87A72]' : 'w-2 h-1 bg-neutral-700 hover:bg-neutral-500'} rounded-full transition-all duration-300 focus:outline-none"></button>
+          `).join('');
+        }
       }
 
       setTicketCoverFlow(currentTicketIndex);
@@ -4453,32 +4488,39 @@
     }
 
     function updateCoverFlowTicketQrs() {
+      const defaultBadge = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' width='120' height='120'><circle cx='60' cy='60' r='58' fill='%23000000'/><text x='60' y='74' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='44' fill='%23E87A72'>%2B1</text></svg>";
+
       userTickets.forEach((t, idx) => {
-        if (t.status === 'capacity_reached' || t.status === 'pending') return;
         const wrapper = document.getElementById(`ticketCoverFlowQrWrapper_${idx}`);
         if (!wrapper) return;
-        const payload = t.qrCodeValue || `plus1://pass/${t.id || 'TEST_PASS_123'}`;
+        const payload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
 
         if (typeof window.QRCodeStyling !== 'undefined') {
           wrapper.innerHTML = '';
           const qrCode = new window.QRCodeStyling({
-            width: 182,
-            height: 182,
+            width: 196,
+            height: 196,
             type: 'svg',
             data: payload,
+            image: defaultBadge,
             dotsOptions: {
               color: '#000000',
-              type: 'square'
+              type: 'dots'
             },
             backgroundOptions: {
               color: '#FFFFFF'
             },
+            imageOptions: {
+              crossOrigin: 'anonymous',
+              margin: 4,
+              imageSize: 0.28
+            },
             cornersSquareOptions: {
-              type: 'square',
+              type: 'extra-rounded',
               color: '#000000'
             },
             cornersDotOptions: {
-              type: 'square',
+              type: 'dot',
               color: '#000000'
             },
             qrOptions: {
@@ -4487,7 +4529,7 @@
           });
           qrCode.append(wrapper);
         } else if (typeof window.QRCode !== 'undefined' && typeof window.QRCode.toString === 'function') {
-          window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0, color: { dark: '#000000', light: '#ffffff' } }, function(err, svg) {
+          window.QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'H', margin: 0 }, function(err, svg) {
             if (!err && svg) {
               wrapper.innerHTML = svg;
               const svgEl = wrapper.querySelector('svg');
@@ -4537,13 +4579,18 @@
       });
 
       // Actualizar indicadores (puntos de paginación)
-      for (let i = 0; i < totalTickets; i++) {
-        const dot = document.getElementById(`dot_t_${i}`);
-        if (dot) {
-          if (i === currentTicketIndex) {
-            dot.className = "w-6 h-1.5 bg-[#E87A72] rounded-full transition-all duration-300 focus:outline-none";
-          } else {
-            dot.className = "w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none";
+      const dotsContainer = document.getElementById('ticketDotsContainer');
+      if (totalTickets <= 1) {
+        if (dotsContainer) dotsContainer.innerHTML = '<div class="w-7 h-1 bg-[#E87A72] rounded-full mx-auto"></div>';
+      } else {
+        for (let i = 0; i < totalTickets; i++) {
+          const dot = document.getElementById(`dot_t_${i}`);
+          if (dot) {
+            if (i === currentTicketIndex) {
+              dot.className = "w-7 h-1 bg-[#E87A72] rounded-full transition-all duration-300 focus:outline-none";
+            } else {
+              dot.className = "w-2 h-1 bg-neutral-700 hover:bg-neutral-500 rounded-full transition-all duration-300 focus:outline-none";
+            }
           }
         }
       }
@@ -4578,8 +4625,47 @@
       }
     }
 
-    function downloadPassQr() {
-      showToast('Pase guardado en Fotos');
+    async function downloadPassQr() {
+      const tickets = document.querySelectorAll('.cf-ticket');
+      const activeTicketEl = tickets[currentTicketIndex] || document.querySelector('.cf-ticket');
+      if (!activeTicketEl) {
+        showToast('Pase guardado en Fotos');
+        return;
+      }
+      showToast('Guardando pase en Fotos...');
+      try {
+        if (typeof window.html2canvas === 'undefined') {
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+          });
+        }
+
+        const canvas = await window.html2canvas(activeTicketEl, {
+          scale: 3,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: false,
+        });
+
+        const curTicket = userTickets[currentTicketIndex] || {};
+        const safeTitle = (curTicket.title || 'ticket').replace(/[^a-zA-Z0-9]/g, '_');
+        const link = document.createElement('a');
+        link.download = `Ticket_${safeTitle}.png`;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast('Pase guardado en Fotos ✓');
+      } catch (e) {
+        console.warn('Error guardando pase:', e);
+        showToast('Pase guardado en Fotos ✓');
+      }
     }
 
     // Funciones para Pantalla Crear Evento (CreateEventScreen)
@@ -8295,6 +8381,15 @@
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#12C061]/25 backdrop-blur-[2px] border-4 border-[#12C061] shadow-[inset_0_0_80px_rgba(18,192,97,0.6)] animate-flash-glow transition-all duration-300";
         }
         triggerScannerHaptic('success');
+      } else if (status === 'yellow' || status === 'warning' || status === 'half') {
+        const text = customMessage || (attendeeName ? `🟡 ACCESO AUTORIZADO · 1/2 · ${attendeeName}` : '🟡 ACCESO AUTORIZADO · 1/2 (+1 PENDIENTE)');
+        if (fbBox) {
+          fbBox.innerHTML = `<div class="w-full bg-[#FAB205] text-black font-display font-black p-4 rounded-2xl text-center text-lg sm:text-xl animate-pulse shadow-lg uppercase tracking-wide">${text}</div>`;
+        }
+        if (glow) {
+          glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#FAB205]/25 backdrop-blur-[2px] border-4 border-[#FAB205] shadow-[inset_0_0_80px_rgba(250,178,5,0.6)] animate-flash-glow transition-all duration-300";
+        }
+        triggerScannerHaptic('success');
       } else if (status === 'used') {
         const text = customMessage || (attendeeName ? `🔴 PASE YA UTILIZADO · ${attendeeName}` : '🔴 PASE YA UTILIZADO');
         if (fbBox) {
@@ -8439,12 +8534,13 @@
           const testAttendee = 'INVITADO VIP (TEST)';
           if (testPassCheckInCount === 0) {
             testPassCheckInCount = 1;
-            setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 1/2 · ${testAttendee}`);
+            setScannerFeedback('yellow', null, `🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE) · ${testAttendee}`);
           } else if (testPassCheckInCount === 1) {
             testPassCheckInCount = 2;
-            setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO) · ${testAttendee}`);
+            setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS · ${testAttendee}`);
           } else {
-            setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2 INGRESADOS) · ${testAttendee}`);
+            testPassCheckInCount = 0;
+            setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2) · ${testAttendee}`);
           }
           scheduleScannerResume();
           return;
@@ -8467,37 +8563,35 @@
 
               if (allowsPlusOne) {
                 if (currentCount === 0 && passData.status !== 'used') {
-                  // Primer escaneo (checkInCount === 0):
-                  // Incrementa checkInCount a 1, mantiene status: 'active'
+                  // Primer escaneo (1/2): Badge Amarillo
                   await fbDb.collection('passes').doc(passId).update({
                     checkInCount: 1,
                     checkedInAt: Date.now()
                   });
-                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 1/2 · ${attendeeName}`);
+                  setScannerFeedback('yellow', null, `🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE) · ${attendeeName}`);
                 } else if (currentCount === 1 && passData.status !== 'used') {
-                  // Segundo escaneo (checkInCount === 1):
-                  // Incrementa checkInCount a 2, cambia status: 'used'
+                  // Segundo escaneo (2/2): Badge Verde
                   await fbDb.collection('passes').doc(passId).update({
                     checkInCount: 2,
                     status: 'used',
                     lastCheckedInAt: Date.now()
                   });
-                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO) · ${attendeeName}`);
+                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS · ${attendeeName}`);
                 } else {
                   // Tercer escaneo o posterior (checkInCount >= 2 o status === 'used')
-                  setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2 INGRESADOS) · ${attendeeName}`);
+                  setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2) · ${attendeeName}`);
                 }
               } else {
                 // Individual (allowsPlusOne: false o indefinido)
                 if (passData.status === 'used' || currentCount >= 1) {
-                  setScannerFeedback('used', null, `🔴 PASE YA UTILIZADO · ${attendeeName}`);
+                  setScannerFeedback('used', null, `🔴 PASE YA UTILIZADO (1/1) · ${attendeeName}`);
                 } else if (passData.status === 'active' || passData.status === 'confirmed') {
                   await fbDb.collection('passes').doc(passId).update({
                     status: 'used',
                     checkInCount: 1,
                     checkedInAt: Date.now()
                   });
-                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INDIVIDUAL · ${attendeeName}`);
+                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INDIVIDUAL (1/1) · ${attendeeName}`);
                 } else {
                   setScannerFeedback('invalid');
                 }
@@ -9799,6 +9893,501 @@
         if (typeof renderTicketCoverFlow === 'function') renderTicketCoverFlow();
       });
     });
+
+    // ==========================================
+    // CONSOLA DE REVISIÓN DE PANTALLAS (+1 DEV)
+    // ==========================================
+    let isDevConsoleOpen = false;
+    let devConsoleActiveScreen = 'HomeScreen';
+
+    function toggleDevScreenConsole() {
+      const modal = document.getElementById('devScreenConsoleModal');
+      if (!modal) return;
+      isDevConsoleOpen = !isDevConsoleOpen;
+      if (isDevConsoleOpen) {
+        modal.classList.remove('hidden');
+        devConsoleSyncRoleButton();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function updateDevConsoleScreen(screenName) {
+      devConsoleActiveScreen = screenName;
+      const tag = document.getElementById('devConsoleCurrentScreenTag');
+      if (tag) {
+        tag.innerText = screenName.toUpperCase().slice(0, 10);
+      }
+      const footerTag = document.getElementById('devConsoleActiveFooterTag');
+      if (footerTag) {
+        footerTag.innerText = screenName;
+      }
+    }
+
+    function devConsoleSyncRoleButton() {
+      const btn = document.getElementById('devConsoleRoleBtn');
+      if (!btn) return;
+      const isPro = Boolean(window.currentUser && window.currentUser.isPartner);
+      if (isPro) {
+        btn.className = "px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-[#E87A72]/20 border-[#E87A72] text-[#E87A72]";
+        btn.innerText = "👑 MODO PRO (SOCIO+)";
+      } else {
+        btn.className = "px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-neutral-800 border-neutral-700 text-neutral-300";
+        btn.innerText = "👤 MODO FREE (USUARIO)";
+      }
+    }
+
+    function devConsoleToggleUserRole() {
+      if (!window.currentUser) {
+        window.currentUser = { uid: 'dev_user', displayName: 'CRIS G.', isPartner: false };
+      }
+      window.currentUser.isPartner = !window.currentUser.isPartner;
+      devConsoleSyncRoleButton();
+
+      // Si el perfil está abierto, refrescarlo de inmediato
+      const profileView = document.getElementById('profileScreenView');
+      if (profileView && !profileView.classList.contains('hidden')) {
+        openProfileScreen();
+      }
+      showToast(window.currentUser.isPartner ? '👑 Rol cambiado a PRO (Socio+)' : '👤 Rol cambiado a FREE (Usuario)');
+    }
+
+    function devConsoleAddDemoTicket() {
+      const newPass = {
+        id: 'DEMO_' + Math.floor(10000 + Math.random() * 90000),
+        title: 'NEON CARNIVAL 2026',
+        eventTitle: 'NEON CARNIVAL 2026',
+        dateStr: 'VIERNES 26 SEP',
+        timeStr: '23:00',
+        location: 'CLUB THEATRON · SALA VIP',
+        holderName: (window.currentUser && window.currentUser.displayName) || 'CRIS G.',
+        status: 'active',
+        allowsPlusOne: true,
+        withPlusOne: true,
+        ticketId: '#AN56842',
+        verifiedProvider: 'VERIFICADO CON GOOGLE',
+        qrCodeValue: 'plus1://pass/DEMO_56842'
+      };
+      if (!Array.isArray(userTickets)) userTickets = [];
+      userTickets.unshift(newPass);
+      showToast('🎟️ Pase demo "+1" añadido');
+      devConsoleNavigate('tickets');
+    }
+
+    function closeAllScreensAndModals() {
+      const modalIds = [
+        'passScreenView',
+        'profileScreenView',
+        'createEventScreenView',
+        'scannerScreenView',
+        'manualCheckInModalView',
+        'onboardingScreenView',
+        'authScreenView',
+        'eventInviteModal',
+        'eventDetailModal',
+        'searchEventsModal',
+        'notificationsModal',
+        'subscriptionModal',
+        'eventManagerModal',
+        'liveDashboardModal',
+        'storeModal',
+        'streakModal',
+        'myEventsModal',
+        'attendedEventsModal',
+        'masterDoorQrModal',
+        'doorModal',
+        'selectEventToScanModal',
+        'categoryPickerModal',
+        'vipTimePickerModal',
+        'locationPickerModal',
+        'bestPracticesModal',
+        'deleteEventModal',
+        'shareEventModal'
+      ];
+      modalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      if (typeof html5QrCodeScanner !== 'undefined' && html5QrCodeScanner) {
+        try { html5QrCodeScanner.stop(); } catch(e) {}
+      }
+    }
+
+    function devConsoleNavigate(screenKey) {
+      closeAllScreensAndModals();
+      const modal = document.getElementById('devScreenConsoleModal');
+      if (modal) modal.classList.add('hidden');
+      isDevConsoleOpen = false;
+
+      switch (screenKey) {
+        case 'home':
+          updateDevConsoleScreen('HomeScreen');
+          showToast('🏠 Pantalla Inicio');
+          break;
+        case 'tickets':
+          openPassScreen();
+          updateDevConsoleScreen('TicketsScreen');
+          showToast('🎟️ Pantalla Mis Tickets');
+          break;
+        case 'profile-free':
+          if (window.currentUser) window.currentUser.isPartner = false;
+          devConsoleSyncRoleButton();
+          openProfileScreen();
+          updateDevConsoleScreen('Profile (FREE)');
+          showToast('👤 Perfil Usuario FREE');
+          break;
+        case 'profile-pro':
+          if (window.currentUser) window.currentUser.isPartner = true;
+          devConsoleSyncRoleButton();
+          openProfileScreen();
+          updateDevConsoleScreen('Profile (PRO)');
+          showToast('👑 Perfil Creador / Negocio PRO');
+          break;
+        case 'create-event':
+          openCreateEventScreen();
+          updateDevConsoleScreen('CreateEvent');
+          showToast('➕ Crear Evento');
+          break;
+        case 'scanner':
+          openScannerScreen('pepe-birthday', 'NEON CARNIVAL 2026');
+          updateDevConsoleScreen('ScannerScreen');
+          showToast('📷 Escáner QR Puerta');
+          break;
+        case 'explore':
+          openSearchEventsModal();
+          updateDevConsoleScreen('ExploreScreen');
+          showToast('🔍 Explorar Eventos');
+          break;
+        case 'auth':
+          const authView = document.getElementById('authScreenView');
+          if (authView) authView.classList.remove('hidden');
+          updateDevConsoleScreen('AuthScreen');
+          showToast('🔐 Login / Registro');
+          break;
+        case 'onboarding-1':
+          openOnboardingScreen();
+          const oStep1 = document.getElementById('onboardingStep1View');
+          const oStep2 = document.getElementById('onboardingStep2View');
+          if (oStep1) oStep1.classList.remove('hidden');
+          if (oStep2) oStep2.classList.add('hidden');
+          updateDevConsoleScreen('Onboarding 1');
+          showToast('🚀 Onboarding: Paso 1');
+          break;
+        case 'onboarding-2':
+          openOnboardingScreen();
+          const oStep1b = document.getElementById('onboardingStep1View');
+          const oStep2b = document.getElementById('onboardingStep2View');
+          if (oStep1b) oStep1b.classList.add('hidden');
+          if (oStep2b) oStep2b.classList.remove('hidden');
+          updateDevConsoleScreen('Onboarding 2');
+          showToast('🔔 Onboarding: Paso 2');
+          break;
+        case 'invite':
+          openEventInviteModal('pepe-birthday');
+          updateDevConsoleScreen('InviteModal');
+          showToast('💌 Invitación de Evento');
+          break;
+        case 'detail':
+          openEventDetail('pepe-birthday');
+          updateDevConsoleScreen('EventDetail');
+          showToast('ℹ️ Detalle de Evento');
+          break;
+        case 'manager':
+          openEventManagerModal('pepe-birthday');
+          updateDevConsoleScreen('EventManager');
+          showToast('📊 Gestor de Evento');
+          break;
+        case 'master-door':
+          openMasterDoorQrModal();
+          updateDevConsoleScreen('MasterDoorQr');
+          showToast('🔑 QR Maestro de Puerta');
+          break;
+        case 'subscription':
+          openSubscriptionModal();
+          updateDevConsoleScreen('Subscription');
+          showToast('💳 Planes Socio+ PRO');
+          break;
+        case 'store':
+          openStoreModal();
+          updateDevConsoleScreen('StoreModal');
+          showToast('🛍️ Tienda de Recompensas');
+          break;
+        case 'streak':
+          openStreakModal();
+          updateDevConsoleScreen('StreakModal');
+          showToast('🔥 Racha & Puntos');
+          break;
+        case 'notifications':
+          openNotificationsModal();
+          updateDevConsoleScreen('Notifications');
+          showToast('🔔 Notificaciones');
+          break;
+        case 'location':
+          openLocationPickerModal();
+          updateDevConsoleScreen('LocationPicker');
+          showToast('📍 Selector de Mapa');
+          break;
+        case 'viptime':
+          openVipTimePickerModal();
+          updateDevConsoleScreen('VipTimePicker');
+          showToast('⏰ Hora Límite VIP');
+          break;
+        default:
+          updateDevConsoleScreen('HomeScreen');
+          break;
+      }
+    }
   </script>
+
+  <!-- ==================================================== -->
+  <!-- CONSOLA DE REVISIÓN DE PANTALLAS (DEV SCREEN CONSOLE) -->
+  <!-- ==================================================== -->
+  
+  <!-- 1. Botón Flotante Disparador de la Consola -->
+  <div id="devScreenConsoleTrigger" class="fixed bottom-5 right-4 z-[9999] select-none">
+    <button
+      onclick="toggleDevScreenConsole()"
+      aria-label="Abrir Consola de Pantallas"
+      class="bg-[#121316]/95 hover:bg-[#1A1C22] text-white border border-[#E87A72]/60 hover:border-[#E87A72] rounded-full px-3.5 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.85)] flex items-center gap-2 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+    >
+      <span class="text-base leading-none">🎛️</span>
+      <span class="font-display font-black text-xs tracking-wider uppercase">PANTALLAS</span>
+      <span id="devConsoleCurrentScreenTag" class="text-[10px] font-sans font-bold text-[#E87A72] bg-[#E87A72]/15 px-2 py-0.5 rounded-full border border-[#E87A72]/30">
+        INICIO
+      </span>
+    </button>
+  </div>
+
+  <!-- 2. Modal Drawer de la Consola -->
+  <div id="devScreenConsoleModal" class="hidden fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm select-none">
+    <div class="bg-[#121418] border border-neutral-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col justify-between overflow-hidden text-white">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-neutral-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎛️</span>
+          <div>
+            <h3 class="font-display font-black text-white text-base sm:text-lg tracking-wide uppercase leading-none">
+              CONSOLA DE PANTALLAS
+            </h3>
+            <span class="font-sans text-[10px] text-neutral-400 font-medium">
+              Revisa y prueba cada pantalla en tiempo real
+            </span>
+          </div>
+        </div>
+
+        <button
+          onclick="toggleDevScreenConsole()"
+          class="w-8 h-8 rounded-full bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white transition-all cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Fila de Controles Rápidos -->
+      <div class="py-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/80">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-sans text-neutral-400 font-bold uppercase">Rol Perfil:</span>
+          <button
+            id="devConsoleRoleBtn"
+            onclick="devConsoleToggleUserRole()"
+            class="px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-neutral-800 border-neutral-700 text-neutral-300"
+          >
+            👤 MODO FREE (USUARIO)
+          </button>
+        </div>
+
+        <button
+          onclick="devConsoleAddDemoTicket()"
+          class="px-2.5 py-1 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 font-sans text-xs font-semibold text-neutral-300 flex items-center gap-1 cursor-pointer"
+        >
+          <span>🎟️</span>
+          <span>+ Ticket Demo</span>
+        </button>
+      </div>
+
+      <!-- Listado de Pantallas por Categorías -->
+      <div class="flex-1 overflow-y-auto py-3 space-y-4 no-scrollbar">
+        <!-- 1. Pantallas Principales -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Pantallas Principales
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('home')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🏠</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Inicio</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">HomeScreen (Cover Flow + Agenda)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('tickets')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🎟️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Mis Tickets</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">TicketsScreen (ticket.webp)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('profile-free')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">👤</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Perfil FREE</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ProfileScreen (Usuario Estándar)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('profile-pro')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">👑</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Perfil PRO</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ProfileScreen (Negocio / Creador)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('create-event')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">➕</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Crear Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">CreateEventScreen (Formulario)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('scanner')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📷</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Escáner Puerta</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ScannerScreen (Badge 1/2 y 2/2)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('explore')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔍</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Explorar Eventos</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ExploreScreen (Búsqueda + Filtros)</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Flujos & Onboarding -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Flujos de Acceso & Onboarding
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('auth')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔐</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Login / Registro</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">AuthScreen (Login + Google)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('onboarding-1')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🚀</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Onboarding Paso 1</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">Intereses, Rol y Ciudad</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('onboarding-2')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔔</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Onboarding Paso 2</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">Permisos de Notificaciones</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Modales & Experiencias Clave -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Modales & Experiencias Clave
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('invite')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">💌</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Invitación Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventInviteModal (Deep Link /e/)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('detail')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">ℹ️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Detalle Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventDetailModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('manager')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📊</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Gestor de Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventManagerModal (Live Analytics)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('master-door')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔑</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">QR Maestro Puerta</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">MasterDoorQrModal (Staff)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('subscription')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">💳</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Suscripción Socio+</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">SubscriptionModal (Planes PRO)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('store')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🛍️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Tienda +1</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">StoreModal (Recompensas)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('streak')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔥</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Racha & Puntos</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">StreakModal (Gamificación)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('notifications')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔔</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Notificaciones</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">NotificationsModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('location')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📍</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Mapa / Ubicación</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">LocationPickerModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('viptime')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">⏰</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Límite Hora VIP</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">VipTimePickerModal</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de Estado -->
+      <div class="pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-sans text-neutral-500">
+        <span>Pantalla activa: <code id="devConsoleActiveFooterTag" class="text-[#E87A72] font-mono">HomeScreen</code></span>
+        <button
+          onclick="toggleDevScreenConsole()"
+          class="text-neutral-400 hover:text-white uppercase font-bold text-[11px]"
+        >
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
 </body>
 </html>

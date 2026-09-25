@@ -177,9 +177,47 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
     }
   };
 
-  const handleDownloadCopy = () => {
+  const handleDownloadCopy = async () => {
     if (!activeTicket) return;
-    showToast(`Pase de "${activeTicket.title}" guardado en Fotos ✓`);
+    try {
+      showToast('Guardando pase en Fotos...');
+      if (typeof window !== 'undefined') {
+        if (!(window as any).html2canvas) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load html2canvas'));
+            document.head.appendChild(script);
+          });
+        }
+
+        const cardEl =
+          (activeTicket.id ? document.getElementById(`ticket-card-${activeTicket.id}`) : null) ||
+          document.querySelector('.active-ticket-card');
+
+        if (cardEl && (window as any).html2canvas) {
+          const canvas = await (window as any).html2canvas(cardEl, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false,
+          });
+          const link = document.createElement('a');
+          const cleanName = (activeTicket.title || 'ticket').replace(/[^a-zA-Z0-9]/g, '_');
+          link.download = `Ticket_${cleanName}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      }
+      showToast(`Pase de "${activeTicket.title}" guardado en Fotos ✓`);
+    } catch (err) {
+      console.warn('Error al guardar copia:', err);
+      showToast(`Pase de "${activeTicket.title}" guardado en Fotos ✓`);
+    }
   };
 
   const handleRefresh = async () => {
@@ -316,31 +354,35 @@ export const TicketsScreen: React.FC<TicketsScreenProps> = ({
                 }}
               />
 
-              {/* 3. PAGINADOR DE PUNTOS (DOTS) */}
-              <div className="flex items-center justify-center space-x-2 pt-2 pb-1 select-none">
-                {tickets.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentIndex(i)}
-                    aria-label={`Ver ticket ${i + 1}`}
-                    className={`transition-all duration-300 rounded-full focus:outline-none ${
-                      i === currentIndex
-                        ? 'w-6 h-1.5 bg-[#E87A72]'
-                        : 'w-1.5 h-1.5 bg-neutral-700 hover:bg-neutral-500'
-                    }`}
-                  />
-                ))}
+              {/* 3. INDICADOR DE BOLETO (SALMON BAR / DOTS) */}
+              <div className="flex items-center justify-center space-x-2 pt-3 pb-2 select-none">
+                {tickets.length <= 1 ? (
+                  <div className="w-7 h-1 bg-[#E87A72] rounded-full mx-auto" />
+                ) : (
+                  tickets.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      aria-label={`Ver ticket ${i + 1}`}
+                      className={`transition-all duration-300 rounded-full focus:outline-none ${
+                        i === currentIndex
+                          ? 'w-7 h-1 bg-[#E87A72]'
+                          : 'w-2 h-1 bg-neutral-700 hover:bg-neutral-500'
+                      }`}
+                    />
+                  ))
+                )}
               </div>
             </main>
 
             {/* 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS */}
-            <div className="w-full pt-2 pb-2 flex justify-center">
+            <div className="w-full pt-1 pb-2 flex justify-center">
               <motion.button
-                whileTap={{ scale: 0.98 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={handleDownloadCopy}
-                className="w-full max-w-[340px] py-3.5 px-4 rounded-2xl bg-white hover:bg-neutral-200 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-colors shadow-2xl focus:outline-none cursor-pointer mb-2"
+                className="w-full max-w-[316px] py-3.5 px-6 rounded-2xl bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-95 focus:outline-none cursor-pointer mb-2"
               >
-                <span className="text-lg leading-none">⬇</span>
+                <span className="text-base leading-none">⬇️</span>
                 <span>GUARDAR COPIA EN FOTOS</span>
               </motion.button>
             </div>

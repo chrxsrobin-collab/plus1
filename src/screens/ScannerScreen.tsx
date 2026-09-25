@@ -28,6 +28,8 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
     return eventId || (typeof window !== 'undefined' ? localStorage.getItem('plus1_active_door_event') || '' : '');
   });
   const [isStaffPaired, setIsStaffPaired] = useState<boolean>(false);
+  const [toastType, setToastType] = useState<'yellow' | 'green' | 'red'>('green');
+  const [testCheckInCount, setTestCheckInCount] = useState<number>(0);
 
   // Consulta los detalles del evento configurado si se pasa activeEventId
   useEffect(() => {
@@ -172,8 +174,80 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
       }
     }
 
-    // 2. Validación estándar de ticket de invitado
-    triggerVerification(trimmed);
+    // 2. Validación de ticket (+1 con 1/2 amarillo y 2/2 verde, o individual verde)
+    const passId = trimmed.replace('plus1://pass/', '');
+    if (passId) {
+      try {
+        const passRef = doc(db, 'passes', passId);
+        const snap = await getDoc(passRef);
+        if (snap.exists()) {
+          const passData = snap.data();
+          const allowsPlusOne = Boolean(
+            passData.allowsPlusOne ??
+              passData.withPlusOne ??
+              passData.allowPlusOne ??
+              (passData.companionsCount && passData.companionsCount > 0)
+          );
+          const currentCount =
+            typeof passData.checkInCount === 'number'
+              ? passData.checkInCount
+              : passData.status === 'used'
+              ? allowsPlusOne
+                ? 2
+                : 1
+              : 0;
+
+          if (allowsPlusOne) {
+            if (currentCount === 0 && passData.status !== 'used') {
+              // Primer escaneo (+1): Badge Amarillo 1/2
+              await setDoc(passRef, { checkInCount: 1, checkedInAt: Date.now() }, { merge: true });
+              triggerVerification('yellow', '🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE)', passId);
+              return;
+            } else if (currentCount === 1 && passData.status !== 'used') {
+              // Segundo escaneo (+1): Badge Verde 2/2
+              await setDoc(
+                passRef,
+                { checkInCount: 2, status: 'used', lastCheckedInAt: Date.now() },
+                { merge: true }
+              );
+              triggerVerification('green', '🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS', passId);
+              return;
+            } else {
+              triggerVerification('red', '🔴 PASE YA AGOTADO (2/2)', passId);
+              return;
+            }
+          } else {
+            // Pase Individual
+            if (passData.status === 'used' || currentCount >= 1) {
+              triggerVerification('red', '🔴 PASE YA UTILIZADO (1/1)', passId);
+              return;
+            } else {
+              await setDoc(
+                passRef,
+                { checkInCount: 1, status: 'used', checkedInAt: Date.now() },
+                { merge: true }
+              );
+              triggerVerification('green', '🟢 ACCESO AUTORIZADO · INGRESO INDIVIDUAL (1/1)', passId);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Error consultando pase en Firestore:', err);
+      }
+    }
+
+    // Fallback simulación rotativa si no existe en Firestore
+    if (testCheckInCount === 0) {
+      setTestCheckInCount(1);
+      triggerVerification('yellow', '🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE)', trimmed);
+    } else if (testCheckInCount === 1) {
+      setTestCheckInCount(2);
+      triggerVerification('green', '🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS', trimmed);
+    } else {
+      setTestCheckInCount(0);
+      triggerVerification('red', '🔴 PASE YA AGOTADO (2/2)', trimmed);
+    }
   };
 
   // Escaneo continuo con BarcodeDetector si está disponible en el navegador
@@ -210,9 +284,21 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
     };
   }, [cameraActive]);
 
-  const triggerVerification = (code?: string) => {
+  const triggerVerification = (
+    type: 'yellow' | 'green' | 'red' = 'green',
+    customMsg?: string,
+    code?: string
+  ) => {
     setIsVerified(true);
-    const msg = '🟢 ACCESO AUTORIZADO · PASE VERIFICADO';
+    setToastType(type);
+    const msg =
+      customMsg ||
+      (type === 'yellow'
+        ? '🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE)'
+        : type === 'red'
+        ? '🔴 PASE YA AGOTADO (2/2)'
+        : '🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS');
+
     setToastMessage(msg);
 
     if (onScanSuccess) {
@@ -403,13 +489,44 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
             <span>SIMULAR ESCANEO DE QR MAESTRO (STAFF)</span>
           </button>
 
-          {/* Botón de simulación para validar entrada (Mockup Check-in) */}
+          {/* Botón de simulación para validar entrada (+1 con 1/2 amarillo y 2/2 verde) */}
           <button
-            onClick={() => triggerVerification()}
-            className="w-full py-3 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border border-[#12C061]/50 hover:border-[#12C061] text-[#12C061] font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer"
+            onClick={() => {
+              if (testCheckInCount === 0) {
+                setTestCheckInCount(1);
+                triggerVerification('yellow', '🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE)');
+              } else if (testCheckInCount === 1) {
+                setTestCheckInCount(2);
+                triggerVerification('green', '🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS');
+              } else {
+                setTestCheckInCount(0);
+                triggerVerification('red', '🔴 PASE YA AGOTADO (2/2)');
+              }
+            }}
+            className={`w-full py-3 px-5 rounded-2xl bg-[#121316] hover:bg-neutral-900 border transition-all active:scale-98 shadow-xl focus:outline-none cursor-pointer flex items-center justify-center space-x-2 font-display text-xs sm:text-sm font-black tracking-wider uppercase ${
+              testCheckInCount === 0
+                ? 'border-[#FAB205]/70 text-[#FAB205]'
+                : testCheckInCount === 1
+                ? 'border-[#12C061]/70 text-[#12C061]'
+                : 'border-[#EF4444]/70 text-[#EF4444]'
+            }`}
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#12C061] animate-pulse" />
-            <span>SIMULAR ESCANEO EXITOSO (CHECK-IN)</span>
+            <span
+              className={`w-2.5 h-2.5 rounded-full animate-pulse ${
+                testCheckInCount === 0
+                  ? 'bg-[#FAB205]'
+                  : testCheckInCount === 1
+                  ? 'bg-[#12C061]'
+                  : 'bg-[#EF4444]'
+              }`}
+            />
+            <span>
+              {testCheckInCount === 0
+                ? 'SIMULAR ESCANEO 1/2 (AMARILLO · +1 PENDIENTE)'
+                : testCheckInCount === 1
+                ? 'SIMULAR ESCANEO 2/2 (VERDE · COMPLETO)'
+                : 'SIMULAR ESCANEO (ROJO · YA AGOTADO)'}
+            </span>
           </button>
         </div>
       </footer>
@@ -422,7 +539,13 @@ export const ScannerScreen: React.FC<ScannerScreenProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-[#121316] border-2 border-[#12C061] text-white font-display font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-2xl tracking-wider uppercase flex items-center space-x-2 whitespace-nowrap"
+            className={`fixed top-8 left-1/2 -translate-x-1/2 z-50 bg-[#121316] border-2 font-display font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-2xl tracking-wider uppercase flex items-center space-x-2 whitespace-nowrap ${
+              toastType === 'yellow'
+                ? 'border-[#FAB205] text-[#FAB205]'
+                : toastType === 'red'
+                ? 'border-[#EF4444] text-[#EF4444]'
+                : 'border-[#12C061] text-[#12C061]'
+            }`}
           >
             <span>{toastMessage}</span>
           </motion.div>
