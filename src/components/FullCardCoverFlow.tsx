@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, PanInfo } from 'framer-motion';
 import { VipFlyerItem } from '../types/home';
 import { formatCardDate } from '../lib/dateUtils';
@@ -18,8 +18,14 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
   onRequestVip,
   onSelectEvent,
 }) => {
-  // Inicializamos en 1 (Indie Night) para coincidir con la referencia visual
-  const [currentIndex, setCurrentIndex] = useState(1);
+  // Inicializamos en 1 si hay más de 1 flyer, de lo contrario en 0
+  const [currentIndex, setCurrentIndex] = useState(() => (flyers.length > 1 ? 1 : 0));
+
+  useEffect(() => {
+    if (flyers.length > 0 && currentIndex >= flyers.length) {
+      setCurrentIndex(Math.max(0, flyers.length - 1));
+    }
+  }, [flyers.length, currentIndex]);
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev < flyers.length - 1 ? prev + 1 : prev));
@@ -93,7 +99,7 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
               <motion.div
                 key={flyer.id}
                 onClick={() => {
-                  if (isCenter) {
+                  if (isCenter || flyers.length <= 1) {
                     onSelectEvent?.(flyer);
                   } else {
                     setCurrentIndex(index);
@@ -119,7 +125,14 @@ export const FullCardCoverFlow: React.FC<FullCardCoverFlowProps> = ({
                 }}
               >
                 {/* TARJETA COMPLETA ALARGADA CON BORDE FINO SALMÓN #E87A72 Y FONDO OSCURO #181A1E */}
-                <div className="w-[290px] sm:w-[310px] h-[435px] sm:h-[465px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300">
+                <div
+                  onClick={(e) => {
+                    if (isCenter || flyers.length <= 1) {
+                      onSelectEvent?.(flyer);
+                    }
+                  }}
+                  className="w-[290px] sm:w-[310px] h-[435px] sm:h-[465px] rounded-[28px] bg-[#181A1E] border-2 sm:border-[2.5px] border-[#E87A72] p-4 flex flex-col justify-between shadow-2xl overflow-hidden cursor-pointer transition-all duration-300"
+                >
                   
                   {/* 1. Miniatura Superior del Flyer */}
                   <div className="relative w-full h-[200px] sm:h-[215px] rounded-2xl overflow-hidden shadow-inner border border-neutral-800/80 flex-shrink-0">
