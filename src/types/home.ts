@@ -76,6 +76,13 @@ export interface VipFlyerItem {
   remainingSpots?: number;
   recentRequestsCount?: number;
   vipCutoffTime?: string | null;
+  accessType?: string;
+  isPaid?: boolean;
+  ticketPrice?: number | string;
+  allowsPlusOne?: boolean;
+  isVip?: boolean;
+  paymentQrUrl?: string;
+  hostQrUrl?: string;
 }
 
 export interface UserProfile {

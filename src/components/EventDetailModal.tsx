@@ -15,6 +15,28 @@ interface EventDetailModalProps {
   onNavigate?: (route: string) => void;
 }
 
+export const getResolvedAccessType = (event: any): 'FREE_PASS' | 'VIP' | 'VIP_PLUS_ONE' | 'PAID' => {
+  if (!event) return 'FREE_PASS';
+  if (event.isPaid || (event.ticketPrice && Number(event.ticketPrice) >= 20) || String(event.accessType).toUpperCase() === 'PAID') {
+    return 'PAID';
+  }
+  if (event.accessType) {
+    const raw = String(event.accessType).toUpperCase();
+    if (raw === 'FREE_PASS' || raw === 'FREE') return 'FREE_PASS';
+    if (raw === 'VIP_PLUS_ONE' || raw === 'VIP+1') return 'VIP_PLUS_ONE';
+    if (raw === 'PAID') return 'PAID';
+    if (raw === 'VIP') return 'VIP';
+  }
+  // Retrocompatibilidad con eventos creados previamente:
+  if (event.allowsPlusOne || event.withPlusOne || event.allowPlusOne) {
+    return 'VIP_PLUS_ONE';
+  }
+  if (event.accessTier === 'VIP' || event.isVip) {
+    return 'VIP';
+  }
+  return 'FREE_PASS';
+};
+
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   event: propEvent,
   selectedEvent: propSelectedEvent,
@@ -25,9 +47,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 }) => {
   const selectedEvent = propSelectedEvent || propEvent;
   const [passStatus, setPassStatus] = useState<'none' | 'pending' | 'active' | 'confirmed' | 'capacity_reached' | 'declined' | 'used'>('none');
+  const [userPass, setUserPass] = useState<any | null>(null);
   const [existingPassId, setExistingPassId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Estados reactivos de Prueba Social y FOMO
   const [activePassesCount, setActivePassesCount] = useState<number>(selectedEvent?.activePassesCount || 0);
@@ -56,6 +80,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     if (!isOpen || !selectedEvent?.id || !auth.currentUser) {
       setPassStatus('none');
       setExistingPassId(null);
+      setUserPass(null);
       return;
     }
     const q = query(
@@ -68,9 +93,11 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
         const pDoc = snap.docs[0];
         const pData = pDoc.data();
         setExistingPassId(pDoc.id);
+        setUserPass({ id: pDoc.id, ...pData });
         setPassStatus((pData.status as any) || 'pending');
       } else {
         setExistingPassId(null);
+        setUserPass(null);
         setPassStatus('none');
       }
     }, () => {});
@@ -120,23 +147,98 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   if (!selectedEvent) return null;
   const event = selectedEvent;
 
-  const handleRequestVip = async () => {
+  const resolvedAccessType = getResolvedAccessType(selectedEvent);
+
+  const handleActionClick = () => {
+    // CASO A: TIENE PASE APROBADO
+    const isApproved =
+      userPass?.status === 'active' ||
+      userPass?.status === 'confirmed' ||
+      userPass?.status === 'approved' ||
+      userPass?.status === 'accepted' ||
+      passStatus === 'active' ||
+      passStatus === 'confirmed';
+
+    if (isApproved) {
+      onClose();
+      if (onNavigate) onNavigate('/tickets');
+      return;
+    }
+
+    // CASO B: SOLICITUD EN ESPERA
+    if (userPass?.status === 'pending' || passStatus === 'pending') {
+      return;
+    }
+
+    // CASO C: SIN SOLICITUD O PREVIAMENTE DECLINADO
+    if (resolvedAccessType === 'PAID') {
+      setIsPaymentModalOpen(true);
+      return;
+    }
+
+    handleRequestPass(resolvedAccessType);
+  };
+
+  const handleRequestPass = async (accessType: 'FREE_PASS' | 'VIP' | 'VIP_PLUS_ONE' | 'PAID') => {
     if (!auth.currentUser) return;
     setIsSubmitting(true);
     try {
+      const allowsPlusOne = accessType === 'VIP_PLUS_ONE';
+      const tier = accessType === 'FREE_PASS' ? 'FREE' : (accessType === 'PAID' ? 'PAID' : 'VIP');
+      const cleanTitle = (event.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
       let passId = existingPassId;
+
       if (existingPassId) {
         // Reintentar pase previo rechazado o marcado con cupo lleno
-        await updateDoc(doc(db, 'passes', existingPassId), {
-          status: 'pending',
-          updatedAt: Date.now(),
-        });
+        try {
+          await updateDoc(doc(db, 'passes', existingPassId), {
+            status: 'pending',
+            tier,
+            accessTier: tier,
+            accessType,
+            allowsPlusOne,
+            withPlusOne: allowsPlusOne,
+            companionsCount: allowsPlusOne ? 1 : 0,
+            ticketPrice: accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0,
+            isPaid: accessType === 'PAID',
+            updatedAt: Date.now(),
+          });
+        } catch {
+          const passDocRef = await addDoc(collection(db, 'passes'), {
+            eventId: event.id,
+            eventTitle: cleanTitle,
+            title: cleanTitle,
+            eventDate: event.date || event.dateDisplay || '',
+            eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : '22:00'),
+            eventLocation: event.location || event.exactAddress || '',
+            eventImageUrl: event.imageUrl || '',
+            hostUserId: event.hostUserId || '',
+            userId: auth.currentUser.uid,
+            holderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+            userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+            userPhotoUrl: auth.currentUser.photoURL || '',
+            userAvatar: auth.currentUser.photoURL || '',
+            tier,
+            accessTier: tier,
+            accessType,
+            allowsPlusOne,
+            withPlusOne: allowsPlusOne,
+            companionsCount: allowsPlusOne ? 1 : 0,
+            ticketPrice: accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0,
+            isPaid: accessType === 'PAID',
+            status: 'pending',
+            createdAt: Date.now(),
+          });
+          passId = passDocRef.id;
+          setExistingPassId(passId);
+        }
       } else {
         const passDocRef = await addDoc(collection(db, 'passes'), {
           eventId: event.id,
-          eventTitle: event.title,
+          eventTitle: cleanTitle,
+          title: cleanTitle,
           eventDate: event.date || event.dateDisplay || '',
-          eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : ''),
+          eventTime: event.startTime || event.time || (event.timeRange ? event.timeRange.split('—')[0].trim() : '22:00'),
           eventLocation: event.location || event.exactAddress || '',
           eventImageUrl: event.imageUrl || '',
           hostUserId: event.hostUserId || '',
@@ -145,37 +247,70 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
           userPhotoUrl: auth.currentUser.photoURL || '',
           userAvatar: auth.currentUser.photoURL || '',
-          accessTier: 'VIP',
-          status: 'pending', // 'pending' | 'active' | 'capacity_reached' | 'declined' | 'used'
+          tier,
+          accessTier: tier,
+          accessType,
+          allowsPlusOne,
+          withPlusOne: allowsPlusOne,
+          companionsCount: allowsPlusOne ? 1 : 0,
+          ticketPrice: accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0,
+          isPaid: accessType === 'PAID',
+          status: 'pending',
           createdAt: Date.now(),
         });
         passId = passDocRef.id;
         setExistingPassId(passId);
       }
       setPassStatus('pending');
+      setUserPass((prev: any) => ({
+        ...(prev || {}),
+        id: passId,
+        status: 'pending',
+        accessType,
+        tier,
+        accessTier: tier,
+        allowsPlusOne,
+      }));
 
-      // DISPARADOR A: Notificación reactiva para el ANFITRIÓN
+      // Notificación reactiva para el anfitrión
       if (event.hostUserId && event.hostUserId !== auth.currentUser.uid) {
-        await addDoc(collection(db, 'notifications'), {
-          userId: event.hostUserId,
-          type: 'VIP_REQUEST',
-          title: 'NUEVA SOLICITUD VIP ⚡',
-          message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${event.title}.`,
-          eventId: event.id,
-          eventTitle: event.title,
-          eventImageUrl: event.imageUrl || '',
-          passId: passId || '',
-          senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
-          senderId: auth.currentUser.uid,
-          senderPhotoUrl: auth.currentUser.photoURL || '',
-          read: false,
-          createdAt: Date.now(),
-        });
+        try {
+          let notifTitle = 'NUEVA SOLICITUD VIP ⚡';
+          let notifMsg = `${auth.currentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`;
+          if (accessType === 'FREE_PASS') {
+            notifTitle = 'NUEVA SOLICITUD FREE PASS 🎟️';
+            notifMsg = `${auth.currentUser.displayName || 'Un invitado'} ha solicitado su Free Pass para ${cleanTitle}.`;
+          } else if (accessType === 'VIP_PLUS_ONE') {
+            notifTitle = 'SOLICITUD VIP +1 ⚡';
+            notifMsg = `${auth.currentUser.displayName || 'Un invitado'} ha solicitado pase VIP (+1) para ${cleanTitle}.`;
+          } else if (accessType === 'PAID') {
+            notifTitle = 'NUEVA COMPRA DE ENTRADA 💰';
+            notifMsg = `${auth.currentUser.displayName || 'Un invitado'} envió solicitud de compra de entrada (Bs. ${event.ticketPrice || 35}) para ${cleanTitle}.`;
+          }
+
+          await addDoc(collection(db, 'notifications'), {
+            userId: event.hostUserId,
+            type: accessType === 'PAID' ? 'PURCHASE_SUCCESS' : 'VIP_REQUEST',
+            title: notifTitle,
+            message: notifMsg,
+            eventId: event.id,
+            eventTitle: cleanTitle,
+            eventImageUrl: event.imageUrl || '',
+            passId: passId || '',
+            senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+            senderId: auth.currentUser.uid,
+            senderPhotoUrl: auth.currentUser.photoURL || '',
+            read: false,
+            createdAt: Date.now(),
+          });
+        } catch (notifErr) {
+          console.warn('[+1] Error guardando notificación para host:', notifErr);
+        }
       }
 
       if (onApplyVip) onApplyVip(event.id);
     } catch (err) {
-      console.error('Error solicitando VIP:', err);
+      console.error('Error procesando pase:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -371,33 +506,33 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <div className="flex items-center gap-2.5">
                 {/* Botón principal de conversión flex-1 */}
                 <div className="flex-1">
-                  {passStatus === 'pending' || isSubmitting ? (
-                    <button
-                      disabled
-                      className="w-full py-3.5 px-4 rounded-xl bg-[#22242A] border border-neutral-700 text-neutral-400 font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
-                    >
-                      ⏳ SOLICITUD PENDIENTE
-                    </button>
-                  ) : (passStatus === 'active' || passStatus === 'confirmed') ? (
+                  {(userPass?.status === 'active' || userPass?.status === 'confirmed' || userPass?.status === 'approved' || userPass?.status === 'accepted' || passStatus === 'active' || passStatus === 'confirmed') ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        onClose();
-                        if (onNavigate) onNavigate('/tickets');
-                      }}
+                      onClick={handleActionClick}
                       className="w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98"
                     >
-                      🎟️ PASE ACTIVO EN TU BILLETERA
+                      🎟️ PASE ACTIVO · VER EN MIS TICKETS
                     </motion.button>
+                  ) : (userPass?.status === 'pending' || passStatus === 'pending' || isSubmitting) ? (
+                    <button
+                      disabled
+                      className="w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-[#FAB205] font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner"
+                    >
+                      ⏳ SOLICITUD PENDIENTE
+                    </button>
                   ) : (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={handleRequestVip}
+                      onClick={handleActionClick}
                       className="w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg focus:outline-none cursor-pointer active:scale-98"
                     >
-                      {(selectedEvent.accessType === 'vip_plus_one' || (selectedEvent.allowsPlusOne && !selectedEvent.accessType)) ? 'SOLICITAR VIP +1' : 'SOLICITAR VIP'}
+                      {resolvedAccessType === 'FREE_PASS' && 'SOLICITAR FREE PASS'}
+                      {resolvedAccessType === 'VIP' && 'SOLICITAR VIP'}
+                      {resolvedAccessType === 'VIP_PLUS_ONE' && 'SOLICITAR VIP +1'}
+                      {resolvedAccessType === 'PAID' && `COMPRAR ENTRADA · BS. ${event.ticketPrice || 35}`}
                     </motion.button>
                   )}
                 </div>
@@ -421,6 +556,96 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   <polyline points="16 6 12 2 8 6" />
                   <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+
+    {/* Modal de Pago / Confirmación de Transferencia para Eventos PAID */}
+    <AnimatePresence>
+      {isPaymentModalOpen && selectedEvent && (
+        <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsPaymentModalOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+          />
+
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+            className="relative z-10 w-full max-w-md bg-[#16171B] border border-[#26282E] rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl flex flex-col gap-4 text-white"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#26282E]">
+              <h3 className="font-display text-lg font-black tracking-wider uppercase text-white">
+                Comprar Entrada
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-[#121316] border border-neutral-800 space-y-2">
+              <p className="font-display font-bold text-sm uppercase text-neutral-300">
+                {selectedEvent.title}
+              </p>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-xs font-sans text-neutral-400">Total a pagar:</span>
+                <span className="font-display text-2xl font-black text-[#E87A72]">
+                  Bs. {selectedEvent.ticketPrice || 35}
+                </span>
+              </div>
+            </div>
+
+            {(selectedEvent.paymentQrUrl || selectedEvent.hostQrUrl) ? (
+              <div className="flex flex-col items-center justify-center p-3 bg-[#121316] rounded-xl border border-neutral-800">
+                <p className="text-xs font-sans text-neutral-400 mb-2">Escanea el código QR para transferir:</p>
+                <img
+                  src={selectedEvent.paymentQrUrl || selectedEvent.hostQrUrl}
+                  alt="QR Transferencia"
+                  className="w-48 h-48 rounded-lg object-contain bg-white p-2"
+                />
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-center space-y-2">
+                <span className="text-3xl block">📲</span>
+                <p className="font-sans text-xs text-neutral-300 leading-relaxed">
+                  Realiza la transferencia de <strong className="text-white">Bs. {selectedEvent.ticketPrice || 35}</strong> vía Simple QR o transferencia bancaria al anfitrión.
+                </p>
+                <p className="font-sans text-[11px] text-neutral-400">
+                  Una vez transferido, confirma aquí tu solicitud. Tu entrada quedará activa una vez que el anfitrión verifique el comprobante.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsPaymentModalOpen(false);
+                  await handleRequestPass('PAID');
+                }}
+                disabled={isSubmitting}
+                className="w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-sm font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98 disabled:opacity-50"
+              >
+                HE TRANSFERIDO / CONFIRMAR
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="w-full py-2.5 px-4 text-xs font-sans text-neutral-400 hover:text-white uppercase tracking-wider text-center transition-colors"
+              >
+                Cancelar
               </button>
             </div>
           </motion.div>

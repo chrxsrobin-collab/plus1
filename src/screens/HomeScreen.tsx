@@ -5,7 +5,7 @@ import { ActionFooter } from '../components/ActionFooter';
 import { BottomNav } from '../components/BottomNav';
 import { NoEventsModal } from '../components/NoEventsModal';
 import { SelectEventToScanSheet, HostScanEventItem } from '../components/SelectEventToScanSheet';
-import { EventDetailModal } from '../components/EventDetailModal';
+import { EventDetailModal, getResolvedAccessType } from '../components/EventDetailModal';
 import { SearchEventsModal } from '../components/SearchEventsModal';
 import { NotificationsModal } from '../components/NotificationsModal';
 import { PullToRefresh } from '../components/PullToRefresh';
@@ -99,13 +99,19 @@ export const getDayParts = (dateStr?: string) => {
 
 // Mapeo seguro de documentos de Firestore a la interfaz VipFlyerItem
 const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
+  ...data,
   id,
+  accessType: data.accessType || (data.isPaid ? 'paid' : (data.allowsPlusOne ? 'vip_plus_one' : (data.isVip ? 'vip' : 'free'))),
+  isPaid: Boolean(data.isPaid || (data.ticketPrice && Number(data.ticketPrice) >= 20) || String(data.accessType).toUpperCase() === 'PAID'),
+  ticketPrice: data.ticketPrice || 0,
+  allowsPlusOne: Boolean(data.allowsPlusOne || data.withPlusOne || data.allowPlusOne),
+  isVip: Boolean(data.isVip),
   hostUserId: data.hostUserId || '',
   hostName: data.hostName || (data.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
   hostPhotoUrl: data.hostPhotoUrl || data.hostAvatar || undefined,
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
-  subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
+  subtitle: data.subtitle || (data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual'),
   dateDisplay: data.date ? formatCardDate(data.date.toString()) : 'PRÓXIMAMENTE',
   date: data.date || '',
   timeRange: `${data.startTime || '22:00'} — ${data.endTime || '04:00'}`,
@@ -116,7 +122,7 @@ const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
   theme: data.theme || 'custom',
   exactAddress: data.location || '',
   imageUrl: data.imageUrl || data.artImage || undefined,
-  description: `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+  description: data.description || `Organizado por ${data.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
   isVipOrFree: true,
   tags: data.tags || [],
   endTimestamp: data.endTimestamp || computeEventEndTimestamp(data.date, data.endTime, data.startTime),
@@ -598,13 +604,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
 
   const handleRequestVipDirect = async (flyer: VipFlyerItem) => {
     if (!auth.currentUser) {
-      showToast('Inicia sesión para solicitar tu pase VIP');
+      showToast('Inicia sesión para solicitar tu pase');
       return;
     }
 
+    const resolvedAccess = getResolvedAccessType(flyer);
+    if (resolvedAccess === 'PAID') {
+      // Redirigir al modal de detalle para procesar la compra
+      handleApplyVip(flyer.id);
+      return;
+    }
+
+    const isFree = resolvedAccess === 'FREE_PASS';
+    const isPlusOne = resolvedAccess === 'VIP_PLUS_ONE';
+    const tier = isFree ? 'FREE' : 'VIP';
+
     // Actualización reactiva optimista local
     setUserPasses((prev) => ({ ...prev, [flyer.id]: 'pending' }));
-    showToast('⏳ Solicitud VIP enviada al anfitrión');
+    showToast(isFree ? '🎟️ Solicitud de Free Pass enviada' : '⏳ Solicitud VIP enviada al anfitrión');
 
     try {
       const cleanTitle = (flyer.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
@@ -621,31 +638,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, user: propUs
         userName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? "Invitado #" + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
         userPhotoUrl: auth.currentUser.photoURL || '',
         userAvatar: auth.currentUser.photoURL || '',
-        accessTier: 'VIP',
+        tier,
+        accessTier: tier,
+        accessType: resolvedAccess,
+        allowsPlusOne: isPlusOne,
+        withPlusOne: isPlusOne,
+        companionsCount: isPlusOne ? 1 : 0,
+        ticketPrice: 0,
+        isPaid: false,
         status: 'pending',
         createdAt: Date.now(),
       });
 
       // DISPARADOR A: Notificación reactiva para el ANFITRIÓN
       if (flyer.hostUserId && flyer.hostUserId !== auth.currentUser.uid) {
-        await addDoc(collection(db, 'notifications'), {
-          userId: flyer.hostUserId,
-          type: 'VIP_REQUEST',
-          title: 'NUEVA SOLICITUD VIP ⚡',
-          message: `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase VIP para ${cleanTitle}.`,
-          eventId: flyer.id,
-          eventTitle: cleanTitle,
-          eventImageUrl: flyer.imageUrl || '',
-          passId: passDocRef.id,
-          senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
-          senderId: auth.currentUser.uid,
-          senderPhotoUrl: auth.currentUser.photoURL || '',
-          read: false,
-          createdAt: Date.now(),
-        });
+        try {
+          let notifTitle = isFree ? 'NUEVA SOLICITUD FREE PASS 🎟️' : (isPlusOne ? 'SOLICITUD VIP +1 ⚡' : 'NUEVA SOLICITUD VIP ⚡');
+          let notifMsg = `${auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Un usuario')} ha solicitado pase ${isFree ? 'Free Pass' : (isPlusOne ? 'VIP (+1)' : 'VIP')} para ${cleanTitle}.`;
+
+          await addDoc(collection(db, 'notifications'), {
+            userId: flyer.hostUserId,
+            type: 'VIP_REQUEST',
+            title: notifTitle,
+            message: notifMsg,
+            eventId: flyer.id,
+            eventTitle: cleanTitle,
+            eventImageUrl: flyer.imageUrl || '',
+            passId: passDocRef.id,
+            senderName: auth.currentUser.displayName || (auth.currentUser.isAnonymous ? 'Invitado #' + auth.currentUser.uid.slice(-4).toUpperCase() : 'Invitado'),
+            senderId: auth.currentUser.uid,
+            senderPhotoUrl: auth.currentUser.photoURL || '',
+            read: false,
+            createdAt: Date.now(),
+          });
+        } catch (notifErr) {
+          console.warn('[+1] Error guardando notificación para host:', notifErr);
+        }
       }
     } catch (err) {
-      console.error('Error enviando solicitud VIP directa:', err);
+      console.error('Error enviando solicitud directa:', err);
       showToast('Error al enviar la solicitud');
       setUserPasses((prev) => {
         const copy = { ...prev };

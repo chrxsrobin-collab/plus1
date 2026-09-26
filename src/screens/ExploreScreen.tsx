@@ -32,14 +32,20 @@ const QUICK_FILTERS: QuickFilterType[] = [
 ];
 
 const mapDocToVipFlyer = (id: string, data: any): VipFlyerItem => ({
+  ...data,
   id,
   eventId: id,
+  accessType: data.accessType || (data.isPaid ? 'paid' : (data.allowsPlusOne ? 'vip_plus_one' : (data.isVip ? 'vip' : 'free'))),
+  isPaid: Boolean(data.isPaid || (data.ticketPrice && Number(data.ticketPrice) >= 20) || String(data.accessType).toUpperCase() === 'PAID'),
+  ticketPrice: data.ticketPrice || 0,
+  allowsPlusOne: Boolean(data.allowsPlusOne || data.withPlusOne || data.allowPlusOne),
+  isVip: Boolean(data.isVip),
   hostUserId: data.hostUserId,
   hostName: data.hostName || (data.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
   hostPhotoUrl: data.hostPhotoUrl || data.hostAvatar || undefined,
   typeBadge: data.type === 'public' ? 'EVENTO PÚBLICO' : 'FIESTA PRIVADA',
   title: data.title || 'SIN TÍTULO',
-  subtitle: data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual',
+  subtitle: data.subtitle || (data.allowsPlusOne ? 'Pase +1 Habilitado' : 'Acceso Individual'),
   dateDisplay: data.date ? formatCardDate(data.date.toString()) : 'PRÓXIMAMENTE',
   date: data.date,
   timeRange: `${data.startTime || '22:00'} — ${data.endTime || '04:00'}`,
