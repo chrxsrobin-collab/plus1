@@ -3153,30 +3153,6 @@
     let fbDb = null;
     let fbAuth = null;
     let fbCurrentUser = null;
-    let globalPassesList = [];
-    let allUserPasses = [];
-    let realtimeNotifsList = [];
-    let userCreatedEvents = [];
-    let userTickets = [];
-    let eventsData = [];
-    let isLoadingEvents = true;
-    let currentCardIndex = 0;
-    let totalCards = 0;
-    let userPassesUnsubscribe = null;
-    let userNotifsUnsubscribe = null;
-    let userDocUnsubscribe = null;
-
-    // Función utilitaria para formatear fechas a DD.MM.YY
-    function formatCardDate(dateStr) {
-      if (!dateStr) return "";
-      const cleanDate = String(dateStr).split("T")[0].trim();
-      const parts = cleanDate.split("-");
-      if (parts.length === 3 && parts[0].length === 4) {
-        const year = parts[0].slice(-2);
-        return `${parts[2]}.${parts[1]}.${year}`;
-      }
-      return dateStr;
-    }
 
     if (typeof firebase !== 'undefined') {
       try {
@@ -3186,6 +3162,12 @@
 
         // Soporte offline para persistencia de pases en puerta
         fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+        let userPassesUnsubscribe = null;
+        let userNotifsUnsubscribe = null;
+        let userDocUnsubscribe = null;
+        let realtimeNotifsList = [];
+        let allUserPasses = [];
 
         // Escucha del estado de autenticación
         fbAuth.onAuthStateChanged((user) => {
@@ -3593,6 +3575,12 @@
         console.warn('[+1 Firebase] Inicialización fallback:', e);
       }
     }
+
+    let globalPassesList = [];
+    let eventsData = [];
+    let isLoadingEvents = true;
+    let currentCardIndex = 0;
+    let totalCards = 0;
 
     function getEventSocialData(event) {
       if (!event) return { activeCount: 0, confirmedUsers: [], remainingSpots: 100, recentRequests: 12, guestLimit: 100 };
@@ -4131,7 +4119,7 @@
 
     function handleCardTap(index) {
       if (hasDraggedCard) return;
-      if (currentCardIndex === index || totalCards <= 1) {
+      if (currentCardIndex === index) {
         openEventDetail(index);
       } else {
         setFullCard(index, 0, false);
@@ -4147,246 +4135,240 @@
     }
 
     function openEventDetail(target) {
-      try {
-        let event;
-        if (typeof target === 'number') {
-          event = (activeCoverFlowEvents && activeCoverFlowEvents[target]) || (eventsData && eventsData[target]);
-        } else if (typeof target === 'string') {
-          event = (eventsData || []).find(e => e.id === target) || (activeCoverFlowEvents || []).find(e => e.id === target);
-          if (!event && typeof fbDb !== 'undefined' && fbDb) {
-            fbDb.collection('events').doc(target).get().then(docSnap => {
-              if (docSnap.exists) {
-                const d = docSnap.data();
-                openEventDetail({
-                  ...d,
-                  id: docSnap.id,
-                  accessType: d.accessType || (d.isPaid ? 'paid' : (d.allowsPlusOne ? 'vip_plus_one' : (d.isVip ? 'vip' : 'free'))),
-                  isPaid: Boolean(d.isPaid || (d.ticketPrice && Number(d.ticketPrice) >= 20) || String(d.accessType).toUpperCase() === 'PAID'),
-                  ticketPrice: d.ticketPrice || 0,
-                  allowsPlusOne: Boolean(d.allowsPlusOne || d.withPlusOne || d.allowPlusOne),
-                  isVip: Boolean(d.isVip),
-                  hostUserId: d.hostUserId || '',
-                  hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
-                  hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
-                  title: d.title || 'SIN TÍTULO',
-                  subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
-                  dateDisplay: d.date ? formatCardDate(d.date) : 'PRÓXIMAMENTE',
-                  date: d.date || '',
-                  startTime: d.startTime || '',
-                  endTime: d.endTime || '',
-                  timeRange: d.startTime && d.endTime ? `${d.startTime} — ${d.endTime}` : (d.startTime || '22:00'),
-                  location: d.location || 'Por definir',
-                  availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
-                  imageUrl: d.imageUrl || d.artImage,
-                  description: d.description || `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
-                  dressCode: d.dressCode || null,
-                  isTonight: true,
-                  isWeekend: true,
-                  isVipOrFree: true,
-                  vipCutoffTime: d.vipCutoffTime || null
-                });
-              }
-            }).catch(console.warn);
-            return;
-          }
-        } else {
-          event = target;
-        }
-        if (!event) return;
-        currentDetailModalEvent = event;
-
-        const social = getEventSocialData(event);
-        const isSoldOut = social.remainingSpots === 0;
-
-        let bannerHtml = '';
-        if (event.imageUrl) {
-          bannerHtml = `
-            <img
-              src="${event.imageUrl}"
-              alt="${event.title || 'Flyer del evento'}"
-              class="w-full h-full object-cover object-center"
-            />
-          `;
-        } else {
-          bannerHtml = `
-            <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1F2228] to-[#121316] p-4 text-center">
-              <span class="font-display text-2xl text-white tracking-wide uppercase">
-                ${event.title || ''}
-              </span>
-              <span class="text-xs text-zinc-500 font-sans mt-1">
-                EVENTO SIN FLYER
-              </span>
-            </div>
-          `;
-        }
-
-        bannerHtml += `
-          <!-- Badge flotante de Cupos o Urgencia en la esquina inferior -->
-          <div class="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
-            ${isSoldOut ?
-              `<span class="text-xs font-display font-black text-[#DC2626] tracking-wider uppercase">🔒 LISTA VIP COMPLETA</span>` :
-              (social.remainingSpots <= 20 ?
-                `<span class="text-xs font-display font-black text-[#E87A72] tracking-wider uppercase">⏳ ÚLTIMOS ${social.remainingSpots} CUPOS</span>` :
-                `<span class="text-xs font-sans text-[#E87A72] font-semibold">CUPO MÁX. ${social.guestLimit}</span>`
-              )
+      let event;
+      if (typeof target === 'number') {
+        event = (activeCoverFlowEvents && activeCoverFlowEvents[target]) || eventsData[target];
+      } else if (typeof target === 'string') {
+        event = eventsData.find(e => e.id === target);
+        if (!event && typeof fbDb !== 'undefined' && fbDb) {
+          fbDb.collection('events').doc(target).get().then(docSnap => {
+            if (docSnap.exists) {
+              const d = docSnap.data();
+              openEventDetail({
+                ...d,
+                id: docSnap.id,
+                accessType: d.accessType || (d.isPaid ? 'paid' : (d.allowsPlusOne ? 'vip_plus_one' : (d.isVip ? 'vip' : 'free'))),
+                isPaid: Boolean(d.isPaid || (d.ticketPrice && Number(d.ticketPrice) >= 20) || String(d.accessType).toUpperCase() === 'PAID'),
+                ticketPrice: d.ticketPrice || 0,
+                allowsPlusOne: Boolean(d.allowsPlusOne || d.withPlusOne || d.allowPlusOne),
+                isVip: Boolean(d.isVip),
+                hostUserId: d.hostUserId || '',
+                hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
+                hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
+                title: d.title || 'SIN TÍTULO',
+                subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
+                dateDisplay: d.date ? formatCardDate(d.date) : 'PRÓXIMAMENTE',
+                date: d.date || '',
+                startTime: d.startTime || '',
+                endTime: d.endTime || '',
+                timeRange: d.startTime && d.endTime ? `${d.startTime} — ${d.endTime}` : (d.startTime || '22:00'),
+                location: d.location || 'Por definir',
+                availabilityText: `CUPO MÁX. ${d.maxCapacity || 150} ·`,
+                imageUrl: d.imageUrl || d.artImage,
+                description: d.description || `Organizado por ${d.hostName || 'Comunidad +1'}. Acceso en puerta con código QR.`,
+                dressCode: d.dressCode || null,
+                isTonight: true,
+                isWeekend: true,
+                isVipOrFree: true,
+                vipCutoffTime: d.vipCutoffTime || null
+              });
             }
+          }).catch(console.warn);
+          return;
+        }
+      } else {
+        event = target;
+      }
+      if (!event) return;
+      currentDetailModalEvent = event;
+
+      const social = getEventSocialData(event);
+      const isSoldOut = social.remainingSpots === 0;
+
+      let bannerHtml = '';
+      if (event.imageUrl) {
+        bannerHtml = `
+          <img
+            src="${event.imageUrl}"
+            alt="${event.title || 'Flyer del evento'}"
+            class="w-full h-full object-cover object-center"
+          />
+        `;
+      } else {
+        bannerHtml = `
+          <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1F2228] to-[#121316] p-4 text-center">
+            <span class="font-display text-2xl text-white tracking-wide uppercase">
+              ${event.title || ''}
+            </span>
+            <span class="text-xs text-zinc-500 font-sans mt-1">
+              EVENTO SIN FLYER
+            </span>
           </div>
         `;
+      }
 
-        document.getElementById('modalBanner').innerHTML = bannerHtml;
-        document.getElementById('modalTitle').innerText = event.title || 'EVENTO +1';
-
-        const hostAuthorEl = document.getElementById('modalHostAuthor');
-        if (hostAuthorEl) {
-          const hostName = (event.hostName || 'ANFITRIÓN').toUpperCase();
-          const hostPhoto = event.hostPhotoUrl;
-          const hostUid = event.hostUserId || '';
-          let avatarMarkup = '';
-          if (hostPhoto) {
-            avatarMarkup = `<img src="${hostPhoto}" alt="${hostName}" class="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0" />`;
-          } else {
-            const initial = hostName ? hostName.charAt(0).toUpperCase() : '+';
-            avatarMarkup = `<div class="w-5 h-5 rounded-full bg-[#26282E] flex items-center justify-center text-[10px] text-[#E87A72] font-bold shrink-0">${initial}</div>`;
+      bannerHtml += `
+        <!-- Badge flotante de Cupos o Urgencia en la esquina inferior -->
+        <div class="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 flex items-center gap-1.5">
+          ${isSoldOut ?
+            `<span class="text-xs font-display font-black text-[#DC2626] tracking-wider uppercase">🔒 LISTA VIP COMPLETA</span>` :
+            (social.remainingSpots <= 20 ?
+              `<span class="text-xs font-display font-black text-[#E87A72] tracking-wider uppercase">⏳ ÚLTIMOS ${social.remainingSpots} CUPOS</span>` :
+              `<span class="text-xs font-sans text-[#E87A72] font-semibold">CUPO MÁX. ${social.guestLimit}</span>`
+            )
           }
-          hostAuthorEl.className = "inline-flex items-center gap-2 cursor-pointer group py-1 active:opacity-75 transition-opacity mt-2";
-          hostAuthorEl.title = hostUid ? "Ver perfil del anfitrión" : "";
-          hostAuthorEl.onclick = () => handleOpenHostProfileHtml(hostUid, hostName, hostPhoto);
-          hostAuthorEl.innerHTML = `
-            ${avatarMarkup}
-            <span class="font-sans text-xs tracking-wider text-[#9CA3AF] group-hover:text-white uppercase flex items-center gap-1">
-              BY <strong class="text-white font-semibold underline decoration-white/30 underline-offset-2">${hostName}</strong>
-            </span>
-            <span class="text-[10px] text-zinc-500 group-hover:text-zinc-300">›</span>
-          `;
+        </div>
+      `;
+
+      document.getElementById('modalBanner').innerHTML = bannerHtml;
+      document.getElementById('modalTitle').innerText = event.title;
+
+      const hostAuthorEl = document.getElementById('modalHostAuthor');
+      if (hostAuthorEl) {
+        const hostName = (event.hostName || 'ANFITRIÓN').toUpperCase();
+        const hostPhoto = event.hostPhotoUrl;
+        const hostUid = event.hostUserId || '';
+        let avatarMarkup = '';
+        if (hostPhoto) {
+          avatarMarkup = `<img src="${hostPhoto}" alt="${hostName}" class="w-5 h-5 rounded-full object-cover border border-white/20 shrink-0" />`;
+        } else {
+          const initial = hostName ? hostName.charAt(0).toUpperCase() : '+';
+          avatarMarkup = `<div class="w-5 h-5 rounded-full bg-[#26282E] flex items-center justify-center text-[10px] text-[#E87A72] font-bold shrink-0">${initial}</div>`;
+        }
+        hostAuthorEl.className = "inline-flex items-center gap-2 cursor-pointer group py-1 active:opacity-75 transition-opacity mt-2";
+        hostAuthorEl.title = hostUid ? "Ver perfil del anfitrión" : "";
+        hostAuthorEl.onclick = () => handleOpenHostProfileHtml(hostUid, hostName, hostPhoto);
+        hostAuthorEl.innerHTML = `
+          ${avatarMarkup}
+          <span class="font-sans text-xs tracking-wider text-[#9CA3AF] group-hover:text-white uppercase flex items-center gap-1">
+            BY <strong class="text-white font-semibold underline decoration-white/30 underline-offset-2">${hostName}</strong>
+          </span>
+          <span class="text-[10px] text-zinc-500 group-hover:text-zinc-300">›</span>
+        `;
+      }
+
+      document.getElementById('modalSubtitle').innerText = event.subtitle || '';
+      document.getElementById('modalDate').innerText = formatCardDate(event.dateDisplay || event.date);
+      document.getElementById('modalTime').innerText = event.timeRange;
+      document.getElementById('modalAddress').innerText = event.exactAddress || event.location;
+
+      // Micro-badge de Cierre de Lista VIP (si aplica)
+      const vipCutoffEl = document.getElementById('modalVipCutoffBadge');
+      const vipCutoffText = document.getElementById('modalVipCutoffText');
+      if (vipCutoffEl && vipCutoffText) {
+        if (event.vipCutoffTime) {
+          vipCutoffText.innerText = 'LISTA VIP VÁLIDA HASTA: ' + formatVipCutoffDisplay(event.vipCutoffTime);
+          vipCutoffEl.classList.remove('hidden');
+        } else {
+          vipCutoffEl.classList.add('hidden');
+        }
+      }
+
+      // Micro-badge de Dress Code (si aplica)
+      const dressCodeEl = document.getElementById('modalDressCodeBox');
+      const dressCodeText = document.getElementById('modalDressCodeText');
+      if (dressCodeEl && dressCodeText) {
+        if (event.dressCode) {
+          dressCodeText.innerText = event.dressCode;
+          dressCodeEl.classList.remove('hidden');
+        } else {
+          dressCodeEl.classList.add('hidden');
+        }
+      }
+
+      // FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?")
+      const attendeesContainer = document.getElementById('modalSocialAttendees');
+      if (attendeesContainer) {
+        let avatarsHtml = '';
+        if (social.confirmedUsers && social.confirmedUsers.length > 0) {
+          avatarsHtml = `<div class="flex -space-x-2 overflow-hidden shrink-0">` +
+            social.confirmedUsers.map(u => u.photoUrl ?
+              `<img src="${u.photoUrl}" alt="${u.name}" class="w-7 h-7 rounded-full border-2 border-[#16171B] object-cover shrink-0" />` :
+              `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-[11px] text-white font-display font-black uppercase">${(u.name || 'A').slice(0, 1)}</div>`
+            ).join('') + `</div>`;
+        } else {
+          avatarsHtml = `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-xs">🎟️</div>`;
         }
 
-        document.getElementById('modalSubtitle').innerText = event.subtitle || '';
-        document.getElementById('modalDate').innerText = formatCardDate(event.dateDisplay || event.date);
-        document.getElementById('modalTime').innerText = event.timeRange || event.startTime || '22:00';
-        document.getElementById('modalAddress').innerText = event.exactAddress || event.location || 'Por definir';
+        const textHtml = social.activeCount > 0 ?
+          (social.activeCount === 1 ?
+            `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> ya tiene su pase` :
+            `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> y <strong class="text-white font-medium">${social.activeCount - 1} más</strong> ya tienen su pase`
+          ) :
+          'Sé el primero en anotarte en la lista VIP';
 
-        // Micro-badge de Cierre de Lista VIP (si aplica)
-        const vipCutoffEl = document.getElementById('modalVipCutoffBadge');
-        const vipCutoffText = document.getElementById('modalVipCutoffText');
-        if (vipCutoffEl && vipCutoffText) {
-          if (event.vipCutoffTime) {
-            vipCutoffText.innerText = 'LISTA VIP VÁLIDA HASTA: ' + formatVipCutoffDisplay(event.vipCutoffTime);
-            vipCutoffEl.classList.remove('hidden');
-          } else {
-            vipCutoffEl.classList.add('hidden');
-          }
+        attendeesContainer.innerHTML = `${avatarsHtml}<p class="font-sans text-[#8E8E93] text-xs leading-tight">${textHtml}</p>`;
+      }
+
+      // TICKER DE ACTIVIDAD EN VIVO
+      const tickerEl = document.getElementById('modalLiveTicker');
+      if (tickerEl) {
+        tickerEl.innerText = `🔥 Alta demanda: ${social.recentRequests} solicitudes recibidas hoy`;
+      }
+
+      document.getElementById('modalDescription').innerText = event.description;
+
+      const promosUl = document.getElementById('modalPromotions');
+      promosUl.innerHTML = (event.promotions || []).map(p => `
+        <li class="flex items-start text-xs sm:text-sm text-neutral-300 font-sans">
+          <span class="text-[#E87A72] mr-2 leading-tight">✦</span>
+          <span>${p}</span>
+        </li>
+      `).join('');
+
+      const cleanTitle = (event.title || '').replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase();
+      const existingPass = (allUserPasses || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle))) ||
+                           (userTickets || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle)));
+      const ctaBtn = document.getElementById('modalCtaBtn');
+
+      if (ctaBtn) {
+        const isApproved = existingPass && (
+          existingPass.status === 'active' ||
+          existingPass.status === 'confirmed' ||
+          existingPass.status === 'approved' ||
+          existingPass.status === 'accepted'
+        );
+
+        if (isApproved) {
+          ctaBtn.innerText = '🎟️ PASE ACTIVO · VER EN MIS TICKETS';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98';
+          ctaBtn.disabled = false;
+          ctaBtn.onclick = () => {
+            closeEventDetail();
+            openTicketsScreen();
+          };
+        } else if (existingPass && existingPass.status === 'pending') {
+          ctaBtn.innerText = '⏳ SOLICITUD PENDIENTE';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-[#FAB205] font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
+          ctaBtn.disabled = true;
+          ctaBtn.onclick = null;
+        } else {
+          const resolvedType = getResolvedAccessType(event);
+          let btnLabel = 'SOLICITAR FREE PASS';
+          if (resolvedType === 'VIP') btnLabel = 'SOLICITAR VIP';
+          else if (resolvedType === 'VIP_PLUS_ONE') btnLabel = 'SOLICITAR VIP +1';
+          else if (resolvedType === 'PAID') btnLabel = `COMPRAR ENTRADA · BS. ${event.ticketPrice || 35}`;
+
+          ctaBtn.innerText = btnLabel;
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-98 focus:outline-none cursor-pointer';
+          ctaBtn.disabled = false;
+          ctaBtn.onclick = () => {
+            if (resolvedType === 'PAID') {
+              openPaymentDetailModal(event);
+            } else {
+              handleRequestPassHtml(event, resolvedType);
+            }
+          };
         }
+      }
 
-        // Micro-badge de Dress Code (si aplica)
-        const dressCodeEl = document.getElementById('modalDressCodeBox');
-        const dressCodeText = document.getElementById('modalDressCodeText');
-        if (dressCodeEl && dressCodeText) {
-          if (event.dressCode) {
-            dressCodeText.innerText = event.dressCode;
-            dressCodeEl.classList.remove('hidden');
-          } else {
-            dressCodeEl.classList.add('hidden');
-          }
-        }
-
-        // FILA DE ASISTENTES SOCIALES ("¿QUIÉN VA?")
-        const attendeesContainer = document.getElementById('modalSocialAttendees');
-        if (attendeesContainer) {
-          let avatarsHtml = '';
-          if (social.confirmedUsers && social.confirmedUsers.length > 0) {
-            avatarsHtml = `<div class="flex -space-x-2 overflow-hidden shrink-0">` +
-              social.confirmedUsers.map(u => u.photoUrl ?
-                `<img src="${u.photoUrl}" alt="${u.name}" class="w-7 h-7 rounded-full border-2 border-[#16171B] object-cover shrink-0" />` :
-                `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-[11px] text-white font-display font-black uppercase">${(u.name || 'A').slice(0, 1)}</div>`
-              ).join('') + `</div>`;
-          } else {
-            avatarsHtml = `<div class="w-7 h-7 rounded-full border-2 border-[#16171B] bg-[#26282E] flex items-center justify-center shrink-0 text-xs">🎟️</div>`;
-          }
-
-          const textHtml = social.activeCount > 0 ?
-            (social.activeCount === 1 ?
-              `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> ya tiene su pase` :
-              `<strong class="text-white font-medium">${social.confirmedUsers[0]?.name || '1 persona'}</strong> y <strong class="text-white font-medium">${social.activeCount - 1} más</strong> ya tienen su pase`
-            ) :
-            'Sé el primero en anotarte en la lista VIP';
-
-          attendeesContainer.innerHTML = `${avatarsHtml}<p class="font-sans text-[#8E8E93] text-xs leading-tight">${textHtml}</p>`;
-        }
-
-        // TICKER DE ACTIVIDAD EN VIVO
-        const tickerEl = document.getElementById('modalLiveTicker');
-        if (tickerEl) {
-          tickerEl.innerText = `🔥 Alta demanda: ${social.recentRequests} solicitudes recibidas hoy`;
-        }
-
-        document.getElementById('modalDescription').innerText = event.description || '';
-
-        const promosUl = document.getElementById('modalPromotions');
-        promosUl.innerHTML = (event.promotions || []).map(p => `
-          <li class="flex items-start text-xs sm:text-sm text-neutral-300 font-sans">
-            <span class="text-[#E87A72] mr-2 leading-tight">✦</span>
-            <span>${p}</span>
-          </li>
-        `).join('');
-
-        const cleanTitle = (event.title || '').replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase();
-        const existingPass = (allUserPasses || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle))) ||
-                             (userTickets || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle)));
-        const ctaBtn = document.getElementById('modalCtaBtn');
-
-        if (ctaBtn) {
-          const isApproved = existingPass && (
-            existingPass.status === 'active' ||
-            existingPass.status === 'confirmed' ||
-            existingPass.status === 'approved' ||
-            existingPass.status === 'accepted'
-          );
-
-          if (isApproved) {
-            ctaBtn.innerText = '🎟️ PASE ACTIVO · VER EN MIS TICKETS';
-            ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg cursor-pointer active:scale-98';
-            ctaBtn.disabled = false;
-            ctaBtn.onclick = () => {
-              closeEventDetail();
-              openTicketsScreen();
-            };
-          } else if (existingPass && existingPass.status === 'pending') {
-            ctaBtn.innerText = '⏳ SOLICITUD PENDIENTE';
-            ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-[#FAB205] font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
-            ctaBtn.disabled = true;
-            ctaBtn.onclick = null;
-          } else {
-            const resolvedType = getResolvedAccessType(event);
-            let btnLabel = 'SOLICITAR FREE PASS';
-            if (resolvedType === 'VIP') btnLabel = 'SOLICITAR VIP';
-            else if (resolvedType === 'VIP_PLUS_ONE') btnLabel = 'SOLICITAR VIP +1';
-            else if (resolvedType === 'PAID') btnLabel = `COMPRAR ENTRADA · BS. ${event.ticketPrice || 35}`;
-
-            ctaBtn.innerText = btnLabel;
-            ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-black tracking-wider uppercase flex items-center justify-center transition-colors shadow-lg active:scale-98 focus:outline-none cursor-pointer';
-            ctaBtn.disabled = false;
-            ctaBtn.onclick = () => {
-              if (resolvedType === 'PAID') {
-                openPaymentDetailModal(event);
-              } else {
-                handleRequestPassHtml(event, resolvedType);
-              }
-            };
-          }
-        }
-
-        const modalEl = document.getElementById('eventDetailModal');
-        if (modalEl) modalEl.classList.remove('hidden');
-        const cardEl = document.getElementById('modalCardContainer');
-        if (cardEl) {
-          cardEl.classList.remove('anim-modal-zoom');
-          void cardEl.offsetWidth;
-          cardEl.classList.add('anim-modal-zoom');
-        }
-      } catch (err) {
-        console.error('Error rendering event detail modal:', err);
-        const modalEl = document.getElementById('eventDetailModal');
-        if (modalEl) modalEl.classList.remove('hidden');
+      const modalEl = document.getElementById('eventDetailModal');
+      modalEl.classList.remove('hidden');
+      const cardEl = document.getElementById('modalCardContainer');
+      if (cardEl) {
+        cardEl.classList.remove('anim-modal-zoom');
+        void cardEl.offsetWidth;
+        cardEl.classList.add('anim-modal-zoom');
       }
     }
 
@@ -10612,6 +10594,5 @@
       });
     });
   </script>
-
 </body>
 </html>

@@ -320,7 +320,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     <>
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
+          <div className="fixed md:absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-5 select-none overflow-hidden">
           {/* Fondo con oscurecimiento y desenfoque intenso (Backdrop Blur) */}
           <motion.div
             initial={{ opacity: 0 }}
