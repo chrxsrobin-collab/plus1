@@ -3167,7 +3167,6 @@
         let userNotifsUnsubscribe = null;
         let userDocUnsubscribe = null;
         let realtimeNotifsList = [];
-        let allUserPasses = [];
 
         // Escucha del estado de autenticación
         fbAuth.onAuthStateChanged((user) => {
@@ -3252,22 +3251,11 @@
                 const list = [];
                 const attendedList = [];
                 const activeApprovedList = [];
-                const allPassesList = [];
                 if (querySnap) {
                   const ONE_HOUR_MS = 60 * 60 * 1000;
                   const now = Date.now();
                   querySnap.forEach((doc) => {
                     const data = doc.data();
-                    allPassesList.push({
-                      id: doc.id,
-                      eventId: data.eventId,
-                      title: data.eventTitle || data.title || '',
-                      status: data.status || 'pending',
-                      accessType: data.accessType,
-                      tier: data.tier || data.accessTier,
-                      allowsPlusOne: Boolean(data.allowsPlusOne ?? data.withPlusOne),
-                      ...data
-                    });
                     const isCapacityReached = data.status === 'capacity_reached' || data.status === 'rejected';
                     const isPending = data.status === 'pending';
                     const isUsed = data.status === 'used';
@@ -3337,7 +3325,6 @@
                   });
                 }
                 userTickets = list;
-                allUserPasses = allPassesList;
                 userAttendedEvents = attendedList;
                 const attendedCountEl = document.getElementById('profileAttendedCount');
                 if (attendedCountEl) attendedCountEl.innerText = attendedList.length;
@@ -3373,7 +3360,6 @@
               userPassesUnsubscribe = null;
             }
             userTickets = [];
-            allUserPasses = [];
             userAttendedEvents = [];
             const attendedCountEl = document.getElementById('profileAttendedCount');
             if (attendedCountEl) attendedCountEl.innerText = 0;
@@ -3472,13 +3458,7 @@
               if (eventEnd <= now) return;
 
               liveEvents.push({
-                ...d,
                 id: doc.id,
-                accessType: d.accessType || (d.isPaid ? 'paid' : (d.allowsPlusOne ? 'vip_plus_one' : (d.isVip ? 'vip' : 'free'))),
-                isPaid: Boolean(d.isPaid || (d.ticketPrice && Number(d.ticketPrice) >= 20) || String(d.accessType).toUpperCase() === 'PAID'),
-                ticketPrice: d.ticketPrice || 0,
-                allowsPlusOne: Boolean(d.allowsPlusOne || d.withPlusOne || d.allowPlusOne),
-                isVip: Boolean(d.isVip),
                 hostUserId: d.hostUserId || '',
                 hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
                 hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
@@ -3497,7 +3477,7 @@
                 exactAddress: d.location || '',
                 description: d.description || `Evento exclusivo creado por ${d.hostName || 'Anfitrión +1'}. Acceso validado con pase digital.`,
                 dressCode: d.dressCode || null,
-                promotions: (d.promotions && d.promotions.length > 0) ? d.promotions : [
+                promotions: [
                   d.allowsPlusOne ? 'Acceso con acompañante +1 incluido' : 'Acceso individual nominal',
                   'Validación rápida por escaneo QR en puerta',
                   'Drop digital para asistentes confirmados'
@@ -4145,18 +4125,12 @@
             if (docSnap.exists) {
               const d = docSnap.data();
               openEventDetail({
-                ...d,
                 id: docSnap.id,
-                accessType: d.accessType || (d.isPaid ? 'paid' : (d.allowsPlusOne ? 'vip_plus_one' : (d.isVip ? 'vip' : 'free'))),
-                isPaid: Boolean(d.isPaid || (d.ticketPrice && Number(d.ticketPrice) >= 20) || String(d.accessType).toUpperCase() === 'PAID'),
-                ticketPrice: d.ticketPrice || 0,
-                allowsPlusOne: Boolean(d.allowsPlusOne || d.withPlusOne || d.allowPlusOne),
-                isVip: Boolean(d.isVip),
                 hostUserId: d.hostUserId || '',
                 hostName: d.hostName || (d.hostUserId ? 'ANFITRIÓN' : 'COMUNIDAD +1'),
                 hostPhotoUrl: d.hostPhotoUrl || d.hostAvatar || '',
                 title: d.title || 'SIN TÍTULO',
-                subtitle: d.subtitle || (d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual'),
+                subtitle: d.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual',
                 dateDisplay: d.date ? formatCardDate(d.date) : 'PRÓXIMAMENTE',
                 date: d.date || '',
                 startTime: d.startTime || '',
@@ -4317,8 +4291,7 @@
       `).join('');
 
       const cleanTitle = (event.title || '').replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase();
-      const existingPass = (allUserPasses || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle))) ||
-                           (userTickets || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle)));
+      const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle));
       const ctaBtn = document.getElementById('modalCtaBtn');
 
       if (ctaBtn) {
@@ -4378,9 +4351,9 @@
         return 'PAID';
       }
       if (event.accessType) {
-        const raw = String(event.accessType).trim().toUpperCase();
+        const raw = String(event.accessType).toUpperCase();
         if (raw === 'FREE_PASS' || raw === 'FREE') return 'FREE_PASS';
-        if (raw === 'VIP_PLUS_ONE' || raw === 'VIP+1' || raw === 'VIP_PLUS') return 'VIP_PLUS_ONE';
+        if (raw === 'VIP_PLUS_ONE' || raw === 'VIP+1') return 'VIP_PLUS_ONE';
         if (raw === 'PAID') return 'PAID';
         if (raw === 'VIP') return 'VIP';
       }
@@ -4452,8 +4425,7 @@
       }
       try {
         const cleanTitle = (event.title || 'Evento +1').replace(/^FLYER.*?:\s*/i, '').trim();
-        const existingPass = (allUserPasses || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()))) ||
-                             (userTickets || []).find(p => p && (p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase())));
+        const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()));
         let passId = null;
 
         const allowsPlusOne = accessType === 'VIP_PLUS_ONE';
@@ -4461,49 +4433,24 @@
         const resolvedPrice = accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0;
 
         if (existingPass && existingPass.id && fbDb) {
-          try {
-            await fbDb.collection('passes').doc(existingPass.id).update({
-              status: 'pending',
-              tier: tier,
-              accessTier: tier,
-              accessType: accessType,
-              allowsPlusOne: allowsPlusOne,
-              withPlusOne: allowsPlusOne,
-              companionsCount: allowsPlusOne ? 1 : 0,
-              ticketPrice: resolvedPrice,
-              isPaid: accessType === 'PAID',
-              updatedAt: Date.now()
-            });
-            passId = existingPass.id;
-          } catch (updateErr) {
-            console.warn('[+1] Error al actualizar pase previo, creando nuevo:', updateErr);
-            const passRef = await fbDb.collection('passes').add({
-              eventId: event.id || 'evt_' + Date.now(),
-              eventTitle: cleanTitle,
-              title: cleanTitle,
-              eventDate: event.dateDisplay || event.date || '',
-              eventTime: event.timeRange ? event.timeRange.split('—')[0].trim() : (event.startTime || event.time || '22:00'),
-              eventLocation: event.exactAddress || event.location || '',
-              eventImageUrl: event.imageUrl || '',
-              hostUserId: event.hostUserId || '',
-              userId: fbCurrentUser.uid,
-              holderName: fbCurrentUser.displayName || 'Invitado',
-              userName: fbCurrentUser.displayName || 'Invitado',
-              userPhotoUrl: fbCurrentUser.photoURL || '',
-              userAvatar: fbCurrentUser.photoURL || '',
-              tier: tier,
-              accessTier: tier,
-              accessType: accessType,
-              allowsPlusOne: allowsPlusOne,
-              withPlusOne: allowsPlusOne,
-              companionsCount: allowsPlusOne ? 1 : 0,
-              ticketPrice: resolvedPrice,
-              isPaid: accessType === 'PAID',
-              status: 'pending',
-              createdAt: Date.now()
-            });
-            passId = passRef.id;
-          }
+          await fbDb.collection('passes').doc(existingPass.id).update({
+            status: 'pending',
+            tier: tier,
+            accessTier: tier,
+            accessType: accessType,
+            allowsPlusOne: allowsPlusOne,
+            withPlusOne: allowsPlusOne,
+            companionsCount: allowsPlusOne ? 1 : 0,
+            ticketPrice: resolvedPrice,
+            isPaid: accessType === 'PAID',
+            updatedAt: Date.now()
+          });
+          existingPass.status = 'pending';
+          existingPass.tier = tier;
+          existingPass.accessTier = tier;
+          existingPass.accessType = accessType;
+          existingPass.allowsPlusOne = allowsPlusOne;
+          passId = existingPass.id;
         } else if (fbDb) {
           const passRef = await fbDb.collection('passes').add({
             eventId: event.id || 'evt_' + Date.now(),
@@ -4531,11 +4478,7 @@
             createdAt: Date.now()
           });
           passId = passRef.id;
-        }
-
-        // Actualización optimista de listas locales
-        if (passId) {
-          const passObj = {
+          userTickets.push({
             id: passId,
             eventId: event.id,
             title: cleanTitle,
@@ -4544,53 +4487,39 @@
             accessTier: tier,
             accessType: accessType,
             allowsPlusOne: allowsPlusOne
-          };
-          if (typeof allUserPasses !== 'undefined' && Array.isArray(allUserPasses)) {
-            const idx = allUserPasses.findIndex(p => p && (p.id === passId || p.eventId === event.id));
-            if (idx >= 0) allUserPasses[idx] = { ...allUserPasses[idx], ...passObj };
-            else allUserPasses.push(passObj);
-          }
-          if (typeof userTickets !== 'undefined' && Array.isArray(userTickets)) {
-            const idx = userTickets.findIndex(p => p && (p.id === passId || p.eventId === event.id));
-            if (idx >= 0) userTickets[idx] = { ...userTickets[idx], ...passObj };
-            else userTickets.push(passObj);
-          }
+          });
         }
 
-        // Notificar al anfitrión (con captura segura)
+        // Notificar al anfitrión
         if (event.hostUserId && event.hostUserId !== fbCurrentUser.uid && fbDb) {
-          try {
-            let notifTitle = 'NUEVA SOLICITUD VIP ⚡';
-            let notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`;
-            if (accessType === 'FREE_PASS') {
-              notifTitle = 'NUEVA SOLICITUD FREE PASS 🎟️';
-              notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado su Free Pass para ${cleanTitle}.`;
-            } else if (accessType === 'VIP_PLUS_ONE') {
-              notifTitle = 'SOLICITUD VIP +1 ⚡';
-              notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP (+1) para ${cleanTitle}.`;
-            } else if (accessType === 'PAID') {
-              notifTitle = 'NUEVA COMPRA DE ENTRADA 💰';
-              notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} envió solicitud de compra de entrada (Bs. ${resolvedPrice}) para ${cleanTitle}.`;
-            }
-
-            await fbDb.collection('notifications').add({
-              userId: event.hostUserId,
-              type: accessType === 'PAID' ? 'PURCHASE_SUCCESS' : 'VIP_REQUEST',
-              title: notifTitle,
-              message: notifMsg,
-              eventId: event.id || '',
-              eventTitle: cleanTitle,
-              eventImageUrl: event.imageUrl || '',
-              passId: passId || '',
-              senderName: fbCurrentUser.displayName || 'Invitado',
-              senderId: fbCurrentUser.uid,
-              senderPhotoUrl: fbCurrentUser.photoURL || '',
-              read: false,
-              createdAt: Date.now()
-            });
-          } catch (notifErr) {
-            console.warn('[+1] Error registrando notificación para anfitrión:', notifErr);
+          let notifTitle = 'NUEVA SOLICITUD VIP ⚡';
+          let notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP para ${cleanTitle}.`;
+          if (accessType === 'FREE_PASS') {
+            notifTitle = 'NUEVA SOLICITUD FREE PASS 🎟️';
+            notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado su Free Pass para ${cleanTitle}.`;
+          } else if (accessType === 'VIP_PLUS_ONE') {
+            notifTitle = 'SOLICITUD VIP +1 ⚡';
+            notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} ha solicitado pase VIP (+1) para ${cleanTitle}.`;
+          } else if (accessType === 'PAID') {
+            notifTitle = 'NUEVA COMPRA DE ENTRADA 💰';
+            notifMsg = `${fbCurrentUser.displayName || 'Un invitado'} envió solicitud de compra de entrada (Bs. ${resolvedPrice}) para ${cleanTitle}.`;
           }
+
+          await fbDb.collection('notifications').add({
+            userId: event.hostUserId,
+            type: accessType === 'PAID' ? 'PURCHASE_SUCCESS' : 'VIP_REQUEST',
+            title: notifTitle,
+            message: notifMsg,
+            eventId: event.id || '',
+            eventTitle: cleanTitle,
+            eventImageUrl: event.imageUrl || '',
+            passId: passId || '',
+            senderName: fbCurrentUser.displayName || 'Invitado',
+            senderId: fbCurrentUser.uid,
+            senderPhotoUrl: fbCurrentUser.photoURL || '',
+            read: false,
+            createdAt: Date.now()
+          });
         }
 
         if (accessType === 'PAID') {
