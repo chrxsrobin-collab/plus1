@@ -10593,6 +10593,501 @@
         if (typeof renderTicketCoverFlow === 'function') renderTicketCoverFlow();
       });
     });
+
+    // ==========================================
+    // CONSOLA DE REVISIÓN DE PANTALLAS (+1 DEV)
+    // ==========================================
+    let isDevConsoleOpen = false;
+    let devConsoleActiveScreen = 'HomeScreen';
+
+    function toggleDevScreenConsole() {
+      const modal = document.getElementById('devScreenConsoleModal');
+      if (!modal) return;
+      isDevConsoleOpen = !isDevConsoleOpen;
+      if (isDevConsoleOpen) {
+        modal.classList.remove('hidden');
+        devConsoleSyncRoleButton();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function updateDevConsoleScreen(screenName) {
+      devConsoleActiveScreen = screenName;
+      const tag = document.getElementById('devConsoleCurrentScreenTag');
+      if (tag) {
+        tag.innerText = screenName.toUpperCase().slice(0, 10);
+      }
+      const footerTag = document.getElementById('devConsoleActiveFooterTag');
+      if (footerTag) {
+        footerTag.innerText = screenName;
+      }
+    }
+
+    function devConsoleSyncRoleButton() {
+      const btn = document.getElementById('devConsoleRoleBtn');
+      if (!btn) return;
+      const isPro = Boolean(window.currentUser && window.currentUser.isPartner);
+      if (isPro) {
+        btn.className = "px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-[#E87A72]/20 border-[#E87A72] text-[#E87A72]";
+        btn.innerText = "👑 MODO PRO (SOCIO+)";
+      } else {
+        btn.className = "px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-neutral-800 border-neutral-700 text-neutral-300";
+        btn.innerText = "👤 MODO FREE (USUARIO)";
+      }
+    }
+
+    function devConsoleToggleUserRole() {
+      if (!window.currentUser) {
+        window.currentUser = { uid: 'dev_user', displayName: 'CRIS G.', isPartner: false };
+      }
+      window.currentUser.isPartner = !window.currentUser.isPartner;
+      devConsoleSyncRoleButton();
+
+      // Si el perfil está abierto, refrescarlo de inmediato
+      const profileView = document.getElementById('profileScreenView');
+      if (profileView && !profileView.classList.contains('hidden')) {
+        openProfileScreen();
+      }
+      showToast(window.currentUser.isPartner ? '👑 Rol cambiado a PRO (Socio+)' : '👤 Rol cambiado a FREE (Usuario)');
+    }
+
+    function devConsoleAddDemoTicket() {
+      const newPass = {
+        id: 'DEMO_' + Math.floor(10000 + Math.random() * 90000),
+        title: 'NEON CARNIVAL 2026',
+        eventTitle: 'NEON CARNIVAL 2026',
+        dateStr: 'VIERNES 26 SEP',
+        timeStr: '23:00',
+        location: 'CLUB THEATRON · SALA VIP',
+        holderName: (window.currentUser && window.currentUser.displayName) || 'CRIS G.',
+        status: 'active',
+        allowsPlusOne: true,
+        withPlusOne: true,
+        ticketId: '#AN56842',
+        verifiedProvider: 'VERIFICADO CON GOOGLE',
+        qrCodeValue: 'plus1://pass/DEMO_56842'
+      };
+      if (!Array.isArray(userTickets)) userTickets = [];
+      userTickets.unshift(newPass);
+      showToast('🎟️ Pase demo "+1" añadido');
+      devConsoleNavigate('tickets');
+    }
+
+    function closeAllScreensAndModals() {
+      const modalIds = [
+        'passScreenView',
+        'profileScreenView',
+        'createEventScreenView',
+        'scannerScreenView',
+        'manualCheckInModalView',
+        'onboardingScreenView',
+        'authScreenView',
+        'eventInviteModal',
+        'eventDetailModal',
+        'searchEventsModal',
+        'notificationsModal',
+        'subscriptionModal',
+        'eventManagerModal',
+        'liveDashboardModal',
+        'storeModal',
+        'streakModal',
+        'myEventsModal',
+        'attendedEventsModal',
+        'masterDoorQrModal',
+        'doorModal',
+        'selectEventToScanModal',
+        'categoryPickerModal',
+        'vipTimePickerModal',
+        'locationPickerModal',
+        'bestPracticesModal',
+        'deleteEventModal',
+        'shareEventModal'
+      ];
+      modalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      if (typeof html5QrCodeScanner !== 'undefined' && html5QrCodeScanner) {
+        try { html5QrCodeScanner.stop(); } catch(e) {}
+      }
+    }
+
+    function devConsoleNavigate(screenKey) {
+      closeAllScreensAndModals();
+      const modal = document.getElementById('devScreenConsoleModal');
+      if (modal) modal.classList.add('hidden');
+      isDevConsoleOpen = false;
+
+      switch (screenKey) {
+        case 'home':
+          updateDevConsoleScreen('HomeScreen');
+          showToast('🏠 Pantalla Inicio');
+          break;
+        case 'tickets':
+          openPassScreen();
+          updateDevConsoleScreen('TicketsScreen');
+          showToast('🎟️ Pantalla Mis Tickets');
+          break;
+        case 'profile-free':
+          if (window.currentUser) window.currentUser.isPartner = false;
+          devConsoleSyncRoleButton();
+          openProfileScreen();
+          updateDevConsoleScreen('Profile (FREE)');
+          showToast('👤 Perfil Usuario FREE');
+          break;
+        case 'profile-pro':
+          if (window.currentUser) window.currentUser.isPartner = true;
+          devConsoleSyncRoleButton();
+          openProfileScreen();
+          updateDevConsoleScreen('Profile (PRO)');
+          showToast('👑 Perfil Creador / Negocio PRO');
+          break;
+        case 'create-event':
+          openCreateEventScreen();
+          updateDevConsoleScreen('CreateEvent');
+          showToast('➕ Crear Evento');
+          break;
+        case 'scanner':
+          openScannerScreen('pepe-birthday', 'NEON CARNIVAL 2026');
+          updateDevConsoleScreen('ScannerScreen');
+          showToast('📷 Escáner QR Puerta');
+          break;
+        case 'explore':
+          openSearchEventsModal();
+          updateDevConsoleScreen('ExploreScreen');
+          showToast('🔍 Explorar Eventos');
+          break;
+        case 'auth':
+          const authView = document.getElementById('authScreenView');
+          if (authView) authView.classList.remove('hidden');
+          updateDevConsoleScreen('AuthScreen');
+          showToast('🔐 Login / Registro');
+          break;
+        case 'onboarding-1':
+          openOnboardingScreen();
+          const oStep1 = document.getElementById('onboardingStep1View');
+          const oStep2 = document.getElementById('onboardingStep2View');
+          if (oStep1) oStep1.classList.remove('hidden');
+          if (oStep2) oStep2.classList.add('hidden');
+          updateDevConsoleScreen('Onboarding 1');
+          showToast('🚀 Onboarding: Paso 1');
+          break;
+        case 'onboarding-2':
+          openOnboardingScreen();
+          const oStep1b = document.getElementById('onboardingStep1View');
+          const oStep2b = document.getElementById('onboardingStep2View');
+          if (oStep1b) oStep1b.classList.add('hidden');
+          if (oStep2b) oStep2b.classList.remove('hidden');
+          updateDevConsoleScreen('Onboarding 2');
+          showToast('🔔 Onboarding: Paso 2');
+          break;
+        case 'invite':
+          openEventInviteModal('pepe-birthday');
+          updateDevConsoleScreen('InviteModal');
+          showToast('💌 Invitación de Evento');
+          break;
+        case 'detail':
+          openEventDetail('pepe-birthday');
+          updateDevConsoleScreen('EventDetail');
+          showToast('ℹ️ Detalle de Evento');
+          break;
+        case 'manager':
+          openEventManagerModal('pepe-birthday');
+          updateDevConsoleScreen('EventManager');
+          showToast('📊 Gestor de Evento');
+          break;
+        case 'master-door':
+          openMasterDoorQrModal();
+          updateDevConsoleScreen('MasterDoorQr');
+          showToast('🔑 QR Maestro de Puerta');
+          break;
+        case 'subscription':
+          openSubscriptionModal();
+          updateDevConsoleScreen('Subscription');
+          showToast('💳 Planes Socio+ PRO');
+          break;
+        case 'store':
+          openStoreModal();
+          updateDevConsoleScreen('StoreModal');
+          showToast('🛍️ Tienda de Recompensas');
+          break;
+        case 'streak':
+          openStreakModal();
+          updateDevConsoleScreen('StreakModal');
+          showToast('🔥 Racha & Puntos');
+          break;
+        case 'notifications':
+          openNotificationsModal();
+          updateDevConsoleScreen('Notifications');
+          showToast('🔔 Notificaciones');
+          break;
+        case 'location':
+          openLocationPickerModal();
+          updateDevConsoleScreen('LocationPicker');
+          showToast('📍 Selector de Mapa');
+          break;
+        case 'viptime':
+          openVipTimePickerModal();
+          updateDevConsoleScreen('VipTimePicker');
+          showToast('⏰ Hora Límite VIP');
+          break;
+        default:
+          updateDevConsoleScreen('HomeScreen');
+          break;
+      }
+    }
   </script>
+
+  <!-- ==================================================== -->
+  <!-- CONSOLA DE REVISIÓN DE PANTALLAS (DEV SCREEN CONSOLE) -->
+  <!-- ==================================================== -->
+  
+  <!-- 1. Botón Flotante Disparador de la Consola -->
+  <div id="devScreenConsoleTrigger" class="fixed bottom-5 right-4 z-[9999] select-none">
+    <button
+      onclick="toggleDevScreenConsole()"
+      aria-label="Abrir Consola de Pantallas"
+      class="bg-[#121316]/95 hover:bg-[#1A1C22] text-white border border-[#E87A72]/60 hover:border-[#E87A72] rounded-full px-3.5 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.85)] flex items-center gap-2 transition-all active:scale-95 cursor-pointer backdrop-blur-md"
+    >
+      <span class="text-base leading-none">🎛️</span>
+      <span class="font-display font-black text-xs tracking-wider uppercase">PANTALLAS</span>
+      <span id="devConsoleCurrentScreenTag" class="text-[10px] font-sans font-bold text-[#E87A72] bg-[#E87A72]/15 px-2 py-0.5 rounded-full border border-[#E87A72]/30">
+        INICIO
+      </span>
+    </button>
+  </div>
+
+  <!-- 2. Modal Drawer de la Consola -->
+  <div id="devScreenConsoleModal" class="hidden fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm select-none">
+    <div class="bg-[#121418] border border-neutral-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[88vh] flex flex-col justify-between overflow-hidden text-white">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-neutral-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎛️</span>
+          <div>
+            <h3 class="font-display font-black text-white text-base sm:text-lg tracking-wide uppercase leading-none">
+              CONSOLA DE PANTALLAS
+            </h3>
+            <span class="font-sans text-[10px] text-neutral-400 font-medium">
+              Revisa y prueba cada pantalla en tiempo real
+            </span>
+          </div>
+        </div>
+
+        <button
+          onclick="toggleDevScreenConsole()"
+          class="w-8 h-8 rounded-full bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white transition-all cursor-pointer"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Fila de Controles Rápidos -->
+      <div class="py-3 flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/80">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-sans text-neutral-400 font-bold uppercase">Rol Perfil:</span>
+          <button
+            id="devConsoleRoleBtn"
+            onclick="devConsoleToggleUserRole()"
+            class="px-3 py-1 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all border cursor-pointer bg-neutral-800 border-neutral-700 text-neutral-300"
+          >
+            👤 MODO FREE (USUARIO)
+          </button>
+        </div>
+
+        <button
+          onclick="devConsoleAddDemoTicket()"
+          class="px-2.5 py-1 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 font-sans text-xs font-semibold text-neutral-300 flex items-center gap-1 cursor-pointer"
+        >
+          <span>🎟️</span>
+          <span>+ Ticket Demo</span>
+        </button>
+      </div>
+
+      <!-- Listado de Pantallas por Categorías -->
+      <div class="flex-1 overflow-y-auto py-3 space-y-4 no-scrollbar">
+        <!-- 1. Pantallas Principales -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Pantallas Principales
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('home')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🏠</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Inicio</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">HomeScreen (Cover Flow + Agenda)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('tickets')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🎟️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Mis Tickets</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">TicketsScreen (ticket.webp)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('profile-free')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">👤</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Perfil FREE</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ProfileScreen (Usuario Estándar)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('profile-pro')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">👑</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Perfil PRO</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ProfileScreen (Negocio / Creador)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('create-event')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">➕</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Crear Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">CreateEventScreen (Formulario)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('scanner')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📷</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Escáner Puerta</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ScannerScreen (Badge 1/2 y 2/2)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('explore')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔍</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Explorar Eventos</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">ExploreScreen (Búsqueda + Filtros)</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. Flujos & Onboarding -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Flujos de Acceso & Onboarding
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('auth')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔐</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Login / Registro</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">AuthScreen (Login + Google)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('onboarding-1')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🚀</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Onboarding Paso 1</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">Intereses, Rol y Ciudad</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('onboarding-2')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔔</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Onboarding Paso 2</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">Permisos de Notificaciones</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Modales & Experiencias Clave -->
+        <div class="space-y-1.5">
+          <h4 class="font-sans text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-1">
+            Modales & Experiencias Clave
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button onclick="devConsoleNavigate('invite')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">💌</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Invitación Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventInviteModal (Deep Link /e/)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('detail')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">ℹ️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Detalle Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventDetailModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('manager')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📊</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Gestor de Evento</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">EventManagerModal (Live Analytics)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('master-door')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔑</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">QR Maestro Puerta</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">MasterDoorQrModal (Staff)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('subscription')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">💳</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Suscripción Socio+</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">SubscriptionModal (Planes PRO)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('store')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🛍️</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Tienda +1</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">StoreModal (Recompensas)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('streak')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔥</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Racha & Puntos</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">StreakModal (Gamificación)</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('notifications')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">🔔</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Notificaciones</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">NotificationsModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('location')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">📍</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Mapa / Ubicación</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">LocationPickerModal</p>
+              </div>
+            </button>
+            <button onclick="devConsoleNavigate('viptime')" class="p-2.5 rounded-2xl bg-[#181A20] hover:bg-[#20222A] border border-neutral-800/80 text-neutral-200 text-left flex items-start gap-2.5 transition-all cursor-pointer">
+              <span class="text-xl p-1 rounded-xl bg-black/40 border border-white/5">⏰</span>
+              <div class="flex-1 min-w-0">
+                <span class="font-display font-black text-sm uppercase block truncate">Límite Hora VIP</span>
+                <p class="font-sans text-[10px] text-neutral-400 truncate mt-0.5">VipTimePickerModal</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de Estado -->
+      <div class="pt-3 border-t border-neutral-800 flex items-center justify-between text-xs font-sans text-neutral-500">
+        <span>Pantalla activa: <code id="devConsoleActiveFooterTag" class="text-[#E87A72] font-mono">HomeScreen</code></span>
+        <button
+          onclick="toggleDevScreenConsole()"
+          class="text-neutral-400 hover:text-white uppercase font-bold text-[11px]"
+        >
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
 </body>
 </html>
