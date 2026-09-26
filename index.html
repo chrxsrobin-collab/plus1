@@ -245,37 +245,25 @@
         </div>
       </section>
 
-      <!-- 5. DOCK DE ACCIÓN INFERIOR: [ + ] CREAR EVENTO + [ ⛶ ESCANEAR QR ] -->
+      <!-- 5. DOCK DE ACCIÓN INFERIOR: [ + ] CREAR EVENTO (ANCHO COMPLETO) -->
       <div class="anim-footer w-full mt-6 mb-24 px-4 pb-[90px] z-20">
-        <div class="relative w-full h-14 rounded-2xl bg-[#E87A72] p-1.5 flex items-center justify-between shadow-lg">
-          <!-- CREAR EVENTO CON [ + ] -->
-          <button onclick="handleNavigation('/create-event')" class="flex-1 h-full flex items-center justify-center pl-3 pr-1 text-left focus:outline-none group">
-            <span class="font-display text-black text-[26px] sm:text-[28px] font-black tracking-tight uppercase group-hover:scale-[1.02] transition-transform flex items-center space-x-1.5">
-              <span class="text-xl font-bold">[ + ]</span>
-              <span>CREAR EVENTO</span>
-            </span>
-          </button>
-
-          <!-- ESCANEAR QR CON VALIDACIÓN -->
-          <button onclick="handleScanQrButtonClick()" class="anim-qr-btn h-full px-3.5 bg-[#101114] hover:bg-[#181a1e] rounded-xl flex items-center space-x-1.5 border border-[#26282E] focus:outline-none active:scale-95 transition-all cursor-pointer">
-            <svg class="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
-              <path d="M3 9h6V3H3v6zm2-4h2v2H5V5zm8-2v6h6V3h-6zm4 4h-2V5h2v2zM3 21h6v-6H3v6zm2-4h2v2H5v-2zm13-2h-2v2h2v-2zm-4 4h-2v2h2v-2zm4 0h-2v2h2v-2zm2-2h-2v2h2v-2zm-6-4h-2v2h2v-2zm2 0h-2v2h2v-2zm2-4h-2v2h2v-2z" />
-            </svg>
-            <span class="font-display text-white text-[12px] sm:text-xs font-bold tracking-wider uppercase whitespace-nowrap">
-              ESCANEAR QR
-            </span>
-          </button>
-        </div>
+        <button onclick="handleNavigation('/create-event')" class="w-full h-14 rounded-2xl bg-[#E87A72] flex items-center justify-center text-center shadow-lg active:scale-[0.99] transition-transform focus:outline-none cursor-pointer group">
+          <span class="font-display text-black text-[24px] sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.01] transition-transform flex items-center justify-center space-x-1.5">
+            <span class="text-xl font-bold">[ + ]</span>
+            <span>CREAR EVENTO</span>
+          </span>
+        </button>
       </div>
 
     </div>
 
     <!-- 5. BOTTOM NAVIGATION BAR PERMANENTE Y FIJA -->
     <nav id="floatingBottomNav" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[260px] w-[88%] mx-auto py-2.5 px-6 rounded-full bg-[#121316]/90 backdrop-blur-lg border border-[#26282E] shadow-2xl flex items-center justify-around select-none opacity-100 pointer-events-auto transform translate-y-0">
-      <!-- Home -->
-      <button class="p-1 text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); showToast('Ruta: /')">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <!-- Buscar (Lupa) -->
+      <button class="p-1 text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); openSearchEventsModal()" aria-label="Buscar eventos">
+        <svg class="w-5 h-5 text-white stroke-current" fill="none" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" stroke-width="2.5"></circle>
+          <line x1="16.5" y1="16.5" x2="22" y2="22" stroke-width="2.5" stroke-linecap="round"></line>
         </svg>
       </button>
 
@@ -1112,7 +1100,7 @@
                 </div>
                 <div>
                   <h3 class="font-display text-base sm:text-lg uppercase tracking-wide leading-tight text-white">
-                    Armar mis propias previas y juntadas
+                    Armar mis propios eventos y juntadas
                   </h3>
                   <p class="font-sans text-[11px] sm:text-xs text-[#8E8E93] mt-0.5 leading-snug">
                     Crea eventos, gestiona puerta y pases +1 en segundos.
@@ -2053,7 +2041,7 @@
       </div>
     </div>
 
-    <!-- MODAL SELECTOR DE HORA DE CIERRE VIP (VipTimePickerModal) -->
+    <!-- MODAL SELECTOR DE HORA DE CIERRE DE LISTA (TimePickerModal) -->
     <div id="vipTimePickerModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
       <div class="bg-[#16171B] border border-[#26282E] rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl relative anim-modal-zoom flex flex-col space-y-4">
         <!-- Header -->
@@ -2061,7 +2049,7 @@
           <div class="flex items-center gap-2">
             <span class="text-[#E87A72] text-lg">⏳</span>
             <h3 class="font-display text-white text-lg font-black tracking-wider uppercase">
-              CIERRE DE LISTA VIP
+              CIERRE DE LISTA
             </h3>
           </div>
           <button
@@ -2074,7 +2062,7 @@
         </div>
 
         <p class="font-sans text-xs text-[#8E8E93] leading-relaxed">
-          Selecciona la hora límite para el ingreso de los pases VIP solicitados:
+          Selecciona la hora límite para el ingreso de pases aprobados
         </p>
 
         <!-- Selector Central de Hora -->
@@ -2084,25 +2072,8 @@
             id="vipTimePickerModalInput"
             value="01:00"
             oninput="handleVipTimeModalInputChange(this.value)"
-            class="w-full h-14 bg-[#101114] border-2 border-[#E87A72]/60 focus:border-[#E87A72] rounded-2xl text-center text-white font-display text-3xl font-black tracking-widest outline-none transition-colors"
+            class="w-full h-14 bg-[#101114] border-2 border-[#E87A72]/60 focus:border-[#E87A72] rounded-2xl text-center text-white font-display text-3xl font-black tracking-widest outline-none transition-colors cursor-pointer"
           />
-          <span class="text-[#8E8E93] text-xs font-sans mt-2">
-            Horario visible: <strong id="vipTimePickerModalPreviewText" class="text-white">01:00 AM</strong>
-          </span>
-        </div>
-
-        <!-- Atajos de Horarios Típicos -->
-        <div class="space-y-1.5">
-          <span class="font-sans text-[11px] text-[#8E8E93] uppercase tracking-wider block font-bold">
-            Horarios sugeridos
-          </span>
-          <div class="grid grid-cols-5 gap-1.5" id="vipTimePresetContainer">
-            <button type="button" onclick="setVipTimePreset('23:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">23:00</button>
-            <button type="button" onclick="setVipTimePreset('00:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">00:00</button>
-            <button type="button" onclick="setVipTimePreset('01:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#E87A72] text-black shadow-md">01:00</button>
-            <button type="button" onclick="setVipTimePreset('02:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">02:00</button>
-            <button type="button" onclick="setVipTimePreset('03:00')" class="vip-preset-btn py-1.5 rounded-xl font-display text-xs font-bold transition-all cursor-pointer bg-[#101114] border border-[#26282E] text-neutral-300 hover:border-white/30">03:00</button>
-          </div>
         </div>
 
         <!-- Acciones -->
@@ -2455,6 +2426,9 @@
           </div>
         </div>
 
+        <!-- BANNER CREA TU PRIMER EVENTO (REUBICADO DEBAJO DE MÉTRICAS) -->
+        <div id="profileCreateFirstEventBanner" class="w-full mt-4"></div>
+
         <!-- 4. SECCIÓN SUSCRIPCIÓN Y ACCIONES -->
         <div id="profileFreeAccountSection" class="w-full mt-5">
           <div class="space-y-2.5">
@@ -2463,10 +2437,10 @@
                 <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">💳</div>
                 <div class="text-left">
                   <span id="profileSubAccountText" class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                    HAZTE PRO POR $US 9.99/MES
+                    HAZTE PRO
                   </span>
                   <span id="profileSubAccountDesc" class="font-sans text-neutral-400 text-xs block">
-                    Diseñado para promotores, clubes y organizadores
+                    Diseñado para promotores, clubes y organizaciones
                   </span>
                 </div>
               </div>
@@ -4566,6 +4540,29 @@
       renderCoverFlow();
       renderTicketCoverFlow();
       checkHashDeepLink();
+
+      // Auto-hiding dinámico de la Bottom Nav con el scroll (tipo Facebook)
+      let lastScrollY = 0;
+      const bottomNavEl = document.getElementById('floatingBottomNav');
+      if (bottomNavEl) {
+        window.addEventListener('scroll', () => {
+          const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+          if (Math.abs(currentScrollY - lastScrollY) < 10) return;
+
+          if (currentScrollY > lastScrollY && currentScrollY > 60) {
+            bottomNavEl.style.transition = 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease';
+            bottomNavEl.style.transform = 'translate(-50%, 100px)';
+            bottomNavEl.style.opacity = '0';
+            bottomNavEl.style.pointerEvents = 'none';
+          } else {
+            bottomNavEl.style.transition = 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease';
+            bottomNavEl.style.transform = 'translate(-50%, 0)';
+            bottomNavEl.style.opacity = '1';
+            bottomNavEl.style.pointerEvents = 'auto';
+          }
+          lastScrollY = currentScrollY;
+        }, { passive: true });
+      }
 
       const track = document.getElementById('coverFlowTrack');
       if (track) {
@@ -8617,7 +8614,9 @@
       }
       container.classList.remove('hidden');
 
+      const bannerContainer = document.getElementById('profileCreateFirstEventBanner');
       if (userCreatedEvents && userCreatedEvents.length > 0) {
+        if (bannerContainer) bannerContainer.innerHTML = '';
         container.innerHTML = `
           <div class="space-y-2">
             ${userCreatedEvents.slice(0, 3).map(evt => `
@@ -8649,20 +8648,23 @@
           </div>
         `;
       } else {
-        container.innerHTML = `
-          <div onclick="handleCreateEventWithPhoneCheck()" class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] hover:border-[#E87A72]/40 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer transition-colors">
-            <span class="text-xl mb-1.5">🎉</span>
-            <p class="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[280px]">
-              ¿ORGANIZAS UN EVENTO, CONFERENCIA O JUNTE? CREA TU PRIMER EVENTO
-            </p>
-            <button
-              onclick="event.stopPropagation(); handleCreateEventWithPhoneCheck()"
-              class="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
-            >
-              [ + CREAR EVENTO ]
-            </button>
-          </div>
-        `;
+        container.innerHTML = '';
+        if (bannerContainer) {
+          bannerContainer.innerHTML = `
+            <div onclick="handleCreateEventWithPhoneCheck()" class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] hover:border-[#E87A72]/40 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer transition-colors">
+              <span class="text-xl mb-1.5">🥳</span>
+              <p class="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[280px]">
+                ¿ORGANIZAS UN EVENTO, CONFERENCIA O JUNTE? CREA TU PRIMER EVENTO
+              </p>
+              <button
+                onclick="event.stopPropagation(); handleCreateEventWithPhoneCheck()"
+                class="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
+              >
+                [ + CREAR EVENTO ]
+              </button>
+            </div>
+          `;
+        }
       }
     }
 
