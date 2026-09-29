@@ -234,9 +234,12 @@
               EVENTOS ESTA SEMANA
             </span>
           </div>
-          <span id="thisWeekCityBadge" class="font-sans text-[11px] text-[#E87A72] font-semibold tracking-wider uppercase bg-black/60 px-3 py-1 rounded-full border border-white/10">
-            📍 Tu Ciudad
-          </span>
+          <button type="button" onclick="openSearchEventsModal()" aria-label="Buscar eventos" class="bg-[#16171B] border border-[#26282E] p-2 rounded-full hover:border-[#E87A72] transition-colors flex items-center justify-center text-[#E87A72] active:scale-95 cursor-pointer shadow-sm">
+            <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.5" y1="16.5" x2="22" y2="22"></line>
+            </svg>
+          </button>
         </div>
 
         <!-- 2. Lista Cronológica Agrupada por Día -->
@@ -259,11 +262,10 @@
 
     <!-- 5. BOTTOM NAVIGATION BAR PERMANENTE Y FIJA -->
     <nav id="floatingBottomNav" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[260px] w-[88%] mx-auto py-2.5 px-6 rounded-full bg-[#121316]/90 backdrop-blur-lg border border-[#26282E] shadow-2xl flex items-center justify-around select-none opacity-100 pointer-events-auto transform translate-y-0">
-      <!-- Buscar (Lupa) -->
-      <button class="p-1 text-white hover:scale-110 active:scale-95 transition-transform focus:outline-none" onclick="event.stopPropagation(); openSearchEventsModal()" aria-label="Buscar eventos">
-        <svg class="w-5 h-5 text-white stroke-current" fill="none" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="7" stroke-width="2.5"></circle>
-          <line x1="16.5" y1="16.5" x2="22" y2="22" stroke-width="2.5" stroke-linecap="round"></line>
+      <!-- Crear Evento (+) -->
+      <button class="p-1 text-white hover:text-[#E87A72] hover:scale-110 active:scale-95 transition-transform focus:outline-none cursor-pointer" onclick="event.stopPropagation(); handleNavigation('/create-event')" aria-label="Crear evento">
+        <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
         </svg>
       </button>
 
@@ -719,13 +721,17 @@
       <div class="relative z-10 w-full max-w-md max-h-[92vh] bg-[#16171B] border-[1.5px] border-[#26282E] rounded-3xl flex flex-col overflow-hidden shadow-2xl text-white font-sans">
         
         <!-- HEADER / FLYER CON BOTÓN DE CIERRE FLOTANTE -->
-        <div class="relative w-full h-44 sm:h-48 flex-shrink-0 bg-neutral-900 overflow-hidden">
-          <img id="inviteFlyerImg" src="./assets/images/pantalla_crear_evento.webp" alt="Flyer" class="w-full h-full object-cover" />
+        <div class="relative w-full h-52 flex-shrink-0 bg-[#16171B] overflow-hidden rounded-t-3xl border-b border-[#26282E]">
+          <img id="inviteFlyerImg" src="" alt="Flyer" class="hidden w-full h-52 object-cover rounded-t-3xl" />
+          <div id="inviteFlyerPlaceholder" class="w-full h-52 bg-[#16171B] relative flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 opacity-20 bg-cover bg-center pointer-events-none" style="background-image: url('./assets/images/fondo_iniciob.webp');"></div>
+            <span class="relative z-10 font-display text-5xl sm:text-6xl font-black tracking-tighter text-[#E87A72] select-none">+1</span>
+          </div>
           <div class="absolute inset-0 bg-gradient-to-t from-[#16171B] via-transparent to-black/60 pointer-events-none"></div>
 
           <!-- Badge de tipo flotante -->
           <div class="absolute top-3.5 left-4 z-10">
-            <span id="invitePrivacyBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider">
+            <span id="invitePrivacyBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider">
               <span>🔒</span>
               <span id="invitePrivacyBadgeText">FIESTA PRIVADA</span>
             </span>
@@ -738,102 +744,85 @@
         </div>
 
         <!-- CONTENIDO PRINCIPAL CON SCROLL VERTICAL -->
-        <div class="flex-1 overflow-y-auto px-5 py-3 space-y-4">
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <!-- VISTA 1: DETALLES DE INVITACIÓN -->
           <div id="inviteDetailsView" class="space-y-4">
             <!-- 1. Título y Badge del Anfitrión -->
             <div class="space-y-1">
-              <span id="inviteHostBadge" class="text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block">
-                INVITACIÓN PRIVADA POR PEPE G.
+              <span id="inviteHostBadge" class="text-xs font-display font-black tracking-widest text-[#E87A72] uppercase block">
+                INVITACIÓN PRIVADA POR EL ANFITRIÓN
               </span>
               <h2 id="inviteTitleText" class="font-display text-2xl sm:text-3xl font-black tracking-tight uppercase leading-tight text-white">
-                CUMPLE DE PEPE 🎂
+                EVENTO +1
               </h2>
-              <p id="inviteSubtitleText" class="font-sans text-xs text-neutral-400 font-medium">
-                Fiesta Privada de Cumpleaños
-              </p>
             </div>
 
             <!-- 2. Bloque de Fecha y Hora -->
-            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-center gap-3">
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3.5 flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 text-lg">
                 📅
               </div>
               <div class="flex-1 min-w-0">
                 <p id="inviteDateText" class="font-display text-sm sm:text-base font-black uppercase text-white tracking-wide truncate">
-                  VIE. 24 DE OCTUBRE
+                  FECHA POR CONFIRMAR
                 </p>
-                <p id="inviteTimeText" class="font-sans text-xs text-neutral-400 font-semibold tracking-wider">
-                  22:00 — 04:30
+                <p id="inviteTimeText" class="font-sans text-xs text-neutral-400 font-medium">
+                  22:00
                 </p>
               </div>
             </div>
 
             <!-- 3. Ubicación (Dinámica Pública / Privada) -->
-            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-start gap-3">
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3.5 flex items-start gap-3">
               <div class="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0 text-lg mt-0.5">
                 📍
               </div>
               <div class="flex-1 min-w-0">
                 <p id="inviteVenueText" class="font-display text-sm sm:text-base font-black uppercase text-white tracking-wide truncate">
-                  Terraza Privada Moncloa · Sopocachi
+                  Lugar por definir
                 </p>
                 <div id="inviteLocationLocked" class="mt-1 flex items-center gap-1.5 text-xs text-neutral-400">
                   <span>🔒</span>
-                  <span class="italic">Dirección exacta visible tras confirmar asistencia</span>
+                  <span class="font-sans text-xs text-neutral-400">Dirección exacta visible tras confirmar asistencia</span>
                 </div>
                 <div id="inviteLocationUnlocked" class="hidden mt-1">
                   <span class="text-[11px] font-bold text-[#12C061] flex items-center gap-1">
                     <span>🔓 Dirección desbloqueada:</span>
                   </span>
                   <p id="inviteExactAddressText" class="font-sans text-xs text-neutral-200 mt-0.5 font-medium leading-relaxed">
-                    Av. Arce #2410, Edificio Los Robles, Terraza Penthouse Piso 12
                   </p>
                 </div>
               </div>
             </div>
 
-            <!-- 4. Social Wall: Amigos Confirmados -->
-            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3 flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <div class="flex items-center -space-x-2 overflow-hidden py-0.5">
-                  <img src="./assets/images/avatar_chris.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
-                  <img src="./assets/images/avatar_1.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
-                  <img src="./assets/images/avatar_2.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
-                  <img src="./assets/images/avatar_3.png" alt="User" class="inline-block w-7 h-7 rounded-full ring-2 ring-[#1C1E24] object-cover bg-neutral-800" />
+            <!-- 4. Asistentes Confirmados -->
+            <div class="bg-[#1C1E24] border border-[#2A2D35] rounded-2xl p-3.5 flex items-center gap-3">
+              <div class="flex items-center -space-x-2 overflow-hidden py-0.5" id="inviteAvatarsContainer">
+                <div class="w-7 h-7 rounded-full ring-2 ring-[#1C1E24] bg-neutral-700 flex items-center justify-center text-[11px] text-white">
+                  👤
                 </div>
-                <span id="inviteAttendeesText" class="font-sans text-xs font-semibold text-neutral-300">
-                  18 amigos confirmados
-                </span>
               </div>
-              <span class="text-xs px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-neutral-400 font-mono">
-                LISTA ACTIVA
+              <span id="inviteAttendeesText" class="font-sans text-xs font-semibold text-neutral-300">
+                0 confirmados
               </span>
             </div>
 
-            <!-- Descripción -->
-            <p id="inviteDescriptionText" class="font-sans text-xs text-neutral-400 leading-relaxed px-1">
-              Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.
+            <!-- Descripción (solo si existe) -->
+            <p id="inviteDescriptionText" class="hidden font-sans text-xs sm:text-sm text-neutral-300 leading-relaxed px-1">
             </p>
 
             <!-- 5. Selector de Acompañante (+1) -->
-            <div id="invitePlusOneSection" class="space-y-2 pt-1">
-              <label class="block text-[11px] font-display font-extrabold uppercase tracking-wider text-neutral-400">
-                ACOMPAÑANTE (+1)
-              </label>
+            <div id="invitePlusOneSection" class="space-y-1.5 pt-1">
               <div class="grid grid-cols-2 gap-2 p-1 bg-[#101114] rounded-2xl border border-[#26282E]">
-                <button type="button" id="inviteSoloBtn" onclick="setInvitePlusOne(false)" class="py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer">
+                <button type="button" id="inviteSoloBtn" onclick="setInvitePlusOne(false)" class="py-3 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer">
                   <span>👤</span>
                   <span>SOLO YO</span>
                 </button>
-                <button type="button" id="invitePlusOneBtn" onclick="setInvitePlusOne(true)" class="py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer">
+                <button type="button" id="invitePlusOneBtn" onclick="setInvitePlusOne(true)" class="py-3 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer">
                   <span>👥</span>
                   <span>VOY CON MI +1</span>
                 </button>
               </div>
-              <p id="invitePlusOneNote" class="text-[11px] font-sans font-medium text-center text-neutral-400">
-                Tu pase QR será válido para 1 ingreso individual.
-              </p>
             </div>
           </div>
 
@@ -974,9 +963,8 @@
         <!-- FOOTER CON BOTÓN DE ACCIÓN (SOLO EN MODO INVITE) -->
         <div id="inviteFooterActionBox" class="p-4 bg-[#16171B] border-t border-[#26282E]">
           <!-- Botón de Confirmación Privada -->
-          <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-3.5 px-4 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-[#12C061]/25 cursor-pointer">
-            <span>🎟️</span>
-            <span>ACEPTAR INVITACIÓN Y GENERAR QR</span>
+          <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-4 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-base sm:text-lg tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-[#12C061]/25 cursor-pointer">
+            <span>[ GENERAR MI QR DE INGRESO ]</span>
           </button>
 
           <!-- Botón de Solicitud VIP Pública -->
@@ -1209,7 +1197,7 @@
             ELIGE TUS INTERESES
           </h1>
           <p class="font-sans text-xs sm:text-sm text-[#D1D5DB] mt-1.5 font-medium max-w-xs">
-            Selecciona al menos 3 para recomendarte los mejores eventos.
+            Selecciona 3 para recomendarte eventos similares
           </p>
 
           <!-- Contador reactivo -->
@@ -1224,59 +1212,45 @@
         <!-- Nube de Tags -->
         <main class="relative z-10 w-full max-w-md mx-auto px-6 py-4 flex-1 flex flex-col justify-center overflow-y-auto no-scrollbar">
           <div class="grid grid-cols-2 gap-2.5 sm:gap-3" id="onboardingChipsContainer">
-            <!-- Chip 1 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Reggaetón')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <!-- Chip 1: Reggaeton / Latino -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'reggaeton_latino')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🍑</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Reggaetón</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Reggaeton / Latino</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
-            <!-- Chip 2 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Electrónica / Techno')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <!-- Chip 2: Electrónica / Techno -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'electronica_techno')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🎧</span>
               <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Electrónica / Techno</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
-            <!-- Chip 3 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Live Rock & Indie')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
-              <span class="text-xl shrink-0">🎸</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Live Rock & Indie</span>
-              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
-            </button>
-
-            <!-- Chip 4 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Previas & Juntadas')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <!-- Chip 3: Previas / Juntadas -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'previas_juntadas')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🍻</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Previas & Juntadas</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Previas / Juntadas</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
-            <!-- Chip 5 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Boliches & Clubs')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <!-- Chip 4: Clubs / DJs -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'clubs_festivales')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🪩</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Boliches & Clubs</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Clubs / DJs</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
-            <!-- Chip 6 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Arte & Cocktails')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
-              <span class="text-xl shrink-0">🎨</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Arte & Cocktails</span>
+            <!-- Chip 5: Arte / Teatro -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'arte_teatro')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+              <span class="text-xl shrink-0">🎭</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Arte / Teatro</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
 
-            <!-- Chip 7 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Festivales & Open Air')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
-              <span class="text-xl shrink-0">⚡</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Festivales & Open Air</span>
-              <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
-            </button>
-
-            <!-- Chip 8 -->
-            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'Deportes & Salud')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B]/90 hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
+            <!-- Chip 6: Salud / Fitness -->
+            <button type="button" onclick="toggleOnboardingInterestHtml(this, 'deportes_salud')" class="py-3.5 px-3 rounded-2xl border text-left flex items-center space-x-2.5 transition-all cursor-pointer shadow-md bg-[#16171B] hover:bg-[#1E2026] border-[#26282E] text-neutral-300">
               <span class="text-xl shrink-0">🏃‍♂️</span>
-              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Deportes & Salud</span>
+              <span class="font-sans text-xs sm:text-[13px] font-bold leading-tight truncate">Salud / Fitness</span>
               <span class="interest-dot hidden ml-auto text-[#E87A72] text-xs font-black">●</span>
             </button>
           </div>
@@ -1289,7 +1263,7 @@
         <!-- Pie de Acción -->
         <footer class="relative z-10 w-full max-w-md mx-auto px-6 pb-8 pt-2 flex flex-col items-center space-y-2">
           <button type="button" id="onboardingSubmitBtn" onclick="handleOnboardingSubmitHtml()" disabled class="w-full py-4 rounded-2xl font-display text-lg tracking-wider uppercase font-bold flex items-center justify-center space-x-2 transition-all shadow-xl bg-[#26282E] text-[#8E8E93] opacity-60 cursor-not-allowed">
-            <span>ENTRAR A +1 🚀</span>
+            <span>INICIAR +1</span>
           </button>
         </footer>
       </div>
@@ -1539,33 +1513,7 @@
             <textarea id="createEventDescInput" rows="3" maxlength="500" oninput="handleCreateEventDescInput(this)" placeholder="Detalles, line up, dress code, etc..." class="w-full p-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"></textarea>
           </div>
 
-          <!-- CAMPO 4: DRESS CODE (MÁXIMO 30 CARACTERES, OPCIONAL) -->
-          <div class="w-full">
-            <button id="createDressCodeEmptyBtn" type="button" onclick="activateCreateDressCode()" class="w-full py-2.5 px-3 rounded-xl bg-[#16171B] hover:bg-[#1E2025] border border-[#26282E] text-[#8E8E93] hover:text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-[0.99]">
-              <span>+ AGREGAR DRESS CODE (OPCIONAL)</span>
-            </button>
-            <div id="createDressCodeActiveBox" class="hidden p-3 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-1.5 min-w-0">
-                  <span class="text-sm">👔</span>
-                  <label class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
-                    DRESS CODE
-                  </label>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <span id="createDressCodeCounter" class="font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]">
-                    0/30
-                  </span>
-                  <button type="button" onclick="deactivateCreateDressCode()" class="text-[#8E8E93] hover:text-[#EF4444] text-xs px-1.5 py-0.5 rounded transition-colors" title="Eliminar dress code">
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <input type="text" id="createEventDressCodeInput" maxlength="30" oninput="handleCreateEventDressCodeInput(this)" placeholder="Ej. All Black, Urbano, White..." class="w-full h-10 px-3 rounded-lg bg-[#0E0F12] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-xs outline-none transition-colors" />
-            </div>
-          </div>
-
-          <!-- CAMPO 5: FECHA Y HORA DE INICIO (2 COLUMNAS ALINEADAS) -->
+          <!-- CAMPO 3: FECHA Y HORA DE INICIO (2 COLUMNAS ALINEADAS) -->
           <div class="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
             <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
@@ -1635,147 +1583,44 @@
             </div>
           </div>
 
-          <!-- CAMPO 5: PRIVACIDAD DEL EVENTO (SEGMENTED SELECTOR) -->
+          <!-- CAMPO 5: PERMITIR ACOMPAÑANTE (+1) (INMEDIATAMENTE TRAS FECHA, HORA Y UBICACIÓN) -->
+          <div class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E]">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-display text-white text-sm font-black uppercase tracking-wide block">
+                  PERMITIR ACOMPAÑANTE (+1)
+                </span>
+                <span class="font-sans text-neutral-400 text-xs block mt-0.5">
+                  Cada invitado confirmado podrá reclamar un pase adicional.
+                </span>
+              </div>
+              
+              <button type="button" id="plusOneToggleBtn" onclick="toggleCreatePlusOne()" class="relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061] cursor-pointer">
+                <span id="plusOneToggleCircle" class="absolute top-1 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- CAMPO 6: PRIVACIDAD DEL EVENTO (SEGMENTED SELECTOR - DEFAULT: PRIVADO) -->
           <div class="space-y-1.5">
             <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
               PRIVACIDAD
             </label>
             <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#16171B] border border-[#26282E]">
-              <button type="button" id="privacyPublicBtn" onclick="setCreatePrivacy('public')" class="py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow">
-                PÚBLICO
-              </button>
-              <button type="button" id="privacyPrivateBtn" onclick="setCreatePrivacy('private')" class="py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white">
+              <button type="button" id="privacyPrivateBtn" onclick="setCreatePrivacy('private')" class="py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer">
                 PRIVADO
+              </button>
+              <button type="button" id="privacyPublicBtn" onclick="setCreatePrivacy('public')" class="py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer">
+                PÚBLICO
               </button>
             </div>
             <p id="privacyDescriptionText" class="font-sans text-neutral-400 text-xs px-1">
-              Visible para todos los usuarios en la app y cartelera.
+              Solo accesible mediante tu enlace directo por WhatsApp
             </p>
           </div>
 
-          <!-- CAMPO 5.2: TIPO DE ACCESO / MODALIDAD -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                TIPO DE ACCESO / MODALIDAD
-              </label>
-              <span id="createEventPlanBadge" class="font-sans text-[10px] font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/30 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                PLAN FREE
-              </span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <!-- FREE PASS -->
-              <button type="button" id="accessTypeBtn_free" onclick="setCreateAccessType('free')" class="p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between bg-[#12C061]/15 border-[#12C061] text-white shadow-[0_0_12px_rgba(18,192,97,0.2)]">
-                <div class="flex items-center justify-between">
-                  <span class="text-lg">🎟️</span>
-                  <span id="accessTypeDot_free" class="w-2 h-2 rounded-full bg-[#12C061]"></span>
-                </div>
-                <div class="mt-2">
-                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">FREE PASS</span>
-                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Entrada libre por solicitud</span>
-                </div>
-              </button>
-
-              <!-- SOLICITAR VIP -->
-              <button type="button" id="accessTypeBtn_vip" onclick="setCreateAccessType('vip')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
-                <div class="flex items-center justify-between">
-                  <span class="text-lg">⭐</span>
-                  <span id="accessTypeProBadge_vip" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
-                </div>
-                <div class="mt-2">
-                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">SOLICITAR VIP</span>
-                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Pase VIP individual</span>
-                </div>
-              </button>
-
-              <!-- VIP +1 -->
-              <button type="button" id="accessTypeBtn_vip_plus_one" onclick="setCreateAccessType('vip_plus_one')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
-                <div class="flex items-center justify-between">
-                  <span class="text-lg">👥</span>
-                  <span id="accessTypeProBadge_vip_plus_one" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
-                </div>
-                <div class="mt-2">
-                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">VIP +1</span>
-                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Pase VIP con acompañante</span>
-                </div>
-              </button>
-
-              <!-- VENDER ENTRADA -->
-              <button type="button" id="accessTypeBtn_paid" onclick="setCreateAccessType('paid')" class="p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between bg-[#16171B] border-[#26282E] text-neutral-400 hover:border-white/20 hover:text-white">
-                <div class="flex items-center justify-between">
-                  <span class="text-lg">💳</span>
-                  <span id="accessTypeProBadge_paid" class="text-[10px] font-display font-black bg-[#FAB205] text-black px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">🔒 PRO</span>
-                </div>
-                <div class="mt-2">
-                  <span class="font-display text-xs font-black uppercase tracking-wider block text-white">VENDER ENTRADA</span>
-                  <span class="font-sans text-[10px] text-neutral-400 block mt-0.5">Entrada con cobro digital</span>
-                </div>
-              </button>
-            </div>
-
-            <!-- CAMPO CONDICIONAL: PRECIO POR ENTRADA (BS) -->
-            <div id="createPaidTicketBox" class="hidden p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] space-y-2 mt-2">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                PRECIO POR ENTRADA (BS)
-              </label>
-              <div class="relative">
-                <input
-                  type="number"
-                  id="createTicketPriceInput"
-                  min="20"
-                  step="1"
-                  oninput="handleTicketPriceInput(this)"
-                  placeholder="Mínimo 20 Bs"
-                  class="w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#26282E] focus:border-[#12C061] text-white font-sans text-sm outline-none transition-colors"
-                />
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 font-display text-xs font-bold text-neutral-400">
-                  BS
-                </span>
-              </div>
-              <p id="createTicketPriceError" class="hidden font-sans text-xs text-[#E87A72] flex items-center gap-1 font-medium">
-                <span>⚠️</span> El precio mínimo de venta es de 20 Bs
-              </p>
-            </div>
-          </div>
-
-          <!-- CONTROL: CIERRE DE LISTA -->
-          <div class="w-full p-3.5 rounded-xl bg-[#16171B] border border-[#26282E] flex items-center justify-between gap-3" id="createVipCutoffContainer">
-            <div class="flex items-center gap-2 shrink-0 min-w-0">
-              <span class="text-[#E87A72] text-sm">⏳</span>
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase truncate">
-                Cierre de lista
-              </label>
-            </div>
-
-            <!-- BOTÓN DISPARADOR INACTIVO -->
-            <button id="createVipCutoffEmptyBtn" type="button" onclick="openVipTimePickerModal()" class="relative inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#101114] hover:bg-[#1E2025] border border-[#26282E] hover:border-[#E87A72]/50 text-[#8E8E93] hover:text-white font-sans text-xs font-medium transition-all cursor-pointer active:scale-95 shadow-sm">
-              <span>+ Definir hora</span>
-            </button>
-
-            <!-- PASTILLA CON HORARIO DEFINIDO (ACTIVO) -->
-            <div id="createVipCutoffActivePill" class="hidden inline-flex items-center gap-1.5 bg-[#101114] border border-[#E87A72]/50 rounded-xl px-2.5 py-1 shadow-sm">
-              <button type="button" onclick="openVipTimePickerModal()" class="flex items-center gap-1.5 cursor-pointer text-left focus:outline-none" title="Modificar hora de cierre">
-                <span id="createVipCutoffDisplayLabel" class="font-display font-black text-xs text-[#E87A72] tracking-wider uppercase">
-                  01:00 AM
-                </span>
-                <span class="text-neutral-400 hover:text-white text-[10px]">✏️</span>
-              </button>
-              <button
-                type="button"
-                onclick="deactivateCreateVipCutoff()"
-                title="Remover límite de lista"
-                class="w-4 h-4 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center text-[10px] ml-0.5 transition-all cursor-pointer active:scale-90"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p id="createVipCutoffHelperText" class="hidden"></p>
-          </div>
-
-          <!-- CAMPO 5.5: VIBE / GÉNERO DEL EVENTO (TAG AFFINITY SYSTEM) -->
-          <div class="space-y-1.5">
+          <!-- CAMPO 7: VIBE / GÉNERO DEL EVENTO (CONDICIONADO A PRIVACIDAD PÚBLICA) -->
+          <div id="createEventTagsWrapper" class="space-y-1.5 hidden">
             <div class="flex items-center justify-between">
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
                 VIBE / GÉNERO DEL EVENTO
@@ -1818,55 +1663,10 @@
             </div>
           </div>
 
-          <!-- CAMPO 6: MECÁNICA +1 Y CAPACIDAD MÁXIMA -->
-          <div class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] space-y-3.5">
-            <!-- Switch Permitir +1 -->
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="font-display text-white text-sm font-black uppercase tracking-wide block">
-                  PERMITIR +1 (ACOMPAÑANTE)
-                </span>
-                <span class="font-sans text-neutral-400 text-xs block mt-0.5">
-                  Cada invitado confirmado puede registrar un acompañante
-                </span>
-              </div>
-              
-              <button type="button" id="plusOneToggleBtn" onclick="toggleCreatePlusOne()" class="relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061]">
-                <span id="plusOneToggleCircle" class="absolute top-1 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md"></span>
-              </button>
-            </div>
-
-            <div class="h-px bg-neutral-800/80 w-full"></div>
-
-            <!-- Contador de Cupo Máximo -->
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                  CUPO MÁXIMO (LÍMITE 150)
-                </span>
-                <span class="font-sans text-neutral-400 text-xs block mt-0.5">
-                  Capacidad de admisión
-                </span>
-              </div>
-
-              <div class="flex items-center space-x-2.5">
-                <button type="button" onclick="adjustCreateCapacity(-5)" class="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold hover:bg-neutral-800 active:scale-90 transition-all focus:outline-none">
-                  -
-                </button>
-                <span id="createCapacityDisplay" class="font-display text-white text-lg font-black tracking-tight w-10 text-center">
-                  150
-                </span>
-                <button type="button" onclick="adjustCreateCapacity(5)" class="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold hover:bg-neutral-800 active:scale-90 transition-all focus:outline-none">
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. BOTÓN CTA "PUBLICAR EVENTO" -->
+          <!-- BOTÓN CTA: PUBLICAR Y OBTENER LINK DE WHATSAPP -->
           <div class="pt-2">
-            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer">
-              PUBLICAR EVENTO
+            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer">
+              [ PUBLICAR Y OBTENER LINK DE WHATSAPP ]
             </button>
 
             <!-- BOTÓN "ELIMINAR EVENTO" (SOLO EN MODO EDICIÓN) -->
@@ -2401,17 +2201,36 @@
           <div id="profilePartnerBadgeContainer" class="mt-2 flex items-center justify-center"></div>
         </div>
 
-        <!-- BLOQUE COMPACTO DE EVENTOS PARA USUARIOS FREE -->
-        <div id="profileFreeEventsContainer" class="w-full mt-3"></div>
+        <!-- 2. MÓDULO DE GESTIÓN: "MIS EVENTOS" -->
+        <div id="profileFreeEventsContainer" class="w-full mt-3">
+          <div onclick="openMyEventsModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/40 flex items-center justify-between shadow-md cursor-pointer transition-colors active:scale-[0.99] group">
+            <div class="text-left pr-2 truncate">
+              <h3 class="font-display text-white text-lg sm:text-xl font-black tracking-wide uppercase leading-tight group-hover:text-[#E87A72] transition-colors">
+                MIS EVENTOS
+              </h3>
+              <p class="font-sans text-xs text-[#9CA3AF] mt-0.5">
+                Gestiona listas y pases de puerta
+              </p>
+            </div>
+            <button
+              onclick="event.stopPropagation(); closeProfileScreen(); openCreateEventScreen();"
+              class="px-4 py-2 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-all shadow-md shrink-0 active:scale-95 cursor-pointer"
+            >
+              [ + CREAR ]
+            </button>
+          </div>
+        </div>
 
-        <!-- 3 MÉTRICAS DE GAMIFICACIÓN -->
-        <div class="grid grid-cols-3 gap-2.5 w-full mt-3">
-          <div onclick="openAttendedEventsModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
+        <!-- 3. FILA DE 3 MÉTRICAS INTERACTIVAS -->
+        <div class="grid grid-cols-3 gap-2.5 w-full mt-4">
+          <div onclick="openAttendedEventsModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
+            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
             <div class="text-xl mb-1">📅</div>
             <span id="profileAttendedCount" class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">0</span>
             <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">HISTORIAL</span>
           </div>
-          <div onclick="openStreakModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
+          <div onclick="openStreakModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
+            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
             <div class="text-xl mb-1">⏱️</div>
             <div class="flex items-center justify-center space-x-1 my-1">
               <span class="text-2xl filter drop-shadow">🔥</span>
@@ -2419,19 +2238,19 @@
             </div>
             <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">RACHA</span>
           </div>
-          <div onclick="openStoreModal()" class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95">
-            <div class="text-xl mb-1">🪙</div>
+          <div onclick="openStoreModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
+            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
+            <div class="text-xl mb-1">⭐</div>
             <span id="profilePointsCount" class="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">380</span>
-            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">PLUSCOINS</span>
+            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">PERKS</span>
           </div>
         </div>
 
-        <!-- BANNER CREA TU PRIMER EVENTO (REUBICADO DEBAJO DE MÉTRICAS) -->
-        <div id="profileCreateFirstEventBanner" class="w-full mt-4"></div>
+        <div id="profileCreateFirstEventBanner" class="hidden"></div>
 
         <!-- 4. SECCIÓN SUSCRIPCIÓN Y ACCIONES -->
-        <div id="profileFreeAccountSection" class="w-full mt-5">
-          <div class="space-y-2.5">
+        <div id="profileFreeAccountSection" class="w-full mt-4">
+          <div class="space-y-2">
             <div onclick="openSubscriptionModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
               <div class="flex items-center space-x-3.5">
                 <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">💳</div>
@@ -2452,15 +2271,16 @@
                 <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">🔗</div>
                 <div class="text-left">
                   <span class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">COMPARTIR APP</span>
-                  <span class="font-sans text-neutral-400 text-xs block">Invita a tus amigos y gana 50 Pluscoins</span>
+                  <span class="font-sans text-neutral-400 text-xs block">Invita a tus amig@s y gana +Perks</span>
                 </div>
               </div>
               <span class="text-neutral-500 font-bold text-lg">›</span>
             </div>
           </div>
 
-          <div class="mt-8 text-center pb-4">
-            <button onclick="handleLogoutHtml()" class="font-display text-xs sm:text-sm font-bold tracking-widest text-[#EF4444] uppercase hover:underline focus:outline-none cursor-pointer bg-transparent border-0">
+          <!-- 5. CIERRE DE SESIÓN -->
+          <div class="mt-6 text-center pb-4">
+            <button onclick="handleLogoutHtml()" class="text-red-400 font-sans text-xs sm:text-sm tracking-wide hover:underline focus:outline-none cursor-pointer bg-transparent border-0 uppercase">
               CERRAR SESIÓN
             </button>
           </div>
@@ -2723,7 +2543,7 @@
         </div>
 
         <h3 class="font-display text-white text-2xl font-black tracking-wide uppercase mb-2">
-          PLUSCOINS & RECOMPENSAS
+          PERKS & RECOMPENSAS
         </h3>
 
         <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800/80 mb-4">
@@ -2731,7 +2551,7 @@
             380
           </span>
           <span class="font-sans text-neutral-400 text-xs uppercase font-semibold">
-            Tus Pluscoins Disponibles
+            Tus Puntos Perks Disponibles
           </span>
         </div>
 
@@ -2745,71 +2565,28 @@
       </div>
     </div>
 
-    <!-- MODAL 4: SUSCRIPCIÓN "SOCIO +" -->
-    <div id="subscriptionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div class="w-full max-w-sm rounded-[28px] bg-[#16171B] border border-[#26282E] p-6 shadow-2xl relative text-left anim-modal-zoom">
-        <button onclick="closeSubscriptionModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer">
-          ✕
-        </button>
-
-        <!-- Cabecera: Insignia amarilla con texto negro SOCIO + -->
-        <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FAB205] text-black font-display font-black text-xs uppercase tracking-wider mb-3.5 shadow-md">
-          <span>👑</span>
-          <span>SOCIO +</span>
+    <!-- MODAL 4: HAZTE PRO (COMING SOON) -->
+    <div id="subscriptionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+      <div class="w-full max-w-xs rounded-2xl bg-[#16171B] border border-[#26282E] p-6 text-center shadow-2xl relative anim-modal-zoom flex flex-col items-center">
+        <!-- Insignia / Icono -->
+        <div class="w-12 h-12 rounded-2xl bg-[#FAB205]/15 border border-[#FAB205]/30 flex items-center justify-center text-2xl mb-4 text-[#FAB205]">
+          👑
         </div>
 
-        <!-- Precio destacado -->
-        <h3 class="font-display text-white text-3xl sm:text-4xl font-black tracking-tight uppercase leading-tight">
-          $US 9.99 / MES
+        <!-- Título principal -->
+        <h3 class="font-display text-white text-2xl font-black tracking-wider uppercase leading-tight">
+          COMING SOON
         </h3>
 
-        <!-- Público objetivo y propuesta -->
-        <p class="font-sans text-neutral-400 text-xs sm:text-sm mt-1 mb-4 leading-relaxed">
-          Diseñado para promotores, clubes y organizadores con alta afluencia de gente.
+        <!-- Micro-copy -->
+        <p class="font-sans text-[#9CA3AF] text-sm mt-2 leading-relaxed">
+          Estamos preparando las herramientas avanzadas para clubes y organizaciones.
         </p>
 
-        <!-- Vista previa de beneficios (Coming Soon) -->
-        <div class="p-4 rounded-2xl bg-black/40 border border-[#26282E] space-y-3 font-sans text-xs sm:text-sm text-neutral-300 mb-6">
-          <div class="flex items-start space-x-2.5">
-            <span class="text-[#FAB205] font-bold text-base leading-none">✦</span>
-            <span class="leading-snug">Herramientas avanzadas de gestión de puerta y staff.</span>
-          </div>
-          <div class="flex items-start space-x-2.5">
-            <span class="text-[#FAB205] font-bold text-base leading-none">✦</span>
-            <span class="leading-snug">Métricas de asistencia y rendimiento de promotores.</span>
-          </div>
-          <div class="flex items-start space-x-2.5">
-            <span class="text-[#FAB205] font-bold text-base leading-none">✦</span>
-            <span class="leading-snug">Enlaces de listas VIP y eventos sin límite de cupos.</span>
-          </div>
-        </div>
-
-        <!-- Acciones con Código de Desbloqueo ("prouser") -->
-        <div class="space-y-3 pt-2 border-t border-[#26282E]">
-          <div>
-            <label class="font-sans text-[#8E8E93] text-[11px] font-bold uppercase tracking-wider block mb-1.5 text-center">
-              CÓDIGO DE ACCESO PRO / BETA TESTER
-            </label>
-            <input
-              type="password"
-              id="partnerSecretCodeInput"
-              placeholder="Ingresa código de activación..."
-              class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#FAB205] text-white text-center font-display text-base tracking-wider placeholder:text-neutral-600 outline-none transition-colors"
-              oninput="document.getElementById('partnerSecretCodeError').classList.add('hidden')"
-            />
-            <p id="partnerSecretCodeError" class="hidden font-sans text-xs text-[#EF4444] font-bold text-center mt-2">
-              🤡 INTENTA DE NUEVO HAHAHA 
-            </p>
-          </div>
-
-          <button id="subscriptionMainBtn" onclick="handleSubscribePartnerHtml()" class="w-full h-12 sm:h-14 rounded-xl bg-[#FAB205] hover:bg-yellow-400 active:scale-98 text-black font-display font-black text-sm sm:text-base tracking-wider uppercase transition-all shadow-xl cursor-pointer flex items-center justify-center">
-            [ ACTIVAR MEMBRESÍA SOCIO + ]
-          </button>
-
-          <button onclick="closeSubscriptionModal()" class="w-full h-11 rounded-xl bg-[#101114] border border-[#26282E] text-neutral-400 hover:text-white font-display font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer">
-            VOLVER
-          </button>
-        </div>
+        <!-- Botón de Cierre tipo pastilla -->
+        <button onclick="closeSubscriptionModal()" class="w-full h-12 mt-6 rounded-full bg-[#E87A72] hover:bg-[#d66f67] active:scale-98 text-black font-display font-black text-sm tracking-wider uppercase transition-all shadow-lg cursor-pointer flex items-center justify-center">
+          [ ENTENDIDO ]
+        </button>
       </div>
     </div>
 
@@ -3826,10 +3603,10 @@
         container.innerHTML = `
           <div class="mx-4 p-4 rounded-xl bg-[#16171B]/60 border border-dashed border-[#26282E] text-center mb-4">
             <span class="font-display text-xs text-zinc-400 uppercase tracking-wider font-bold">
-              NO HAY MÁS EVENTOS PROGRAMADOS ESTA SEMANA
+              NO HAY MÁS EVENTOS PUBLICADOS ESTA SEMANA
             </span>
             <p class="font-sans text-[11px] text-zinc-500 mt-1">
-              Revisa los eventos destacados de hoy arriba
+              Revisa eventos cercanos arriba
             </p>
           </div>
         `;
@@ -5458,21 +5235,21 @@
       if (locationInput) locationInput.value = '';
       handleRemoveArtImage();
       deactivateCreateVipCutoff();
-      setCreatePrivacy('public');
-      createAccessType = 'free';
+      setCreatePrivacy('private');
+      createAccessType = 'FREE_PASS';
       createTicketPrice = '';
       const priceInput = document.getElementById('createTicketPriceInput');
       if (priceInput) priceInput.value = '';
       const priceError = document.getElementById('createTicketPriceError');
       if (priceError) priceError.classList.add('hidden');
-      renderCreateAccessTypeUI();
+      if (typeof renderCreateAccessTypeUI === 'function') renderCreateAccessTypeUI();
 
       createCapacity = 150;
       const display = document.getElementById('createCapacityDisplay');
       if (display) display.innerText = createCapacity;
       if (btn) {
-        btn.innerText = "PUBLICAR EVENTO";
-        btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[26px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
+        btn.innerText = "[ PUBLICAR Y OBTENER LINK DE WHATSAPP ]";
+        btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
         btn.removeAttribute('disabled');
       }
     }
@@ -5706,15 +5483,18 @@
       const pubBtn = document.getElementById('privacyPublicBtn');
       const privBtn = document.getElementById('privacyPrivateBtn');
       const desc = document.getElementById('privacyDescriptionText');
+      const tagsWrapper = document.getElementById('createEventTagsWrapper');
 
       if (mode === 'public') {
-        pubBtn.className = "py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow";
-        privBtn.className = "py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white";
+        pubBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer";
+        privBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer";
         if (desc) desc.innerText = "Visible para todos los usuarios en la app y cartelera.";
+        if (tagsWrapper) tagsWrapper.classList.remove('hidden');
       } else {
-        privBtn.className = "py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow";
-        pubBtn.className = "py-2 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white";
-        if (desc) desc.innerText = "Solo accesible mediante enlace de invitación directo.";
+        privBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer";
+        pubBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer";
+        if (desc) desc.innerText = "Solo accesible mediante tu enlace directo por WhatsApp";
+        if (tagsWrapper) tagsWrapper.classList.add('hidden');
       }
     }
 
@@ -5760,21 +5540,22 @@
         title: title,
         description: description,
         dressCode: dressCode,
-        accessType: createAccessType || 'free',
-        isPaid: createAccessType === 'paid',
-        ticketPrice: createAccessType === 'paid' ? Number(createTicketPrice) : 0,
-        isVip: createAccessType === 'vip' || createAccessType === 'vip_plus_one',
-        type: createPrivacyMode || 'public',
+        accessType: 'FREE_PASS',
+        isPaid: false,
+        ticketPrice: 0,
+        isVip: false,
+        type: createPrivacyMode || 'private',
         date: date,
         startTime: startTime,
         endTime: null,
         endTimestamp: calculatedEndTimestamp,
         location: location,
         coordinates: createEventCoordinates || null,
-        allowsPlusOne: createAccessType === 'vip_plus_one' || (createAccessType === 'free' && Boolean(createPlusOneEnabled)),
-        maxCapacity: createCapacity || 150,
-        tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
-        vipCutoffTime: (createVipCutoffActive && createVipCutoffTime) ? createVipCutoffTime : null,
+        allowsPlusOne: Boolean(createPlusOneEnabled),
+        guestLimit: 150,
+        maxCapacity: 150,
+        tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
+        vipCutoffTime: null,
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
         hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
         hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
@@ -5888,7 +5669,7 @@
         console.error('[+1 Firestore] Error al publicar evento:', err);
         showToast('Error al publicar evento: ' + (err.message || 'Error'));
         if (btn) {
-          btn.innerText = "PUBLICAR EVENTO";
+          btn.innerText = "[ PUBLICAR Y OBTENER LINK DE WHATSAPP ]";
           btn.removeAttribute('disabled');
         }
       }
@@ -7634,7 +7415,7 @@
     async function handleSkipOnboardingHtml() {
       const citySelect = document.getElementById('onboardingCitySelectHtml');
       const selectedCity = citySelect ? citySelect.value : 'La Paz, BO';
-      const defaultInterests = ['Reggaetón', 'Boliches & Clubs', 'Previas & Juntadas'];
+      const defaultInterests = ['reggaeton_latino', 'clubs_festivales', 'previas_juntadas'];
 
       try {
         if (fbCurrentUser && fbDb) {
@@ -8615,57 +8396,26 @@
       container.classList.remove('hidden');
 
       const bannerContainer = document.getElementById('profileCreateFirstEventBanner');
-      if (userCreatedEvents && userCreatedEvents.length > 0) {
-        if (bannerContainer) bannerContainer.innerHTML = '';
-        container.innerHTML = `
-          <div class="space-y-2">
-            ${userCreatedEvents.slice(0, 3).map(evt => `
-              <div class="w-full p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] flex items-center justify-between shadow-md">
-                <div class="flex items-center space-x-3 truncate pr-2">
-                  <span class="text-2xl shrink-0">🎪</span>
-                  <div class="truncate text-left">
-                    <h4 class="font-display text-white text-base sm:text-lg font-black tracking-wide uppercase truncate leading-tight">
-                      ${evt.title || 'EVENTO SIN TÍTULO'}
-                    </h4>
-                    <span class="font-sans text-xs text-[#9CA3AF] font-medium block mt-0.5">
-                      👥 ${evt.guestsCount || evt.confirmedCount || 0} CONFIRMADOS
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onclick="closeProfileScreen(); openCreateEventScreen('${evt.id}')"
-                  class="px-3.5 py-1.5 rounded-xl bg-[#26282E] hover:bg-neutral-800 text-white hover:text-[#E87A72] font-display text-xs font-bold tracking-wider uppercase transition-colors shadow-sm shrink-0 active:scale-95 cursor-pointer border border-neutral-700/60"
-                >
-                  EDITAR
-                </button>
-              </div>
-            `).join('')}
-            ${userCreatedEvents.length > 3 ? `
-              <button onclick="openMyEventsModal()" class="w-full py-2.5 rounded-xl bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] text-zinc-400 hover:text-white font-display text-xs font-bold tracking-wider uppercase transition-colors text-center cursor-pointer">
-                MIS EVENTOS CREADOS (${userCreatedEvents.length}) ›
-              </button>
-            ` : ''}
+      if (bannerContainer) bannerContainer.innerHTML = '';
+
+      container.innerHTML = `
+        <div onclick="openMyEventsModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/40 flex items-center justify-between shadow-md cursor-pointer transition-colors active:scale-[0.99] group">
+          <div class="text-left pr-2 truncate">
+            <h3 class="font-display text-white text-lg sm:text-xl font-black tracking-wide uppercase leading-tight group-hover:text-[#E87A72] transition-colors">
+              MIS EVENTOS
+            </h3>
+            <p class="font-sans text-xs text-[#9CA3AF] mt-0.5">
+              Gestiona listas y pases de puerta
+            </p>
           </div>
-        `;
-      } else {
-        container.innerHTML = '';
-        if (bannerContainer) {
-          bannerContainer.innerHTML = `
-            <div onclick="handleCreateEventWithPhoneCheck()" class="w-full p-4 rounded-2xl bg-[#16171B]/50 border border-dashed border-[#26282E] hover:border-[#E87A72]/40 flex flex-col items-center justify-center text-center shadow-sm cursor-pointer transition-colors">
-              <span class="text-xl mb-1.5">🥳</span>
-              <p class="font-sans text-xs sm:text-sm text-neutral-300 font-medium tracking-wide uppercase mb-3 max-w-[280px]">
-                ¿ORGANIZAS UN EVENTO, CONFERENCIA O JUNTE? CREA TU PRIMER EVENTO
-              </p>
-              <button
-                onclick="event.stopPropagation(); handleCreateEventWithPhoneCheck()"
-                class="py-2.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md cursor-pointer"
-              >
-                [ + CREAR EVENTO ]
-              </button>
-            </div>
-          `;
-        }
-      }
+          <button
+            onclick="event.stopPropagation(); closeProfileScreen(); openCreateEventScreen();"
+            class="px-4 py-2 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-all shadow-md shrink-0 active:scale-95 cursor-pointer"
+          >
+            [ + CREAR ]
+          </button>
+        </div>
+      `;
     }
 
     function openPlansBenefitsModal() {
@@ -10160,8 +9910,46 @@
       document.getElementById('inviteDateText').innerText = currentInviteData.dateDisplay;
       document.getElementById('inviteTimeText').innerText = currentInviteData.timeRange;
       document.getElementById('inviteVenueText').innerText = currentInviteData.venueName;
-      document.getElementById('inviteDescriptionText').innerText = currentInviteData.description;
-      document.getElementById('inviteAttendeesText').innerText = currentInviteData.confirmedCount + " amigos confirmados";
+
+      // Imagen flyer dinámica o placeholder editorial +1
+      const flyerImgEl = document.getElementById('inviteFlyerImg');
+      const flyerPlaceholderEl = document.getElementById('inviteFlyerPlaceholder');
+      if (flyerImgEl && flyerPlaceholderEl) {
+        if (currentInviteData.flyerImage || currentInviteData.imageUrl) {
+          flyerImgEl.src = currentInviteData.flyerImage || currentInviteData.imageUrl;
+          flyerImgEl.alt = currentInviteData.title;
+          flyerImgEl.classList.remove('hidden');
+          flyerPlaceholderEl.classList.add('hidden');
+        } else {
+          flyerImgEl.src = '';
+          flyerImgEl.classList.add('hidden');
+          flyerPlaceholderEl.classList.remove('hidden');
+        }
+      }
+
+      // Descripción (solo si existe)
+      const descEl = document.getElementById('inviteDescriptionText');
+      if (descEl) {
+        if (currentInviteData.description && currentInviteData.description.trim()) {
+          descEl.innerText = currentInviteData.description;
+          descEl.classList.remove('hidden');
+        } else {
+          descEl.innerText = '';
+          descEl.classList.add('hidden');
+        }
+      }
+
+      // Selector de acompañante (+1)
+      const plusOneSection = document.getElementById('invitePlusOneSection');
+      if (plusOneSection) {
+        if (currentInviteData.allowsPlusOne === false) {
+          plusOneSection.classList.add('hidden');
+        } else {
+          plusOneSection.classList.remove('hidden');
+        }
+      }
+
+      document.getElementById('inviteAttendeesText').innerText = currentInviteData.confirmedCount + " confirmados";
       document.getElementById('inviteExactAddressText').innerText = currentInviteData.exactAddress;
       document.getElementById('ticketExactAddressDisplay').innerText = currentInviteData.exactAddress;
 
@@ -10324,7 +10112,7 @@
       inviteHasConfirmed = true;
       document.getElementById('inviteLocationLocked').classList.add('hidden');
       document.getElementById('inviteLocationUnlocked').classList.remove('hidden');
-      document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " amigos confirmados";
+      document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " confirmados";
       switchInviteView('ticket');
       updateInviteTicketQr(currentInviteData.id);
       showToast('¡Asistencia confirmada! Pase QR generado');
