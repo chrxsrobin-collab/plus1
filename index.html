@@ -6171,17 +6171,33 @@
     // CATÁLOGO DE PLANTILLAS DE ARTE PREDEFINIDAS (+1)
     // ====================================================
     const TEMPLATE_CATEGORIES = [
+      { id: 'art', label: 'Arte / Teatro', path: './assets/images/templates/art/' },
+      { id: 'clubs', label: 'Clubs / Festivales', path: './assets/images/templates/clubs/' },
+      { id: 'electronic', label: 'Electrónica / Techno', path: './assets/images/templates/electronic/' },
       { id: 'previas', label: 'Previas / Juntadas', path: './assets/images/templates/previas/' },
       { id: 'reggaeton', label: 'Reggaeton / Latino', path: './assets/images/templates/reggaeton/' },
-      { id: 'electronic', label: 'Electrónica / Techno', path: './assets/images/templates/electronic/' },
-      { id: 'clubs', label: 'Clubs / Festivales', path: './assets/images/templates/clubs/' },
-      { id: 'art', label: 'Arte / Teatro', path: './assets/images/templates/art/' },
       { id: 'sports', label: 'Deportes / Salud', path: './assets/images/templates/sports/' },
     ];
 
     let currentTemplateCategory = 'previas';
 
-    const getCategoryImages = (basePath) => [1, 2, 3, 4, 5, 6].map(i => `${basePath}${i}.webp`);
+    const getCategoryImages = (categoryPath) => {
+      return [1, 2, 3, 4, 5, 6].map(i => `${categoryPath}${i}.webp`);
+    };
+
+    function handleTemplateImgError(img) {
+      if (!img) return;
+      const currentSrc = img.src || img.getAttribute('src') || '';
+      if (currentSrc.includes('.webp')) {
+        img.src = currentSrc.replace('.webp', '.jpg');
+      } else if (currentSrc.includes('.jpg')) {
+        img.src = currentSrc.replace('.jpg', '.jpeg');
+      } else if (currentSrc.includes('.jpeg')) {
+        img.src = currentSrc.replace('.jpeg', '.png');
+      } else {
+        img.onerror = null;
+      }
+    }
 
     function openTemplateSelectorModal() {
       const modal = document.getElementById('templateSelectorModal');
@@ -6233,7 +6249,7 @@
 
       container.innerHTML = images.map((imgUrl, idx) => `
         <div
-          onclick="selectTemplateArt('${imgUrl}')"
+          onclick="selectTemplateArt(this.querySelector('img') ? this.querySelector('img').src : '${imgUrl}')"
           class="aspect-square rounded-2xl overflow-hidden border border-[#26282E] hover:border-[#E87A72] relative cursor-pointer group bg-[#16171B] shadow-md transition-all active:scale-95"
         >
           <img
@@ -6241,7 +6257,7 @@
             alt="Plantilla ${idx + 1}"
             loading="lazy"
             class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
-            onerror="this.onerror=null; this.src='${imgUrl.replace('.webp', '.jpg')}';"
+            onerror="handleTemplateImgError(this)"
           />
           <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <span class="px-3 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[11px] font-display font-bold uppercase text-white tracking-wider">
