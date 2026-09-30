@@ -241,13 +241,13 @@
         </div>
       </main>
 
-      <!-- NUEVA SECCIÓN: "EVENTOS ESTA SEMANA" (AGENDA CRONOLÓGICA) -->
+      <!-- SECCIÓN: "EVENTOS PRÓXIMOS PARA TI" (AGENDA CRONOLÓGICA) -->
       <section id="thisWeekEventsSection" class="w-full flex flex-col mt-4">
-        <!-- 1. Encabezado de Sección Brutalista -->
-        <div class="w-full flex items-center justify-between mt-6 mb-3 px-4">
+        <!-- 1. Encabezado de Sección Brutalista (Pastilla negra desde el borde izquierdo) -->
+        <div class="w-full flex items-center justify-between mt-6 mb-3 pl-0 pr-4">
           <div class="bg-black rounded-none pl-5 pr-5 py-2 inline-flex items-center">
             <span class="font-display text-base text-white tracking-widest uppercase">
-              EVENTOS ESTA SEMANA
+              EVENTOS PRÓXIMOS PARA TI
             </span>
           </div>
           <button type="button" onclick="openSearchEventsModal()" aria-label="Buscar eventos" class="bg-[#16171B] border border-[#26282E] p-2 rounded-full hover:border-[#E87A72] transition-colors flex items-center justify-center text-[#E87A72] active:scale-95 cursor-pointer shadow-sm">
@@ -968,8 +968,8 @@
             <!-- Acciones del ticket -->
             <div class="space-y-2 pt-1">
               <button type="button" onclick="downloadInviteTicket()" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-neutral-100 text-black font-display text-xs sm:text-sm font-black tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-md cursor-pointer">
-                <span>📸</span>
-                <span>GUARDAR COPIA EN FOTOS</span>
+                <span>⬇️</span>
+                <span>GUARDAR COPIA EN MI GALERÍA</span>
               </button>
               <div class="grid grid-cols-2 gap-2">
                 <button type="button" onclick="addInviteToCalendar()" class="py-2.5 px-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-display text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 transition-colors border border-neutral-700 cursor-pointer">
@@ -1345,11 +1345,11 @@
           </div>
         </main>
 
-        <!-- 4. ACCIÓN INFERIOR: GUARDAR COPIA EN FOTOS -->
+        <!-- 4. ACCIÓN INFERIOR: GUARDAR COPIA EN MI GALERÍA -->
         <div class="w-full pt-1 pb-2 flex justify-center">
           <button onclick="downloadPassQr()" class="w-full max-w-[316px] py-3.5 px-6 rounded-2xl bg-white hover:bg-neutral-100 text-black font-display text-sm sm:text-base font-black tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-95 focus:outline-none cursor-pointer mb-2">
             <span class="text-base leading-none">⬇️</span>
-            <span>GUARDAR COPIA EN FOTOS</span>
+            <span>GUARDAR COPIA EN MI GALERÍA</span>
           </button>
         </div>
 
@@ -1528,33 +1528,76 @@
             <input type="text" id="createEventNameInput" placeholder="Ej. Sunset Party 🔥" class="w-full h-12 px-4 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors" />
           </div>
 
-          <!-- CAMPO 3: DESCRIPCIÓN DEL EVENTO (MÁXIMO 500 CARACTERES) -->
+          <!-- CAMPO 3: FECHA Y HORA (TARJETA UNIFICADA TIMELINE ESTILO LUMA) -->
           <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                DESCRIPCIÓN DEL EVENTO
-              </label>
-              <span id="createEventDescCounter" class="font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]">
-                0/500
-              </span>
-            </div>
-            <textarea id="createEventDescInput" rows="3" maxlength="500" oninput="handleCreateEventDescInput(this)" placeholder="Detalles, line up, dress code, etc..." class="w-full p-3 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"></textarea>
-          </div>
+            <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+              FECHA Y HORA
+            </label>
 
-          <!-- CAMPO 3: FECHA Y HORA DE INICIO (2 COLUMNAS ALINEADAS) -->
-          <div class="w-full max-w-full min-w-0 grid grid-cols-2 gap-2.5 box-border">
-            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
-                FECHA
-              </label>
-              <input type="date" id="createEventDateInput" value="2026-09-20" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
-            </div>
+            <!-- Inputs ocultos para persistencia y compatibilidad -->
+            <input type="hidden" id="createEventDateInput" value="" />
+            <input type="hidden" id="createEventStartTimeInput" value="" />
+            <input type="hidden" id="createEventEndDateInput" value="" />
+            <input type="hidden" id="createEventEndTimeInput" value="" />
 
-            <div class="w-full min-w-0 max-w-full space-y-1.5 box-border">
-              <label class="font-display text-white text-xs font-bold tracking-wider uppercase block truncate">
-                HORA DE INICIO
-              </label>
-              <input type="time" id="createEventStartTimeInput" value="21:00" class="w-full min-w-0 max-w-full h-11 px-2.5 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-xs text-center outline-none transition-colors box-border" />
+            <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl overflow-hidden shadow-none flex">
+              <!-- Indicador de Línea de Tiempo Lateral (Timeline Connector) -->
+              <div class="flex flex-col items-center justify-between py-4 pl-4 pr-1.5 select-none">
+                <!-- Punto de Inicio: Círculo sólido -->
+                <div class="w-2.5 h-2.5 rounded-full bg-[#E87A72] shrink-0 mt-0.5"></div>
+                <!-- Línea conectora vertical -->
+                <div class="w-[1.5px] bg-[#26282E] flex-1 my-1.5"></div>
+                <!-- Punto de Cierre: Círculo con borde o aro abierto -->
+                <div class="w-2.5 h-2.5 rounded-full border border-[#8E8E93] bg-transparent shrink-0 mb-0.5"></div>
+              </div>
+
+              <!-- Contenedor de Filas Divididas Horizontalmente -->
+              <div class="flex-1 flex flex-col min-w-0">
+                <!-- Fila 1: Inicio (Start) -->
+                <div
+                  onclick="openTimelinePickerModal('start')"
+                  role="button"
+                  tabindex="0"
+                  class="w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none"
+                >
+                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                    Inicio
+                  </span>
+
+                  <div class="flex items-center gap-1.5 pl-2 min-w-0">
+                    <span id="timelineStartDateDisplay" class="font-sans text-xs sm:text-sm font-semibold text-white tracking-wide text-right truncate">
+                      Definir inicio
+                    </span>
+                    <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors text-xs font-bold shrink-0">
+                      ›
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Línea divisoria sutil -->
+                <div class="w-full border-t border-[#26282E]"></div>
+
+                <!-- Fila 2: Cierre (End / Finalización) -->
+                <div
+                  onclick="openTimelinePickerModal('end')"
+                  role="button"
+                  tabindex="0"
+                  class="w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none"
+                >
+                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                    Cierre
+                  </span>
+
+                  <div class="flex items-center gap-1.5 pl-2 min-w-0">
+                    <span id="timelineEndDateDisplay" class="font-sans text-xs sm:text-sm font-semibold text-white tracking-wide text-right truncate">
+                      Definir cierre
+                    </span>
+                    <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors text-xs font-bold shrink-0">
+                      ›
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1606,34 +1649,74 @@
             </div>
           </div>
 
-          <!-- CAMPO 5: PERMITIR ACOMPAÑANTE (+1) (INMEDIATAMENTE TRAS FECHA, HORA Y UBICACIÓN) -->
+          <!-- CAMPO 5: DESCRIPCIÓN DEL PLAN (REUBICADO INMEDIATAMENTE TRAS LUGAR/UBICACIÓN) -->
+          <div class="space-y-1.5">
+            <label class="font-sans text-[#8E8E93] text-xs font-semibold tracking-wider uppercase block">
+              DESCRIPCIÓN DEL PLAN
+            </label>
+            <div class="relative">
+              <textarea
+                id="createEventDescInput"
+                rows="3"
+                maxlength="100"
+                oninput="handleCreateEventDescInput(this)"
+                placeholder="De qué va la fiesta, promos o vibe general..."
+                class="w-full p-3.5 pb-7 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"
+              ></textarea>
+              <span
+                id="createEventDescCounter"
+                class="absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93] pointer-events-none"
+              >
+                0/100
+              </span>
+            </div>
+          </div>
+
+          <!-- CAMPO 6: PERMITIR ACOMPAÑANTE (+1) -->
           <div class="p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E]">
             <div class="flex items-center justify-between">
               <div>
                 <span class="font-display text-white text-sm font-black uppercase tracking-wide block">
                   PERMITIR ACOMPAÑANTE (+1)
                 </span>
-                <span class="font-sans text-neutral-400 text-xs block mt-0.5">
-                  Cada invitado confirmado podrá reclamar un pase adicional.
+                <span id="plusOneSubtext" class="font-sans text-neutral-400 text-xs block mt-0.5">
+                  Cada invitado confirmado obtendrá pase QR bipersonal
                 </span>
               </div>
               
-              <button type="button" id="plusOneToggleBtn" onclick="toggleCreatePlusOne()" class="relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061] cursor-pointer">
+              <button type="button" id="plusOneToggleBtn" onclick="toggleCreatePlusOne()" class="relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061] cursor-pointer" aria-label="Permitir acompañante">
                 <span id="plusOneToggleCircle" class="absolute top-1 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md"></span>
               </button>
             </div>
           </div>
 
-          <!-- CAMPO 6: PRIVACIDAD DEL EVENTO (SEGMENTED SELECTOR - DEFAULT: PRIVADO) -->
+          <!-- CAMPO 7: PRIVACIDAD DEL EVENTO (SEGMENTED SELECTOR PREMIUM CON ANIMACIÓN SUAVE) -->
           <div class="space-y-1.5">
             <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
               PRIVACIDAD
             </label>
-            <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#16171B] border border-[#26282E]">
-              <button type="button" id="privacyPrivateBtn" onclick="setCreatePrivacy('private')" class="py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer">
+            <div class="relative flex items-center p-1 rounded-xl bg-[#16171B] border border-[#26282E] select-none">
+              <!-- Indicador deslizante (Pill) con animación fluida -->
+              <div
+                id="privacyPillIndicator"
+                class="absolute inset-y-1 w-[calc(50%-4px)] rounded-lg bg-white shadow-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none left-1"
+                style="transform: translateX(100%);"
+              ></div>
+              
+              <button
+                type="button"
+                id="privacyPrivateBtn"
+                onclick="setCreatePrivacy('private')"
+                class="relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-neutral-400 hover:text-white cursor-pointer"
+              >
                 PRIVADO
               </button>
-              <button type="button" id="privacyPublicBtn" onclick="setCreatePrivacy('public')" class="py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer">
+              <button
+                type="button"
+                id="privacyPublicBtn"
+                onclick="setCreatePrivacy('public')"
+                class="relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-black cursor-pointer"
+              >
                 PÚBLICO
               </button>
             </div>
@@ -1642,46 +1725,94 @@
             </p>
           </div>
 
-          <!-- CAMPO 7: VIBE / GÉNERO DEL EVENTO (CONDICIONADO A PRIVACIDAD PÚBLICA) -->
-          <div id="createEventTagsWrapper" class="space-y-1.5 hidden">
+          <!-- CAMPO 8: VIBE / GÉNERO DEL EVENTO (DESPLAZA SUAVEMENTE LA CAPACIDAD AL EXPANDIRSE) -->
+          <div
+            id="createEventTagsWrapper"
+            class="overflow-hidden transition-all duration-300 ease-out"
+            style="max-height: 400px; opacity: 1; pointer-events: auto; margin-top: 0.75rem;"
+          >
+            <div class="space-y-1.5" id="createEventTagsInner">
+              <div class="flex items-center justify-between">
+                <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
+                  VIBE / GÉNERO DEL EVENTO
+                </label>
+                <span
+                  id="createEventTagsCounter"
+                  class="font-sans text-xs font-bold transition-colors text-[#8E8E93]"
+                >
+                  (0/3 seleccionados)
+                </span>
+              </div>
+              <p class="font-sans text-xs text-[#8E8E93] px-1 leading-snug">
+                Elige hasta 3 categorías para recomendar tu evento a las personas indicadas.
+              </p>
+              <div class="grid grid-cols-2 gap-2 pt-1" id="createEventTagsContainer">
+                <button type="button" onclick="toggleCreateEventTagHtml('reggaeton_latino')" id="createTag_reggaeton_latino" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🍑</span>
+                  <span class="truncate">Reggaeton / Latino</span>
+                </button>
+                <button type="button" onclick="toggleCreateEventTagHtml('electronica_techno')" id="createTag_electronica_techno" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🎧</span>
+                  <span class="truncate">Electrónica / Techno</span>
+                </button>
+                <button type="button" onclick="toggleCreateEventTagHtml('previas_juntadas')" id="createTag_previas_juntadas" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🍻</span>
+                  <span class="truncate">Previas / Juntadas</span>
+                </button>
+                <button type="button" onclick="toggleCreateEventTagHtml('clubs_djs')" id="createTag_clubs_djs" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🪩</span>
+                  <span class="truncate">Clubs / DJs</span>
+                </button>
+                <button type="button" onclick="toggleCreateEventTagHtml('arte_teatro')" id="createTag_arte_teatro" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🎭</span>
+                  <span class="truncate">Arte / Teatro</span>
+                </button>
+                <button type="button" onclick="toggleCreateEventTagHtml('salud_fitness')" id="createTag_salud_fitness" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                  <span class="text-base shrink-0">🏃</span>
+                  <span class="truncate">Salud / Fitness</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAMPO 9: CAPACIDAD DE INVITADOS (DESPLAZADO SUAVEMENTE POR VIBE) -->
+          <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <label class="font-display text-white text-xs font-bold tracking-wider uppercase block">
-                VIBE / GÉNERO DEL EVENTO
+                CAPACIDAD DE INVITADOS
               </label>
+              <!-- Aviso dinámico: SOLO aparece cuando se intenta agregar más de 150 -->
               <span
-                id="createEventTagsCounter"
-                class="font-sans text-xs font-bold transition-colors text-[#8E8E93]"
+                id="createCapacityWarning"
+                class="font-sans text-[11px] font-bold text-[#E87A72] transition-opacity duration-300 opacity-0 pointer-events-none"
               >
-                (0/3 elegidas)
+                Máximo permitido: 150 personas
               </span>
             </div>
-            <p class="font-sans text-xs text-[#8E8E93] px-1 leading-snug">
-              Elige hasta 3 etiquetas para recomendar tu evento a las personas indicadas
-            </p>
-            <div class="flex flex-wrap gap-2 pt-2" id="createEventTagsContainer">
-              <button type="button" onclick="toggleCreateEventTagHtml('reggaeton')" id="createTag_reggaeton" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Reggaetón 🍑
+
+            <div id="createCapacityBox" class="h-14 px-4 rounded-xl bg-[#16171B] border border-[#26282E] flex items-center justify-between transition-all duration-200">
+              <button
+                type="button"
+                onclick="adjustCreateCapacity(-10)"
+                class="w-10 h-10 rounded-lg bg-[#22242A] hover:bg-[#2C2E35] border border-[#26282E] text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer text-lg select-none"
+                aria-label="Reducir capacidad"
+              >
+                −
               </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('techno')" id="createTag_techno" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Electrónica / Techno 🎧
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('rock_indie')" id="createTag_rock_indie" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Live Rock & Indie 🎸
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('previas')" id="createTag_previas" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Previas & Juntadas 🍻
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('boliches')" id="createTag_boliches" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Boliches & Clubs 🪩
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('arte_cocktails')" id="createTag_arte_cocktails" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Arte & Cocktails 🎨
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('festivales')" id="createTag_festivales" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Festivales & Open Air ⚡
-              </button>
-              <button type="button" onclick="toggleCreateEventTagHtml('deportes_salud')" id="createTag_deportes_salud" class="py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95">
-                Deportes & Salud 🏃‍♂️
+              
+              <div class="flex items-center justify-center select-none">
+                <span id="createCapacityDisplay" class="font-display text-white text-2xl font-black tabular-nums">
+                  100
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onclick="adjustCreateCapacity(10)"
+                class="w-10 h-10 rounded-lg bg-[#22242A] hover:bg-[#2C2E35] border border-[#26282E] text-white font-bold flex items-center justify-center transition-all active:scale-90 cursor-pointer text-lg select-none"
+                aria-label="Aumentar capacidad"
+              >
+                +
               </button>
             </div>
           </div>
@@ -1873,6 +2004,109 @@
           <!-- Botón Inferior de Cierre -->
           <button id="shareEventBottomBtn" type="button" onclick="closeShareEventModal()" class="w-full py-2 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer mt-0.5">
             CERRAR
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL SELECTOR DE FECHA Y HORA (TIMELINE LUMA STYLE) -->
+    <div id="timelinePickerModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="bg-[#16171B] border border-[#26282E] rounded-3xl max-w-sm w-full p-5 shadow-2xl relative anim-modal-zoom flex flex-col space-y-4">
+        <!-- 1. Encabezado -->
+        <div class="flex items-center justify-between pb-2 border-b border-[#26282E]">
+          <div class="flex items-center space-x-2.5">
+            <div id="timelineModalDot" class="w-3 h-3 rounded-full bg-[#E87A72]"></div>
+            <h3 id="timelineModalTitle" class="font-display text-white text-base sm:text-lg font-black tracking-wider uppercase">
+              FECHA Y HORA DE INICIO
+            </h3>
+          </div>
+          <button
+            type="button"
+            onclick="closeTimelinePickerModal()"
+            class="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer text-xs"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- 2. Subtítulo -->
+        <p id="timelineModalSubtitle" class="font-sans text-xs text-[#8E8E93] leading-relaxed">
+          Define cuándo comienza tu evento para los invitados.
+        </p>
+
+        <!-- 3. Campos de Fecha y Hora -->
+        <div class="space-y-3 py-1">
+          <!-- Fecha -->
+          <div class="space-y-1.5">
+            <label class="font-display text-[#8E8E93] text-[11px] font-bold tracking-wider uppercase block">
+              FECHA
+            </label>
+            <input
+              type="date"
+              id="timelineModalDateInput"
+              class="w-full h-12 px-3.5 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors cursor-pointer"
+            />
+          </div>
+
+          <!-- Hora -->
+          <div class="space-y-1.5">
+            <label class="font-display text-[#8E8E93] text-[11px] font-bold tracking-wider uppercase block">
+              HORA
+            </label>
+            <input
+              type="time"
+              id="timelineModalTimeInput"
+              class="w-full h-12 px-3.5 rounded-xl bg-[#101114] border border-[#26282E] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors cursor-pointer"
+            />
+          </div>
+
+          <!-- Sugerencias rápidas para Cierre -->
+          <div id="timelineModalPresetsContainer" class="pt-1 hidden">
+            <span class="font-sans text-[11px] text-[#8E8E93] block mb-1.5 font-medium">
+              Horas habituales de cierre:
+            </span>
+            <div class="grid grid-cols-4 gap-1.5">
+              <button
+                type="button"
+                onclick="setTimelineTimePreset('02:00')"
+                class="timeline-preset-btn py-1.5 px-2 rounded-lg font-sans text-xs font-semibold border transition-all cursor-pointer bg-neutral-900 border-[#26282E] text-zinc-400 hover:text-white"
+              >
+                02:00 AM
+              </button>
+              <button
+                type="button"
+                onclick="setTimelineTimePreset('04:00')"
+                class="timeline-preset-btn py-1.5 px-2 rounded-lg font-sans text-xs font-semibold border transition-all cursor-pointer bg-neutral-900 border-[#26282E] text-zinc-400 hover:text-white"
+              >
+                04:00 AM
+              </button>
+              <button
+                type="button"
+                onclick="setTimelineTimePreset('05:00')"
+                class="timeline-preset-btn py-1.5 px-2 rounded-lg font-sans text-xs font-semibold border transition-all cursor-pointer bg-neutral-900 border-[#26282E] text-zinc-400 hover:text-white"
+              >
+                05:00 AM
+              </button>
+              <button
+                type="button"
+                onclick="setTimelineTimePreset('06:00')"
+                class="timeline-preset-btn py-1.5 px-2 rounded-lg font-sans text-xs font-semibold border transition-all cursor-pointer bg-neutral-900 border-[#26282E] text-zinc-400 hover:text-white"
+              >
+                06:00 AM
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Botón de Confirmación -->
+        <div class="pt-2 flex flex-col gap-2">
+          <button
+            type="button"
+            onclick="confirmTimelinePickerModal()"
+            class="w-full py-3.5 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-sm font-black tracking-wider uppercase transition-all shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>CONFIRMAR</span>
+            <span class="text-base leading-none">✓</span>
           </button>
         </div>
       </div>
@@ -3678,7 +3912,7 @@
         container.innerHTML = `
           <div class="mx-4 py-3 px-4 rounded-xl bg-[#16171B]/60 border border-dashed border-[#26282E] text-center mb-2 flex items-center justify-center">
             <span class="font-display text-[11px] sm:text-xs text-zinc-400 uppercase tracking-wider font-bold truncate">
-              ✦ NO HAY MÁS EVENTOS PUBLICADOS ESTA SEMANA · EXPLORA LOS DE ARRIBA
+              ✦ NO HAY MÁS EVENTOS PRÓXIMOS PUBLICADOS · EXPLORA LOS DE ARRIBA
             </span>
           </div>
         `;
@@ -4715,7 +4949,7 @@
                 NO TIENES PASES ACTIVOS
               </h3>
               <p class="font-sans text-[#9CA3AF] text-xs sm:text-sm leading-relaxed max-w-[280px] mb-6">
-                Cuando un anfitrión apruebe tu solicitud VIP o confirmes asistencia a un evento, tu ticket QR aparecerá aquí listo para entrar.
+                Cuando un anfitrión apruebe tu solicitud, tu pase QR aparecerá aquí listo para entrar.
               </p>
               <button onclick="closePassScreen(); handleNavigation('/home');" class="py-3 px-6 rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs sm:text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer flex items-center space-x-2">
                 <span>EXPLORAR EVENTOS</span>
@@ -4960,10 +5194,10 @@
       const tickets = document.querySelectorAll('.cf-ticket');
       const activeTicketEl = tickets[currentTicketIndex] || document.querySelector('.cf-ticket');
       if (!activeTicketEl) {
-        showToast('Pase guardado en Fotos');
+        showToast('No tienes tickets activos para guardar');
         return;
       }
-      showToast('Guardando pase en Fotos...');
+      showToast('Guardando pase en Galería...');
       try {
         if (typeof window.html2canvas === 'undefined') {
           await new Promise((resolve, reject) => {
@@ -4992,10 +5226,10 @@
         link.click();
         document.body.removeChild(link);
 
-        showToast('Pase guardado en Fotos ✓');
+        showToast('Pase guardado en Galería ✓');
       } catch (e) {
         console.warn('Error guardando pase:', e);
-        showToast('Pase guardado en Fotos ✓');
+        showToast('Pase guardado en Galería ✓');
       }
     }
 
@@ -5159,24 +5393,165 @@
     let createEventSelectedTags = [];
 
     const AVAILABLE_CATEGORIES = [
-      { id: "reggaeton", label: "Reggaetón 🍑" },
-      { id: "techno", label: "Electrónica / Techno 🎧" },
-      { id: "rock_indie", label: "Live Rock & Indie 🎸" },      // Antes: Indie & Live Rock
-      { id: "previas", label: "Previas & Juntadas 🍻" },
-      { id: "boliches", label: "Boliches & Clubs 🪩" },
-      { id: "arte_cocktails", label: "Arte & Cocktails 🎨" },   // Antes: Cocktails & Lounges
-      { id: "festivales", label: "Festivales & Open Air ⚡" },
-      { id: "deportes_salud", label: "Deportes & Salud 🏃‍♂️" },  // Antes: VIP & Rooftops
+      { id: "reggaeton_latino", label: "Reggaeton / Latino", emoji: "🍑" },
+      { id: "electronica_techno", label: "Electrónica / Techno", emoji: "🎧" },
+      { id: "previas_juntadas", label: "Previas / Juntadas", emoji: "🍻" },
+      { id: "clubs_djs", label: "Clubs / DJs", emoji: "🪩", legacyId: "clubs_festivales" },
+      { id: "arte_teatro", label: "Arte / Teatro", emoji: "🎭" },
+      { id: "salud_fitness", label: "Salud / Fitness", emoji: "🏃", legacyId: "deportes_salud" },
     ];
     const CREATE_EVENT_AVAILABLE_TAGS = AVAILABLE_CATEGORIES;
 
-    function toggleCreateEventTagHtml(tagId) {
+    // Timeline Luma Component State & Helpers
+    let activeTimelineMode = 'start';
+    let createEventDate = '';
+    let createEventStartTime = '22:00';
+    let createEventEndDate = '';
+    let createEventEndTime = '04:00';
+
+    function formatTimelineDate(dateStr, timeStr, fallback = 'Definir inicio') {
+      if (!dateStr && !timeStr) return fallback;
+      let datePart = '';
+      if (dateStr) {
+        const parts = String(dateStr).split('T')[0].trim().split('-');
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10) - 1;
+          const d = parseInt(parts[2], 10);
+          const dt = new Date(y, m, d);
+          const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+          const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+          datePart = `${days[dt.getDay()]}, ${d < 10 ? '0' + d : d} ${months[m]}`;
+        } else {
+          datePart = dateStr;
+        }
+      }
+
+      let timePart = '';
+      if (timeStr) {
+        timePart = formatVipCutoffDisplay(timeStr);
+      }
+
+      if (datePart && timePart) {
+        return `${datePart} · ${timePart}`;
+      }
+      return datePart || timePart || fallback;
+    }
+
+    function formatTimelineEndDate(startDateStr, endDateStr, endTimeStr, fallback = 'Definir cierre') {
+      if (!endTimeStr && !endDateStr) return fallback;
+      const isDifferentDate = Boolean(endDateStr && startDateStr && endDateStr.trim() !== startDateStr.trim());
+      if (isDifferentDate) {
+        return formatTimelineDate(endDateStr, endTimeStr, fallback);
+      }
+      if (endTimeStr) {
+        return formatVipCutoffDisplay(endTimeStr);
+      }
+      return formatTimelineDate(endDateStr, undefined, fallback);
+    }
+
+    function updateTimelineUI() {
+      const startDisplay = document.getElementById('timelineStartDateDisplay');
+      const endDisplay = document.getElementById('timelineEndDateDisplay');
+      const dateInp = document.getElementById('createEventDateInput');
+      const startInp = document.getElementById('createEventStartTimeInput');
+      const endDateInp = document.getElementById('createEventEndDateInput');
+      const endInp = document.getElementById('createEventEndTimeInput');
+
+      if (startDisplay) {
+        startDisplay.innerText = formatTimelineDate(createEventDate, createEventStartTime, 'Definir inicio');
+      }
+      if (endDisplay) {
+        endDisplay.innerText = formatTimelineEndDate(createEventDate, createEventEndDate, createEventEndTime, 'Definir cierre');
+      }
+      if (dateInp) dateInp.value = createEventDate;
+      if (startInp) startInp.value = createEventStartTime;
+      if (endDateInp) endDateInp.value = createEventEndDate || createEventDate;
+      if (endInp) endInp.value = createEventEndTime;
+    }
+
+    function openTimelinePickerModal(mode) {
+      activeTimelineMode = mode;
+      const modal = document.getElementById('timelinePickerModal');
+      const title = document.getElementById('timelineModalTitle');
+      const subtitle = document.getElementById('timelineModalSubtitle');
+      const dot = document.getElementById('timelineModalDot');
+      const dateInput = document.getElementById('timelineModalDateInput');
+      const timeInput = document.getElementById('timelineModalTimeInput');
+      const presets = document.getElementById('timelineModalPresetsContainer');
+
+      if (!createEventDate) {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        createEventDate = `${y}-${m}-${d}`;
+      }
+      if (!createEventEndDate) {
+        createEventEndDate = createEventDate;
+      }
+
+      if (mode === 'start') {
+        if (title) title.innerText = 'FECHA Y HORA DE INICIO';
+        if (subtitle) subtitle.innerText = 'Define cuándo comienza tu evento para los invitados.';
+        if (dot) dot.className = 'w-3 h-3 rounded-full bg-[#E87A72]';
+        if (dateInput) dateInput.value = createEventDate;
+        if (timeInput) timeInput.value = createEventStartTime || '22:00';
+        if (presets) presets.classList.add('hidden');
+      } else {
+        if (title) title.innerText = 'FECHA Y HORA DE CIERRE';
+        if (subtitle) subtitle.innerText = 'Define el horario de finalización o cierre del evento.';
+        if (dot) dot.className = 'w-3 h-3 rounded-full border-2 border-[#8E8E93] bg-transparent';
+        if (dateInput) dateInput.value = createEventEndDate || createEventDate;
+        if (timeInput) timeInput.value = createEventEndTime || '04:00';
+        if (presets) presets.classList.remove('hidden');
+      }
+
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeTimelinePickerModal() {
+      const modal = document.getElementById('timelinePickerModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setTimelineTimePreset(preset) {
+      const timeInput = document.getElementById('timelineModalTimeInput');
+      if (timeInput) timeInput.value = preset;
+    }
+
+    function confirmTimelinePickerModal() {
+      const dateInput = document.getElementById('timelineModalDateInput');
+      const timeInput = document.getElementById('timelineModalTimeInput');
+      const dVal = dateInput ? dateInput.value : '';
+      const tVal = timeInput ? timeInput.value : '';
+
+      if (activeTimelineMode === 'start') {
+        createEventDate = dVal;
+        createEventStartTime = tVal;
+        if (!createEventEndDate) {
+          createEventEndDate = dVal;
+        }
+      } else {
+        createEventEndDate = dVal || createEventDate;
+        createEventEndTime = tVal;
+      }
+
+      updateTimelineUI();
+      closeTimelinePickerModal();
+    }
+
+    function toggleCreateEventTagHtml(rawTagId) {
+      let tagId = rawTagId;
+      if (tagId === 'clubs_festivales') tagId = 'clubs_djs';
+      if (tagId === 'deportes_salud') tagId = 'salud_fitness';
+
       const idx = createEventSelectedTags.indexOf(tagId);
       if (idx > -1) {
         createEventSelectedTags.splice(idx, 1);
       } else {
         if (createEventSelectedTags.length >= 3) {
-          showToast('Máximo 3 etiquetas permitidas');
+          showToast('Máximo 3 categorías permitidas');
           if (navigator && navigator.vibrate) navigator.vibrate(50);
           return;
         }
@@ -5188,7 +5563,7 @@
     function renderCreateEventTagsHtml() {
       const counter = document.getElementById('createEventTagsCounter');
       if (counter) {
-        counter.innerText = `(${createEventSelectedTags.length}/3 elegidas)`;
+        counter.innerText = `(${createEventSelectedTags.length}/3 seleccionados)`;
         if (createEventSelectedTags.length > 0) {
           counter.className = "font-sans text-xs font-bold transition-colors text-[#12C061]";
         } else {
@@ -5199,11 +5574,11 @@
       CREATE_EVENT_AVAILABLE_TAGS.forEach((tag) => {
         const btn = document.getElementById(`createTag_${tag.id}`);
         if (!btn) return;
-        const isSelected = createEventSelectedTags.includes(tag.id);
+        const isSelected = createEventSelectedTags.includes(tag.id) || (tag.legacyId && createEventSelectedTags.includes(tag.legacyId));
         if (isSelected) {
-          btn.className = "py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#E87A72]/20 border-[#E87A72] text-white font-bold shadow-[0_0_12px_rgba(232,122,114,0.22)] active:scale-95";
+          btn.className = "py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#E87A72]/20 border-[#E87A72] text-white font-bold shadow-[0_0_12px_rgba(232,122,114,0.22)] flex items-center gap-2 active:scale-95 text-left";
         } else {
-          btn.className = "py-2 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium active:scale-95";
+          btn.className = "py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left";
         }
       });
     }
@@ -5246,11 +5621,11 @@
 
     function handleCreateEventDescInput(el) {
       if (!el) return;
-      if (el.value.length > 500) el.value = el.value.slice(0, 500);
+      if (el.value.length > 100) el.value = el.value.slice(0, 100);
       const counter = document.getElementById('createEventDescCounter');
       if (counter) {
-        counter.innerText = `${el.value.length}/500`;
-        counter.className = `font-sans text-[11px] font-semibold tracking-wider ${el.value.length >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+        counter.innerText = `${el.value.length}/100`;
+        counter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${el.value.length >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
       }
     }
 
@@ -5381,10 +5756,19 @@
       if (nameInput) nameInput.value = '';
       if (descInput) descInput.value = '';
       if (descCounter) {
-        descCounter.innerText = '0/500';
-        descCounter.className = 'font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93]';
+        descCounter.innerText = '0/100';
+        descCounter.className = 'absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93] pointer-events-none';
       }
       deactivateCreateDressCode();
+      const today = new Date();
+      const y = today.getFullYear();
+      const m = String(today.getMonth() + 1).padStart(2, '0');
+      const d = String(today.getDate()).padStart(2, '0');
+      createEventDate = `${y}-${m}-${d}`;
+      createEventStartTime = '22:00';
+      createEventEndDate = createEventDate;
+      createEventEndTime = '04:00';
+      updateTimelineUI();
       if (dateInput) dateInput.value = '';
       if (startTimeInput) startTimeInput.value = '';
       if (locationInput) locationInput.value = '';
@@ -5399,9 +5783,16 @@
       if (priceError) priceError.classList.add('hidden');
       if (typeof renderCreateAccessTypeUI === 'function') renderCreateAccessTypeUI();
 
-      createCapacity = 150;
+      createPlusOneEnabled = true;
+      updatePlusOneUI();
+      createCapacity = 100;
       const display = document.getElementById('createCapacityDisplay');
       if (display) display.innerText = createCapacity;
+      const capWarning = document.getElementById('createCapacityWarning');
+      if (capWarning) {
+        capWarning.classList.remove('opacity-100');
+        capWarning.classList.add('opacity-0', 'pointer-events-none');
+      }
       if (btn) {
         btn.innerText = "[ PUBLICAR Y COMPARTIR ]";
         btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
@@ -5424,11 +5815,11 @@
 
       if (nameInput) nameInput.value = data.title || '';
       if (descInput) {
-        descInput.value = data.description || '';
+        descInput.value = (data.description || '').slice(0, 100);
         if (descCounter) {
-          const len = (data.description || '').length;
-          descCounter.innerText = `${len}/500`;
-          descCounter.className = `font-sans text-[11px] font-semibold tracking-wider ${len >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+          const len = descInput.value.length;
+          descCounter.innerText = `${len}/100`;
+          descCounter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${len >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
         }
       }
       if (data.dressCode) {
@@ -5436,8 +5827,13 @@
       } else {
         deactivateCreateDressCode();
       }
-      if (dateInput) dateInput.value = data.date || data.startDate || '';
-      if (startTimeInput) startTimeInput.value = data.startTime || '';
+      createEventDate = data.date || data.startDate || '';
+      createEventStartTime = data.startTime || '22:00';
+      createEventEndDate = data.endDate || data.date || data.startDate || '';
+      createEventEndTime = data.endTime || '04:00';
+      updateTimelineUI();
+      if (dateInput) dateInput.value = createEventDate;
+      if (startTimeInput) startTimeInput.value = createEventStartTime;
       if (locationInput) locationInput.value = data.location || '';
       if (data.coordinates) {
         setCreateEventCoords(data.coordinates);
@@ -5446,6 +5842,9 @@
       }
       updateLocationUI(data.location || '', data.coordinates || null);
       if (data.type) setCreatePrivacy(data.type);
+
+      createPlusOneEnabled = Boolean(data.allowsPlusOne !== undefined ? data.allowsPlusOne : true);
+      updatePlusOneUI();
 
       const rawAccess = data.accessType || (data.isPaid ? 'paid' : (data.allowsPlusOne ? 'vip_plus_one' : (data.isVip ? 'vip' : 'free')));
       createAccessType = rawAccess;
@@ -5459,15 +5858,23 @@
         deactivateCreateVipCutoff();
       }
       if (data.maxCapacity || data.guestLimit) {
-        createCapacity = Number(data.maxCapacity || data.guestLimit);
-        const display = document.getElementById('createCapacityDisplay');
-        if (display) display.innerText = createCapacity;
+        createCapacity = Math.min(150, Math.max(1, Number(data.maxCapacity || data.guestLimit)));
+      } else {
+        createCapacity = 100;
       }
+      const displayPop = document.getElementById('createCapacityDisplay');
+      if (displayPop) displayPop.innerText = createCapacity;
       if (data.tags && Array.isArray(data.tags)) {
         createEventSelectedTags = data.tags.map(t => {
-          const found = CREATE_EVENT_AVAILABLE_TAGS.find(at => at.id === t || at.label === t);
+          if (t === 'reggaeton' || (typeof t === 'string' && t.includes('Reggaet'))) return 'reggaeton_latino';
+          if (t === 'techno' || (typeof t === 'string' && t.includes('Electrónica'))) return 'electronica_techno';
+          if (t === 'previas' || (typeof t === 'string' && t.includes('Previas'))) return 'previas_juntadas';
+          if (t === 'boliches' || t === 'festivales' || t === 'clubs_festivales' || (typeof t === 'string' && (t.includes('Clubs') || t.includes('Festivales') || t.includes('DJs')))) return 'clubs_djs';
+          if (t === 'arte_cocktails' || (typeof t === 'string' && t.includes('Arte'))) return 'arte_teatro';
+          if (t === 'deportes_salud' || (typeof t === 'string' && (t.includes('Deportes') || t.includes('Salud') || t.includes('Fitness')))) return 'salud_fitness';
+          const found = CREATE_EVENT_AVAILABLE_TAGS.find(at => at.id === t || at.label === t || at.legacyId === t);
           return found ? found.id : t;
-        });
+        }).filter(t => CREATE_EVENT_AVAILABLE_TAGS.some(at => at.id === t || at.legacyId === t));
       } else {
         createEventSelectedTags = [];
       }
@@ -5616,19 +6023,60 @@
 
     function toggleCreatePlusOne() {
       createPlusOneEnabled = !createPlusOneEnabled;
+      updatePlusOneUI();
+    }
+
+    function updatePlusOneUI() {
       const btn = document.getElementById('plusOneToggleBtn');
       const circle = document.getElementById('plusOneToggleCircle');
+      const subtext = document.getElementById('plusOneSubtext');
       if (createPlusOneEnabled) {
-        btn.className = "relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061]";
-        circle.className = "absolute top-1 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md";
+        if (btn) btn.className = "relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-[#12C061] cursor-pointer";
+        if (circle) circle.className = "absolute top-1 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md";
+        if (subtext) subtext.innerText = "Cada invitado confirmado obtendrá pase QR bipersonal";
       } else {
-        btn.className = "relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-neutral-800";
-        circle.className = "absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md";
+        if (btn) btn.className = "relative w-12 h-7 rounded-full transition-colors duration-200 focus:outline-none bg-neutral-800 cursor-pointer";
+        if (circle) circle.className = "absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow-md";
+        if (subtext) subtext.innerText = "Solo pase QR individual";
       }
     }
 
+    let capacityWarningTimeout = null;
+
     function adjustCreateCapacity(delta) {
-      createCapacity = Math.min(150, Math.max(1, createCapacity + delta));
+      let next = createCapacity + delta;
+      const box = document.getElementById('createCapacityBox');
+      const warningEl = document.getElementById('createCapacityWarning');
+
+      if (delta > 0 && (createCapacity >= 150 || next > 150)) {
+        createCapacity = 150;
+        if (box) {
+          box.classList.remove('border-[#26282E]');
+          box.classList.add('border-[#E87A72]', 'shadow-[0_0_12px_rgba(232,122,114,0.3)]');
+          setTimeout(() => {
+            box.classList.remove('border-[#E87A72]', 'shadow-[0_0_12px_rgba(232,122,114,0.3)]');
+            box.classList.add('border-[#26282E]');
+          }, 600);
+        }
+        if (warningEl) {
+          warningEl.classList.remove('opacity-0', 'pointer-events-none');
+          warningEl.classList.add('opacity-100');
+          if (capacityWarningTimeout) clearTimeout(capacityWarningTimeout);
+          capacityWarningTimeout = setTimeout(() => {
+            warningEl.classList.remove('opacity-100');
+            warningEl.classList.add('opacity-0', 'pointer-events-none');
+          }, 2500);
+        }
+        if (navigator && navigator.vibrate) navigator.vibrate(50);
+        showToast('Máximo permitido: 150 personas');
+      } else {
+        if (next < 1) next = 1;
+        createCapacity = next;
+        if (delta < 0 && warningEl) {
+          warningEl.classList.remove('opacity-100');
+          warningEl.classList.add('opacity-0', 'pointer-events-none');
+        }
+      }
       const display = document.getElementById('createCapacityDisplay');
       if (display) display.innerText = createCapacity;
     }
@@ -5637,19 +6085,32 @@
       createPrivacyMode = mode;
       const pubBtn = document.getElementById('privacyPublicBtn');
       const privBtn = document.getElementById('privacyPrivateBtn');
+      const pill = document.getElementById('privacyPillIndicator');
       const desc = document.getElementById('privacyDescriptionText');
       const tagsWrapper = document.getElementById('createEventTagsWrapper');
 
       if (mode === 'public') {
-        pubBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer";
-        privBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer";
+        if (pill) pill.style.transform = 'translateX(100%)';
+        if (pubBtn) pubBtn.className = "relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-black cursor-pointer";
+        if (privBtn) privBtn.className = "relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-neutral-400 hover:text-white cursor-pointer";
         if (desc) desc.innerText = "Visible en la cartelera general para toda la comunidad.";
-        if (tagsWrapper) tagsWrapper.classList.remove('hidden');
+        if (tagsWrapper) {
+          tagsWrapper.style.maxHeight = '400px';
+          tagsWrapper.style.opacity = '1';
+          tagsWrapper.style.pointerEvents = 'auto';
+          tagsWrapper.style.marginTop = '0.75rem';
+        }
       } else {
-        privBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all bg-white text-black shadow cursor-pointer";
-        pubBtn.className = "py-2.5 px-3 rounded-lg font-display text-xs font-black tracking-wider uppercase transition-all text-neutral-400 hover:text-white cursor-pointer";
+        if (pill) pill.style.transform = 'translateX(0%)';
+        if (privBtn) privBtn.className = "relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-black cursor-pointer";
+        if (pubBtn) pubBtn.className = "relative z-10 w-1/2 py-2.5 px-3 text-center font-display text-xs font-black tracking-wider uppercase transition-colors duration-200 text-neutral-400 hover:text-white cursor-pointer";
         if (desc) desc.innerText = "Solo accesible mediante tu enlace directo por WhatsApp.";
-        if (tagsWrapper) tagsWrapper.classList.add('hidden');
+        if (tagsWrapper) {
+          tagsWrapper.style.maxHeight = '0px';
+          tagsWrapper.style.opacity = '0';
+          tagsWrapper.style.pointerEvents = 'none';
+          tagsWrapper.style.marginTop = '0px';
+        }
       }
     }
 
@@ -5660,10 +6121,12 @@
       }
 
       const title = document.getElementById('createEventNameInput')?.value.trim();
-      const description = document.getElementById('createEventDescInput')?.value.slice(0, 500) || '';
+      const description = document.getElementById('createEventDescInput')?.value.slice(0, 100) || '';
       const dressCode = createDressCodeActive ? (document.getElementById('createEventDressCodeInput')?.value.trim().slice(0, 30) || '') : null;
-      const date = document.getElementById('createEventDateInput')?.value || '';
-      const startTime = document.getElementById('createEventStartTimeInput')?.value || '';
+      const date = createEventDate || document.getElementById('createEventDateInput')?.value || '';
+      const startTime = createEventStartTime || document.getElementById('createEventStartTimeInput')?.value || '';
+      const endDate = createEventEndDate || document.getElementById('createEventEndDateInput')?.value || date;
+      const endTime = createEventEndTime || document.getElementById('createEventEndTimeInput')?.value || '';
       const location = document.getElementById('createEventLocationInput')?.value.trim() || '';
 
       if (!title) {
@@ -5689,7 +6152,7 @@
         btn.setAttribute('disabled', 'true');
       }
 
-      const calculatedEndTimestamp = computeEventEndTimestamp(date, undefined, startTime);
+      const calculatedEndTimestamp = computeEventEndTimestamp(date, endTime, startTime);
 
       const eventPayload = {
         title: title,
@@ -5701,15 +6164,17 @@
         isVip: false,
         type: createPrivacyMode || 'private',
         date: date,
+        startDate: date,
         startTime: startTime,
-        endTime: null,
+        endDate: endDate,
+        endTime: endTime || null,
         endTimestamp: calculatedEndTimestamp,
         location: location,
         coordinates: createEventCoordinates || null,
         allowsPlusOne: Boolean(createPlusOneEnabled),
-        guestLimit: 150,
-        maxCapacity: 150,
-        tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
+        guestLimit: Number(createCapacity) || 100,
+        maxCapacity: Number(createCapacity) || 100,
+        tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
         vipCutoffTime: null,
         hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
         hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
@@ -5731,10 +6196,12 @@
               ticketPrice: eventPayload.ticketPrice,
               isVip: eventPayload.isVip,
               type: eventPayload.type,
-              tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas'],
+              tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
               date: eventPayload.date,
+              startDate: eventPayload.startDate,
               startTime: eventPayload.startTime,
-              endTime: null,
+              endDate: eventPayload.endDate,
+              endTime: eventPayload.endTime,
               endTimestamp: calculatedEndTimestamp,
               location: eventPayload.location,
               coordinates: eventPayload.coordinates,
@@ -5816,6 +6283,7 @@
           title: eventPayload.title,
           date: eventPayload.date,
           startTime: eventPayload.startTime,
+          endTime: eventPayload.endTime,
           location: eventPayload.location,
           imageUrl: eventPayload.imageUrl
         });
