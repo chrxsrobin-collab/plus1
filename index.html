@@ -4329,7 +4329,7 @@
         const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()));
         let passId = null;
 
-        const allowsPlusOne = accessType === 'VIP_PLUS_ONE';
+        const allowsPlusOne = Boolean(event.allowsPlusOne || event.withPlusOne || accessType === 'VIP_PLUS_ONE');
         const tier = accessType === 'FREE_PASS' ? 'FREE' : (accessType === 'PAID' ? 'PAID' : 'VIP');
         const resolvedPrice = accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0;
 
@@ -4342,6 +4342,8 @@
             allowsPlusOne: allowsPlusOne,
             withPlusOne: allowsPlusOne,
             companionsCount: allowsPlusOne ? 1 : 0,
+            checkedInCount: existingPass.checkedInCount ?? 0,
+            checkInCount: existingPass.checkedInCount ?? 0,
             ticketPrice: resolvedPrice,
             isPaid: accessType === 'PAID',
             updatedAt: Date.now()
@@ -4373,6 +4375,8 @@
             allowsPlusOne: allowsPlusOne,
             withPlusOne: allowsPlusOne,
             companionsCount: allowsPlusOne ? 1 : 0,
+            checkedInCount: 0,
+            checkInCount: 0,
             ticketPrice: resolvedPrice,
             isPaid: accessType === 'PAID',
             status: 'pending',
@@ -4781,13 +4785,13 @@
 
                   <!-- Nombre de usuario - Tipo de ingreso (Antonio Bold) -->
                   <div class="font-display font-black text-base sm:text-lg text-black tracking-wide uppercase text-center mt-1.5 truncate max-w-[260px]">
-                    ${escapeHtml(cleanHolder || 'INVITADO')} - ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
+                    ${escapeHtml(cleanHolder || t.holderName || 'TITULAR')} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
                   </div>
 
                   <!-- Número de ticket aleatorio/seguridad y texto 'verificado con google' -->
-                  <div class="text-[9.5px] font-sans font-bold text-neutral-600 tracking-wider uppercase text-center mt-1 mb-1">
+                  <p class="text-[10px] text-neutral-600 tracking-widest font-sans mt-0.5 uppercase font-semibold text-center">
                     #${passCode} · VERIFICADO CON GOOGLE
-                  </div>
+                  </p>
 
                 </div>
               </div>
@@ -9229,57 +9233,79 @@
 
         if (fbDb && passId) {
           try {
-            const passSnap = await fbDb.collection('passes').doc(passId).get();
-            if (!passSnap.exists) {
-              setScannerFeedback('invalid');
-            } else {
-              const passData = passSnap.data();
-              const attendeeName = (passData.holderName || passData.userName || 'Invitado')
+            const passRef = fbDb.collection('passes').doc(passId);
+            const result = await fbDb.runTransaction(async (transaction) => {
+              const passDoc = await transaction.get(passRef);
+              if (!passDoc.exists) {
+                return { status: "invalid", message: "PASE NO ENCONTRADO" };
+              }
+
+              const data = passDoc.data();
+              const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
+              const currentCount = data.checkedInCount || data.checkInCount || 0;
+              const holderName = (data.holderName || data.userName || 'Invitado')
                 .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
                 .trim();
-              const allowsPlusOne = Boolean(passData.allowsPlusOne ?? passData.withPlusOne ?? passData.allowPlusOne ?? (passData.companionsCount && passData.companionsCount > 0));
-              const currentCount = typeof passData.checkInCount === 'number'
-                ? passData.checkInCount
-                : (passData.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0);
 
+              // CASO 1: YA AGOTADO
+              if (data.status === "used" || (!allowsPlusOne && currentCount >= 1) || (allowsPlusOne && currentCount >= 2)) {
+                return { 
+                  status: "already_used", 
+                  message: `PASE YA AGOTADO (${currentCount}/${allowsPlusOne ? 2 : 1})`,
+                  holderName 
+                };
+              }
+
+              // CASO 2: PASE INDIVIDUAL (1 solo ingreso)
+              if (!allowsPlusOne) {
+                transaction.update(passRef, {
+                  checkedInCount: 1,
+                  checkInCount: 1,
+                  status: "used",
+                  lastCheckInAt: Date.now(),
+                  checkedInAt: data.checkedInAt || Date.now()
+                });
+                return { status: "success", type: "individual", message: "ACCESO AUTORIZADO · INDIVIDUAL", holderName };
+              }
+
+              // CASO 3: PASE +1 (Permite hasta 2 lecturas)
               if (allowsPlusOne) {
-                if (currentCount === 0 && passData.status !== 'used') {
-                  // Primer escaneo (1/2): Badge Amarillo
-                  await fbDb.collection('passes').doc(passId).update({
-                    checkInCount: 1,
-                    checkedInAt: Date.now()
-                  });
-                  setScannerFeedback('yellow', null, `🟡 ACCESO AUTORIZADO · 1/2 INGRESADO (+1 PENDIENTE) · ${attendeeName}`);
-                } else if (currentCount === 1 && passData.status !== 'used') {
-                  // Segundo escaneo (2/2): Badge Verde
-                  await fbDb.collection('passes').doc(passId).update({
-                    checkInCount: 2,
-                    status: 'used',
-                    lastCheckedInAt: Date.now()
-                  });
-                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · 2/2 CUPOS UTILIZADOS · ${attendeeName}`);
-                } else {
-                  // Tercer escaneo o posterior (checkInCount >= 2 o status === 'used')
-                  setScannerFeedback('used', null, `🔴 PASE YA AGOTADO (2/2) · ${attendeeName}`);
-                }
+                const nextCount = currentCount + 1;
+                const isComplete = nextCount >= 2;
+
+                transaction.update(passRef, {
+                  checkedInCount: nextCount,
+                  checkInCount: nextCount,
+                  status: isComplete ? "used" : "active",
+                  lastCheckInAt: Date.now(),
+                  checkedInAt: data.checkedInAt || Date.now()
+                });
+
+                return { 
+                  status: "success", 
+                  type: "plus_one", 
+                  count: nextCount,
+                  message: isComplete ? "ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO)" : "ACCESO AUTORIZADO · INGRESO 1/2",
+                  holderName 
+                };
+              }
+
+              return { status: "invalid", message: "ESTADO NO VÁLIDO" };
+            });
+
+            if (result.status === 'invalid') {
+              setScannerFeedback('invalid');
+            } else if (result.status === 'already_used') {
+              setScannerFeedback('used', null, `🔴 ${result.message} · ${result.holderName}`);
+            } else if (result.status === 'success') {
+              if (result.type === 'plus_one' && result.count === 1) {
+                setScannerFeedback('yellow', null, `🟡 ${result.message} · ${result.holderName}`);
               } else {
-                // Individual (allowsPlusOne: false o indefinido)
-                if (passData.status === 'used' || currentCount >= 1) {
-                  setScannerFeedback('used', null, `🔴 PASE YA UTILIZADO (1/1) · ${attendeeName}`);
-                } else if (passData.status === 'active' || passData.status === 'confirmed') {
-                  await fbDb.collection('passes').doc(passId).update({
-                    status: 'used',
-                    checkInCount: 1,
-                    checkedInAt: Date.now()
-                  });
-                  setScannerFeedback('valid', null, `🟢 ACCESO AUTORIZADO · INDIVIDUAL (1/1) · ${attendeeName}`);
-                } else {
-                  setScannerFeedback('invalid');
-                }
+                setScannerFeedback('valid', null, `🟢 ${result.message} · ${result.holderName}`);
               }
             }
           } catch (e) {
-            console.error('Error validando pase en Firestore:', e);
+            console.error('Error validando pase con transacción en Firestore:', e);
             setScannerFeedback('invalid');
           }
           scheduleScannerResume();
