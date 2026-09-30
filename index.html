@@ -4329,13 +4329,15 @@
         const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()));
         let passId = null;
 
-        const allowsPlusOne = Boolean(event.allowsPlusOne || event.withPlusOne || accessType === 'VIP_PLUS_ONE');
+        const allowsPlusOne = Boolean(event.allowsPlusOne);
+        const isPrivateEvent = event.type === 'private' || event.isPrivate === true;
+        const passStatus = isPrivateEvent ? 'active' : 'pending';
         const tier = accessType === 'FREE_PASS' ? 'FREE' : (accessType === 'PAID' ? 'PAID' : 'VIP');
         const resolvedPrice = accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0;
 
         if (existingPass && existingPass.id && fbDb) {
           await fbDb.collection('passes').doc(existingPass.id).update({
-            status: 'pending',
+            status: passStatus,
             tier: tier,
             accessTier: tier,
             accessType: accessType,
@@ -4348,7 +4350,7 @@
             isPaid: accessType === 'PAID',
             updatedAt: Date.now()
           });
-          existingPass.status = 'pending';
+          existingPass.status = passStatus;
           existingPass.tier = tier;
           existingPass.accessTier = tier;
           existingPass.accessType = accessType;
@@ -4379,7 +4381,7 @@
             checkInCount: 0,
             ticketPrice: resolvedPrice,
             isPaid: accessType === 'PAID',
-            status: 'pending',
+            status: passStatus,
             createdAt: Date.now()
           });
           passId = passRef.id;
