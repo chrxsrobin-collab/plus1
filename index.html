@@ -4329,32 +4329,29 @@
         const existingPass = userTickets.find(p => p.eventId === event.id || (p.title && p.title.replace(/^FLYER.*?:\s*/i, '').trim().toLowerCase() === cleanTitle.toLowerCase()));
         let passId = null;
 
-        const allowsPlusOne = Boolean(event.allowsPlusOne);
-        const isPrivateEvent = event.type === 'private' || event.isPrivate === true;
-        const passStatus = isPrivateEvent ? 'active' : 'pending';
+        const isPassPlusOne = Boolean(event.allowsPlusOne ?? true);
         const tier = accessType === 'FREE_PASS' ? 'FREE' : (accessType === 'PAID' ? 'PAID' : 'VIP');
         const resolvedPrice = accessType === 'PAID' ? (Number(event.ticketPrice) || 35) : 0;
 
         if (existingPass && existingPass.id && fbDb) {
           await fbDb.collection('passes').doc(existingPass.id).update({
-            status: passStatus,
+            status: "active",
             tier: tier,
             accessTier: tier,
             accessType: accessType,
-            allowsPlusOne: allowsPlusOne,
-            withPlusOne: allowsPlusOne,
-            companionsCount: allowsPlusOne ? 1 : 0,
-            checkedInCount: existingPass.checkedInCount ?? 0,
-            checkInCount: existingPass.checkedInCount ?? 0,
+            allowsPlusOne: isPassPlusOne,
+            checkedInCount: 0,
+            maxUses: isPassPlusOne ? 2 : 1,
+            companionsCount: isPassPlusOne ? 1 : 0,
             ticketPrice: resolvedPrice,
             isPaid: accessType === 'PAID',
             updatedAt: Date.now()
           });
-          existingPass.status = passStatus;
+          existingPass.status = "active";
           existingPass.tier = tier;
           existingPass.accessTier = tier;
           existingPass.accessType = accessType;
-          existingPass.allowsPlusOne = allowsPlusOne;
+          existingPass.allowsPlusOne = isPassPlusOne;
           passId = existingPass.id;
         } else if (fbDb) {
           const passRef = await fbDb.collection('passes').add({
@@ -4374,14 +4371,13 @@
             tier: tier,
             accessTier: tier,
             accessType: accessType,
-            allowsPlusOne: allowsPlusOne,
-            withPlusOne: allowsPlusOne,
-            companionsCount: allowsPlusOne ? 1 : 0,
+            allowsPlusOne: isPassPlusOne,
             checkedInCount: 0,
-            checkInCount: 0,
+            maxUses: isPassPlusOne ? 2 : 1,
+            companionsCount: isPassPlusOne ? 1 : 0,
             ticketPrice: resolvedPrice,
             isPaid: accessType === 'PAID',
-            status: passStatus,
+            status: "active",
             createdAt: Date.now()
           });
           passId = passRef.id;
@@ -4741,7 +4737,7 @@
           const cleanHolder = (t.holderName || 'INVITADO')
             .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
             .trim();
-          const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? (t.companionsCount && t.companionsCount > 0));
+          const allowsPlusOne = Boolean(t.allowsPlusOne ?? true);
           const rawCode = (t.id || t.ticketId || '56842').replace(/^#/, '').toUpperCase().slice(0, 7);
           const passCode = rawCode.startsWith('AN') ? rawCode : `AN${rawCode.slice(0, 5)}`;
           const passPayload = `plus1://pass/${t.id || 'TEST_PASS_123'}`;
@@ -4790,9 +4786,9 @@
                     ${escapeHtml(cleanHolder || t.holderName || 'TITULAR')} · ${allowsPlusOne ? '+1' : 'INDIVIDUAL'}
                   </div>
 
-                  <!-- Número de ticket aleatorio/seguridad y texto 'verificado con google' -->
+                  <!-- Número de ticket aleatorio/seguridad y texto '2 INGRESOS DISPONIBLES' o '1 INGRESO' -->
                   <p class="text-[10px] text-neutral-600 tracking-widest font-sans mt-0.5 uppercase font-semibold text-center">
-                    #${passCode} · VERIFICADO CON GOOGLE
+                    #${passCode} · ${allowsPlusOne ? '2 INGRESOS DISPONIBLES' : '1 INGRESO'}
                   </p>
 
                 </div>
@@ -9242,54 +9238,38 @@
                 return { status: "invalid", message: "PASE NO ENCONTRADO" };
               }
 
-              const data = passDoc.data();
-              const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
-              const currentCount = data.checkedInCount || data.checkInCount || 0;
-              const holderName = (data.holderName || data.userName || 'Invitado')
-                .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
-                .trim();
+              const passData = passDoc.data();
+              const maxAllowed = passData.allowsPlusOne ? 2 : 1;
+              const currentCount = Number(passData.checkedInCount || 0);
 
-              // CASO 1: YA AGOTADO
-              if (data.status === "used" || (!allowsPlusOne && currentCount >= 1) || (allowsPlusOne && currentCount >= 2)) {
+              // VALIDACIÓN: ¿Pase ya agotado?
+              if (passData.status === 'used' || currentCount >= maxAllowed) {
                 return { 
                   status: "already_used", 
-                  message: `PASE YA AGOTADO (${currentCount}/${allowsPlusOne ? 2 : 1})`,
-                  holderName 
+                  message: `PASE YA AGOTADO (${currentCount}/${maxAllowed})`,
+                  holderName: passData.holderName || passData.userName 
                 };
               }
 
-              // CASO 2: PASE INDIVIDUAL (1 solo ingreso)
-              if (!allowsPlusOne) {
-                transaction.update(passRef, {
-                  checkedInCount: 1,
-                  checkInCount: 1,
-                  status: "used",
-                  lastCheckInAt: Date.now(),
-                  checkedInAt: data.checkedInAt || Date.now()
-                });
-                return { status: "success", type: "individual", message: "ACCESO AUTORIZADO · INDIVIDUAL", holderName };
-              }
+              // REGISTRO DEL INGRESO
+              const newCount = currentCount + 1;
+              const isNowUsed = newCount >= maxAllowed;
 
-              // CASO 3: PASE +1 (Permite hasta 2 lecturas)
-              if (allowsPlusOne) {
-                const nextCount = currentCount + 1;
-                const isComplete = nextCount >= 2;
+              transaction.update(passRef, {
+                checkedInCount: newCount,
+                status: isNowUsed ? 'used' : 'active',
+                lastCheckIn: Date.now()
+              });
 
-                transaction.update(passRef, {
-                  checkedInCount: nextCount,
-                  checkInCount: nextCount,
-                  status: isComplete ? "used" : "active",
-                  lastCheckInAt: Date.now(),
-                  checkedInAt: data.checkedInAt || Date.now()
-                });
-
-                return { 
-                  status: "success", 
-                  type: "plus_one", 
-                  count: nextCount,
-                  message: isComplete ? "ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETO)" : "ACCESO AUTORIZADO · INGRESO 1/2",
-                  holderName 
-                };
+              // FEEDBACK VISUAL
+              if (passData.allowsPlusOne) {
+                if (newCount === 1) {
+                  return { status: "success", type: "plus_one", count: 1, message: "🟢 ACCESO AUTORIZADO · INGRESO 1/2 (+1 RESTANTE)", holderName: passData.holderName || passData.userName };
+                } else {
+                  return { status: "success", type: "plus_one", count: 2, message: "🟢 ACCESO AUTORIZADO · INGRESO 2/2 (PASE COMPLETADO)", holderName: passData.holderName || passData.userName };
+                }
+              } else {
+                return { status: "success", type: "individual", count: 1, message: "🟢 ACCESO AUTORIZADO · INDIVIDUAL", holderName: passData.holderName || passData.userName };
               }
 
               return { status: "invalid", message: "ESTADO NO VÁLIDO" };
