@@ -1541,7 +1541,7 @@
             <div id="createArtUploaderBox" onclick="openTemplateSelectorModal()" class="relative w-full aspect-square max-w-[340px] mx-auto rounded-2xl overflow-hidden bg-[#141518] border-2 border-dashed border-[#26282E] hover:border-[#E87A72] flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl">
               <!-- Estado con Imagen -->
               <div id="createArtPreviewWrapper" class="hidden relative w-full h-full">
-                <img id="createArtPreviewImg" src="" alt="Arte del evento" class="w-full h-full aspect-square object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300" onerror="if (!this.dataset.triedJpg && this.src.endsWith('.webp')) { this.dataset.triedJpg = 'true'; this.src = this.src.replace('.webp', '.jpg'); } else if (!this.dataset.triedPng && this.src.endsWith('.jpg')) { this.dataset.triedPng = 'true'; this.src = this.src.replace('.jpg', '.png'); }" />
+                <img id="createArtPreviewImg" src="" alt="Arte del evento" class="w-full h-full aspect-square object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300" />
                 <button type="button" onclick="event.stopPropagation(); handleRemoveArtImage();" aria-label="Eliminar imagen" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/80 hover:bg-black border border-neutral-700/80 text-white flex items-center justify-center backdrop-blur-md shadow-lg transition-all active:scale-90 cursor-pointer">
                   <span class="text-sm font-bold leading-none">✕</span>
                 </button>
@@ -1885,53 +1885,46 @@
         </main>
 
       </div>
-    </div>
-
     <!-- ==================================================== -->
-    <!-- MODAL DE SELECCIÓN DE ARTE / PLANTILLAS (LUMA/IOS)   -->
+    <!-- MODAL: SELECCIÓN DE ARTE / PLANTILLAS PREDETERMINADAS -->
     <!-- ==================================================== -->
     <div id="templateSelectorModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center select-none">
+      <!-- Backdrop clickeable para cerrar -->
       <div onclick="closeTemplateSelectorModal()" class="absolute inset-0"></div>
 
-      <!-- Tarjeta de la sábana (Bottom Sheet iOS / Luma) -->
+      <!-- Tarjeta Bottom Sheet estilo iOS / Luma -->
       <div class="w-full max-w-md h-[88vh] bg-[#0E0F12] border-t sm:border border-[#26282E] rounded-t-[32px] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl relative z-10 anim-modal-zoom">
-        <!-- A. Barra de arrastre superior (estilo iOS) -->
+        <!-- Barra de arrastre superior -->
         <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1 shrink-0"></div>
 
-        <!-- B. Cabecera (Top Bar) -->
-        <div class="flex items-center justify-between px-4 py-2 shrink-0">
-          <button
-            type="button"
-            onclick="closeTemplateSelectorModal()"
-            aria-label="Cerrar modal"
-            class="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-[#16171B] border border-[#26282E] cursor-pointer transition-colors active:scale-95"
-          >
-            ✕
+        <!-- Cabecera (Top Bar) -->
+        <header class="flex items-center justify-between px-4 py-2 shrink-0 border-b border-[#26282E]/40">
+          <button type="button" onclick="closeTemplateSelectorModal()" aria-label="Cerrar" class="w-9 h-9 rounded-full bg-[#16171B] border border-[#26282E] text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors active:scale-95">
+            <span class="text-sm font-bold leading-none">✕</span>
           </button>
-          <h3 class="font-display font-bold text-base sm:text-lg text-white tracking-wider uppercase text-center">
+
+          <h2 class="text-base font-bold text-white tracking-wider font-display uppercase">
             ELEGIR ARTE DEL PLAN
-          </h3>
+          </h2>
+
           <div class="w-9 h-9"></div>
+        </header>
+
+        <!-- Selector de Pestañas / Chips de Categorías (Scroll Horizontal) -->
+        <div id="templateCategoryTabs" class="flex items-center gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar border-b border-[#26282E]/50 shrink-0">
+          <!-- Renderizado dinámicamente vía renderTemplateCategoriesHtml() -->
         </div>
 
-        <!-- C. Selector de Pestañas / Chips de Categorías (Scroll Horizontal) -->
-        <div id="templateCategoryChips" class="flex items-center gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar border-b border-[#26282E]/50 shrink-0">
-          <!-- Inyectado dinámicamente vía renderTemplateCategoryChips() -->
+        <!-- Cuadrícula de Plantillas (Grid 2 Columnas) -->
+        <div id="templateGridContainer" class="flex-1 overflow-y-auto px-4 py-3 grid grid-cols-2 gap-3 min-h-0 no-scrollbar">
+          <!-- Renderizado dinámicamente vía renderTemplateGridHtml() -->
         </div>
 
-        <!-- D. Cuadrícula de Plantillas (Grid 2 Columnas) -->
-        <div id="templateGridContainer" class="flex-1 overflow-y-auto px-4 py-3 grid grid-cols-2 gap-3 content-start">
-          <!-- Inyectado dinámicamente vía renderTemplateGrid() -->
-        </div>
-
-        <!-- E. Botón Fijo al Pie: "ELEGIR DE MI GALERÍA" -->
+        <!-- Botón Fijo al Pie: ELEGIR DE MI GALERÍA -->
         <div class="p-4 bg-gradient-to-t from-[#0E0F12] via-[#0E0F12] to-transparent border-t border-[#26282E]/40 shrink-0">
-          <button
-            type="button"
-            onclick="handleChooseFromGallery()"
-            class="w-full py-4 rounded-2xl bg-tixel-cta hover:opacity-95 text-black font-display font-bold text-base tracking-wider uppercase flex items-center justify-center transition-transform active:scale-95 duration-150 shadow-xl cursor-pointer"
-          >
-            ELEGIR DE MI GALERÍA
+          <button type="button" onclick="handleChooseFromGallery()" class="w-full py-4 rounded-2xl bg-tixel-cta text-black font-display font-bold text-base tracking-wider uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform duration-150 cursor-pointer shadow-lg">
+            <span>📷</span>
+            <span>ELEGIR DE MI GALERÍA</span>
           </button>
         </div>
       </div>
@@ -6165,126 +6158,118 @@
       }
     }
 
-    let currentEventArtBase64 = null;
-
     // ====================================================
-    // CATÁLOGO DE PLANTILLAS DE ARTE PREDEFINIDAS (+1)
+    // CATÁLOGO DE PLANTILLAS DE ARTE (+1 TEMPLATES)
     // ====================================================
-    // Si estamos en GitHub Pages, antepone /plus1, de lo contrario usa ./
-    const BASE_PATH = window.location.pathname.includes('/plus1') ? '/plus1' : '.';
-
     const TEMPLATE_CATEGORIES = [
-      { id: 'previas', label: 'Previas / Juntadas', folder: 'previas' },
-      { id: 'reggaeton', label: 'Reggaeton / Latino', folder: 'reggaeton' },
-      { id: 'electronic', label: 'Electrónica / Techno', folder: 'electronic' },
-      { id: 'clubs', label: 'Clubs / Festivales', folder: 'clubs' },
-      { id: 'art', label: 'Arte / Teatro', folder: 'art' },
-      { id: 'sports', label: 'Deportes / Salud', folder: 'sports' },
+      { id: 'previas', label: 'Previas / Juntadas', path: './assets/images/templates/previas/' },
+      { id: 'reggaeton', label: 'Reggaeton / Latino', path: './assets/images/templates/reggaeton/' },
+      { id: 'electronic', label: 'Electrónica / Techno', path: './assets/images/templates/electronic/' },
+      { id: 'clubs', label: 'Clubs / Festivales', path: './assets/images/templates/clubs/' },
+      { id: 'art', label: 'Arte / Teatro', path: './assets/images/templates/art/' },
+      { id: 'sports', label: 'Deportes / Salud', path: './assets/images/templates/sports/' },
     ];
 
-    let currentTemplateCategory = 'previas';
+    const getCategoryImages = (basePath) => [1, 2, 3, 4, 5, 6].map(i => `${basePath}${i}.webp`);
 
-    const getImageUrl = (folder, index) => {
-      return `${BASE_PATH}/assets/images/templates/${folder}/${index}.webp`;
-    };
+    let selectedTemplateCategoryId = 'previas';
 
     function openTemplateSelectorModal() {
       const modal = document.getElementById('templateSelectorModal');
-      if (!modal) return;
-      modal.classList.remove('hidden');
-      renderTemplateCategoryChips();
-      renderTemplateGrid();
+      if (modal) {
+        modal.classList.remove('hidden');
+        renderTemplateCategoriesHtml();
+        renderTemplateGridHtml();
+      }
     }
 
     function closeTemplateSelectorModal() {
       const modal = document.getElementById('templateSelectorModal');
-      if (modal) modal.classList.add('hidden');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
     }
 
-    function selectTemplateCategory(catId) {
-      currentTemplateCategory = catId;
-      renderTemplateCategoryChips();
-      renderTemplateGrid();
+    function setTemplateCategory(catId) {
+      selectedTemplateCategoryId = catId;
+      renderTemplateCategoriesHtml();
+      renderTemplateGridHtml();
     }
 
-    function renderTemplateCategoryChips() {
-      const container = document.getElementById('templateCategoryChips');
+    function renderTemplateCategoriesHtml() {
+      const container = document.getElementById('templateCategoryTabs');
       if (!container) return;
-
       container.innerHTML = TEMPLATE_CATEGORIES.map(cat => {
-        const isActive = cat.id === currentTemplateCategory;
+        const isActive = cat.id === selectedTemplateCategoryId;
+        const activeClasses = isActive
+          ? 'bg-[#E87A72] text-black font-bold border-[#E87A72] shadow-sm'
+          : 'bg-[#16171B] text-zinc-400 border-[#26282E] hover:text-white hover:border-zinc-500';
         return `
           <button
             type="button"
-            onclick="selectTemplateCategory('${cat.id}')"
-            class="px-3.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer font-sans ${
-              isActive
-                ? 'border border-[#E87A72] bg-[#22242B] text-white shadow-sm font-bold'
-                : 'bg-[#16171B] border border-[#26282E] text-[#8E8E93] hover:text-white hover:border-neutral-700 font-medium'
-            }"
+            onclick="setTemplateCategory('${cat.id}')"
+            class="px-3.5 py-1.5 rounded-full text-xs font-sans whitespace-nowrap border transition-all cursor-pointer ${activeClasses}"
           >
-            ${escapeHtml(cat.label)}
+            ${cat.label}
           </button>
         `;
       }).join('');
     }
 
-    function renderTemplateGrid() {
-      const container = document.getElementById('templateGridContainer');
-      if (!container) return;
+    function renderTemplateGridHtml() {
+      const grid = document.getElementById('templateGridContainer');
+      if (!grid) return;
+      const cat = TEMPLATE_CATEGORIES.find(c => c.id === selectedTemplateCategoryId) || TEMPLATE_CATEGORIES[0];
+      const images = getCategoryImages(cat.path);
 
-      const catObj = TEMPLATE_CATEGORIES.find(c => c.id === currentTemplateCategory) || TEMPLATE_CATEGORIES[0];
-      const numbers = [1, 2, 3, 4, 5, 6];
-
-      container.innerHTML = numbers.map(num => {
-        const imgUrl = getImageUrl(catObj.folder, num);
+      grid.innerHTML = images.map((imgUrl, idx) => {
         return `
-        <div
-          onclick="selectTemplateArt('${imgUrl}', this.querySelector('img'))"
-          class="aspect-square rounded-2xl overflow-hidden border border-[#26282E] hover:border-[#E87A72] relative cursor-pointer group bg-[#16171B] shadow-md transition-all active:scale-95"
-        >
-          <img
-            src="${imgUrl}"
-            alt="Plantilla ${num}"
-            loading="lazy"
-            class="w-full h-full object-cover rounded-2xl bg-[#16171B] group-hover:scale-105 transition-transform duration-300"
-            onerror="if (!this.dataset.triedJpg && this.src.endsWith('.webp')) { this.dataset.triedJpg = 'true'; this.src = this.src.replace('.webp', '.jpg'); } else if (!this.dataset.triedPng && this.src.endsWith('.jpg')) { this.dataset.triedPng = 'true'; this.src = this.src.replace('.jpg', '.png'); }"
-          />
-          <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
-            <span class="px-3 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[11px] font-display font-bold uppercase text-white tracking-wider">
-              ELEGIR
-            </span>
+          <div
+            onclick="handleSelectTemplateImage('${imgUrl}')"
+            class="group relative aspect-square rounded-2xl bg-[#16171B] border-2 border-[#26282E] overflow-hidden cursor-pointer hover:border-[#E87A72] active:scale-95 transition-all shadow-md"
+          >
+            <img
+              src="${imgUrl}"
+              alt="Plantilla ${cat.label} ${idx + 1}"
+              loading="lazy"
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+              <span class="px-2.5 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[#E87A72] text-[11px] font-bold uppercase tracking-wider">
+                Elegir
+              </span>
+            </div>
           </div>
-        </div>
-      `;
+        `;
       }).join('');
     }
 
-    function selectTemplateArt(imgUrl, imgElement) {
-      const resolvedUrl = (imgElement && imgElement.src) ? imgElement.src : imgUrl;
-      currentEventArtBase64 = resolvedUrl;
-      const previewImg = document.getElementById('createArtPreviewImg');
+    function handleSelectTemplateImage(selectedUrl) {
+      currentEventArtBase64 = selectedUrl;
       const previewWrapper = document.getElementById('createArtPreviewWrapper');
       const emptyState = document.getElementById('createArtEmptyState');
-      if (previewImg) {
-        delete previewImg.dataset.triedJpg;
-        delete previewImg.dataset.triedPng;
-        previewImg.src = resolvedUrl;
-      }
+      const previewImg = document.getElementById('createArtPreviewImg');
+      const fileInput = document.getElementById('createArtFileInput');
+
+      if (previewImg) previewImg.src = selectedUrl;
+      if (fileInput) fileInput.value = '';
       if (emptyState) emptyState.classList.add('hidden');
       if (previewWrapper) previewWrapper.classList.remove('hidden');
+
       closeTemplateSelectorModal();
-      showToast('Plantilla aplicada al evento');
+      showToast('🎨 Plantilla seleccionada');
     }
 
     function handleChooseFromGallery() {
       closeTemplateSelectorModal();
-      const fileInput = document.getElementById('createArtFileInput');
-      if (fileInput) fileInput.click();
+      triggerArtFileInput();
     }
 
+    let currentEventArtBase64 = null;
+
     function triggerArtFileInput() {
-      openTemplateSelectorModal();
+      const input = document.getElementById('createArtFileInput');
+      if (input) input.click();
     }
 
     function handleRemoveArtImage() {
@@ -11559,9 +11544,9 @@
         'vipTimePickerModal',
         'locationPickerModal',
         'bestPracticesModal',
-        'templateSelectorModal',
         'deleteEventModal',
-        'shareEventModal'
+        'shareEventModal',
+        'templateSelectorModal'
       ];
       modalIds.forEach(id => {
         const el = document.getElementById(id);
