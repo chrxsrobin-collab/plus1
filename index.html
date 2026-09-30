@@ -70,6 +70,53 @@
     html, body {
       overscroll-behavior-y: contain;
     }
+
+    /* ==================================================== */
+    /* TOKENS DE DEGRADADO CÁLIDO (SISTEMA TIXEL)           */
+    /* ==================================================== */
+    :root {
+      --grad-tixel-cta: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%);
+      --ambient-glow-tixel: radial-gradient(circle, rgba(232, 122, 114, 0.16) 0%, rgba(14, 15, 18, 0) 70%);
+    }
+
+    .bg-tixel-cta {
+      background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%) !important;
+      color: #000000 !important;
+      font-family: 'Antonio', -apple-system, sans-serif !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms ease, box-shadow 150ms ease !important;
+    }
+    .bg-tixel-cta:active {
+      transform: scale(0.95) !important;
+    }
+
+    .ambient-glow-tixel {
+      background: radial-gradient(circle, rgba(232, 122, 114, 0.16) 0%, rgba(14, 15, 18, 0) 70%) !important;
+    }
+
+    /* 1. TEXTO CON DEGRADADO (Para títulos en Antonio Bold) */
+    .text-grad-flame {
+      background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    /* 2. BORDE CON DEGRADADO (Para tarjetas activas o avatares) */
+    .border-grad-flame {
+      border: 1.5px solid transparent;
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+      background-image: 
+        linear-gradient(#181A1E, #181A1E), 
+        linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
+    }
+
+    /* 3. FORMAS Y BADGES DECORATIVOS */
+    .shape-grad-flame {
+      background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
+    }
     
     /* Animaciones suaves */
     @keyframes hudDown {
@@ -231,7 +278,9 @@
       <!-- 4. CARRUSEL COVER FLOW DE TARJETAS COMPLETAS (DESPLAZAMIENTO EN BLOQUE) -->
       <main class="anim-main-card flex-1 flex flex-col justify-center my-auto py-1 w-full overflow-x-visible">
         <div class="relative w-full h-[clamp(455px,60vh,505px)] sm:h-[clamp(475px,62vh,520px)] flex items-center justify-center py-1 overflow-x-visible" style="perspective: 1100px;">
-          <div id="coverFlowTrack" class="relative w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
+          <!-- Ambient Glow detrás de tarjetas principales -->
+          <div class="ambient-glow-tixel absolute w-[330px] h-[480px] rounded-full blur-3xl opacity-20 pointer-events-none z-0"></div>
+          <div id="coverFlowTrack" class="relative z-10 w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing touch-pan-y">
             <!-- Empty state o tarjetas generadas dinámicamente vía renderCoverFlow() -->
           </div>
         </div>
@@ -266,7 +315,7 @@
 
       <!-- 5. DOCK DE ACCIÓN INFERIOR: [ + ] CREAR EVENTO (ANCHO COMPLETO) -->
       <div class="anim-footer w-full mt-6 mb-24 px-4 pb-[90px] z-20">
-        <button onclick="handleNavigation('/create-event')" class="w-full h-14 rounded-2xl bg-[#E87A72] flex items-center justify-center text-center shadow-lg active:scale-[0.99] transition-transform focus:outline-none cursor-pointer group">
+        <button onclick="handleNavigation('/create-event')" class="w-full h-14 rounded-2xl bg-tixel-cta flex items-center justify-center text-center shadow-lg active:scale-95 transition-transform duration-150 focus:outline-none cursor-pointer group">
           <span class="font-display text-black text-[24px] sm:text-[26px] font-black tracking-tight uppercase group-hover:scale-[1.01] transition-transform flex items-center justify-center space-x-1.5">
             <span class="text-xl font-bold">[ + ]</span>
             <span>CREAR EVENTO</span>
@@ -445,7 +494,7 @@
           <p id="modalLiveTicker" class="font-sans text-[11px] text-zinc-400 text-center tracking-wide"></p>
 
           <div class="flex items-center gap-2.5">
-            <button id="modalCtaBtn" class="flex-1 py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-bold tracking-wider uppercase flex items-center justify-center transition-transform duration-100 shadow-lg active:scale-[0.98] focus:outline-none cursor-pointer">
+            <button id="modalCtaBtn" class="flex-1 py-3.5 px-4 rounded-xl bg-tixel-cta hover:opacity-95 text-black font-display text-base font-bold tracking-wider uppercase flex items-center justify-center transition-transform duration-150 shadow-lg active:scale-95 focus:outline-none cursor-pointer">
               SOLICITAR PASE
             </button>
             <button onclick="handleShareCurrentEvent(event)" aria-label="Compartir evento" title="Compartir evento" class="w-14 h-12 rounded-xl bg-[#16171B] hover:bg-[#22252C] border border-[#26282E] hover:border-[#E87A72] flex items-center justify-center text-white active:scale-95 transition-all shadow-md cursor-pointer flex-shrink-0">
@@ -1331,10 +1380,12 @@
         </header>
 
         <!-- 2. CARRUSEL 3D COVER FLOW DE TICKETS -->
-        <main class="flex-1 flex flex-col items-center justify-center my-auto py-1">
+        <main class="flex-1 flex flex-col items-center justify-center my-auto py-1 relative">
+          <!-- Aura de Resplandor Ambiental (Ambient Glow) detrás del carrusel de tickets -->
+          <div class="ambient-glow-tixel absolute w-[360px] h-[520px] rounded-full blur-3xl opacity-25 pointer-events-none z-0"></div>
           <div
             id="ticketCoverFlowTrack"
-            class="relative w-full h-[520px] flex items-center justify-center py-2"
+            class="relative z-10 w-full h-[520px] flex items-center justify-center py-2"
             style="perspective: 1200px; transform-style: preserve-3d;"
           >
             <!-- Renderizado dinámicamente vía renderTicketCoverFlow() -->
@@ -1487,7 +1538,7 @@
           <div class="flex flex-col items-center">
             <input type="file" id="createArtFileInput" accept="image/*" class="hidden" onchange="handleArtFileSelected(event)" />
             
-            <div id="createArtUploaderBox" onclick="triggerArtFileInput()" class="relative w-full aspect-square max-w-[340px] mx-auto rounded-2xl overflow-hidden bg-[#141518] border-2 border-dashed border-[#26282E] hover:border-[#E87A72] flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl">
+            <div id="createArtUploaderBox" onclick="openTemplateSelectorModal()" class="relative w-full aspect-square max-w-[340px] mx-auto rounded-2xl overflow-hidden bg-[#141518] border-2 border-dashed border-[#26282E] hover:border-[#E87A72] flex flex-col items-center justify-center cursor-pointer group transition-colors shadow-2xl">
               <!-- Estado con Imagen -->
               <div id="createArtPreviewWrapper" class="hidden relative w-full h-full">
                 <img id="createArtPreviewImg" src="" alt="Arte del evento" class="w-full h-full aspect-square object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300" />
@@ -1514,7 +1565,7 @@
                   SUBIR ARTE DEL EVENTO
                 </span>
                 <p class="font-sans text-[#6B7280] text-xs text-center mt-1 max-w-[220px] leading-relaxed">
-                  Toca para seleccionar desde tu galería (JPG, PNG, WEBP)
+                  Toca para elegir una plantilla o subir desde tu galería
                 </p>
               </div>
             </div>
@@ -1819,7 +1870,7 @@
 
           <!-- BOTÓN CTA: PUBLICAR Y OBTENER LINK DE WHATSAPP -->
           <div class="pt-2">
-            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer">
+            <button id="publishEventBtn" onclick="publishEvent()" class="w-full py-4 px-5 rounded-2xl bg-tixel-cta hover:opacity-95 active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-transform duration-150 shadow-xl focus:outline-none cursor-pointer">
               [ PUBLICAR Y COMPARTIR ]
             </button>
 
@@ -1833,6 +1884,56 @@
 
         </main>
 
+      </div>
+    </div>
+
+    <!-- ==================================================== -->
+    <!-- MODAL DE SELECCIÓN DE ARTE / PLANTILLAS (LUMA/IOS)   -->
+    <!-- ==================================================== -->
+    <div id="templateSelectorModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center select-none">
+      <div onclick="closeTemplateSelectorModal()" class="absolute inset-0"></div>
+
+      <!-- Tarjeta de la sábana (Bottom Sheet iOS / Luma) -->
+      <div class="w-full max-w-md h-[88vh] bg-[#0E0F12] border-t sm:border border-[#26282E] rounded-t-[32px] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl relative z-10 anim-modal-zoom">
+        <!-- A. Barra de arrastre superior (estilo iOS) -->
+        <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1 shrink-0"></div>
+
+        <!-- B. Cabecera (Top Bar) -->
+        <div class="flex items-center justify-between px-4 py-2 shrink-0">
+          <button
+            type="button"
+            onclick="closeTemplateSelectorModal()"
+            aria-label="Cerrar modal"
+            class="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white rounded-full bg-[#16171B] border border-[#26282E] cursor-pointer transition-colors active:scale-95"
+          >
+            ✕
+          </button>
+          <h3 class="font-display font-bold text-base sm:text-lg text-white tracking-wider uppercase text-center">
+            ELEGIR ARTE DEL PLAN
+          </h3>
+          <div class="w-9 h-9"></div>
+        </div>
+
+        <!-- C. Selector de Pestañas / Chips de Categorías (Scroll Horizontal) -->
+        <div id="templateCategoryChips" class="flex items-center gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar border-b border-[#26282E]/50 shrink-0">
+          <!-- Inyectado dinámicamente vía renderTemplateCategoryChips() -->
+        </div>
+
+        <!-- D. Cuadrícula de Plantillas (Grid 2 Columnas) -->
+        <div id="templateGridContainer" class="flex-1 overflow-y-auto px-4 py-3 grid grid-cols-2 gap-3 content-start">
+          <!-- Inyectado dinámicamente vía renderTemplateGrid() -->
+        </div>
+
+        <!-- E. Botón Fijo al Pie: "ELEGIR DE MI GALERÍA" -->
+        <div class="p-4 bg-gradient-to-t from-[#0E0F12] via-[#0E0F12] to-transparent border-t border-[#26282E]/40 shrink-0">
+          <button
+            type="button"
+            onclick="handleChooseFromGallery()"
+            class="w-full py-4 rounded-2xl bg-tixel-cta hover:opacity-95 text-black font-display font-bold text-base tracking-wider uppercase flex items-center justify-center transition-transform active:scale-95 duration-150 shadow-xl cursor-pointer"
+          >
+            ELEGIR DE MI GALERÍA
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2474,9 +2575,9 @@
 
         <!-- 3. MENÚ DE LISTA PRINCIPAL (ESTILO VERTICAL BRUTALISTA) -->
         <div class="w-full flex flex-col mt-2">
-          <!-- Fila 1: MIS EVENTOS (PASTILLA DESTACADA SALMÓN) -->
+          <!-- Fila 1: MIS EVENTOS (PASTILLA DESTACADA SALMÓN / CORAL DEGRADADO) -->
           <div id="profileFreeEventsContainer" class="w-full mb-3">
-            <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-all active:scale-[0.99] group">
+            <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-tixel-cta hover:opacity-95 text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-transform duration-150 active:scale-95 group">
               <div class="flex items-center space-x-3">
                 <div class="w-7 h-7 rounded-full bg-[#12C061] flex items-center justify-center text-black shrink-0 shadow-sm">
                   <svg class="w-4 h-4 text-black fill-current" viewBox="0 0 24 24">
@@ -3864,7 +3965,7 @@
             <p class="font-sans text-neutral-300 text-sm sm:text-base font-medium tracking-wide uppercase leading-relaxed max-w-[260px]">
               NO HAY EVENTOS PÚBLICOS ACTIVOS · SÉ EL PRIMERO EN CREAR UNO
             </p>
-            <button onclick="handleCreateEventAction()" class="mt-6 py-3 px-6 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-sm tracking-wider uppercase transition-transform active:scale-95 shadow-lg shadow-[#12C061]/25 cursor-pointer">
+            <button onclick="handleCreateEventAction()" class="mt-6 py-3 px-6 rounded-2xl bg-tixel-cta text-black font-display font-black text-sm tracking-wider uppercase transition-transform duration-150 active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer">
               [ + ] CREAR EVENTO
             </button>
           </div>
@@ -4559,7 +4660,7 @@
           }
 
           ctaBtn.innerText = btnLabel;
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display text-base font-bold tracking-wider uppercase flex items-center justify-center transition-transform duration-100 shadow-lg active:scale-[0.98] focus:outline-none cursor-pointer';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-tixel-cta hover:opacity-95 text-black font-display text-base font-bold tracking-wider uppercase flex items-center justify-center transition-transform duration-150 shadow-lg active:scale-95 focus:outline-none cursor-pointer';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => {
             if (resolvedType === 'PAID') {
@@ -5079,6 +5180,9 @@
 
           return `
             <div id="ticketCardItem_${idx}" class="cf-ticket absolute origin-center will-change-transform w-[316px] h-[507px] flex-shrink-0 cursor-pointer select-none transition-transform duration-300 ease-out" onclick="handleTicketCardTap(${idx})">
+              <!-- Destello radial difuso ambiental detrás del contenedor del ticket (blur-2xl opacity-25) -->
+              <div class="ambient-glow-tixel absolute -inset-5 rounded-[44px] pointer-events-none blur-2xl opacity-25 z-0"></div>
+
               <!-- 1. Fondo fotorrealista de papel perforado: ticket.webp -->
               <img 
                 src="./assets/images/ticket.webp" 
@@ -5479,7 +5583,7 @@
         }
       } else {
         if (titleEl) titleEl.innerText = "CREAR NUEVO EVENTO";
-        if (btnEl) btnEl.innerText = "PUBLICAR EVENTO";
+        if (btnEl) btnEl.innerText = "[ PUBLICAR Y COMPARTIR ]";
         if (deleteContainer) deleteContainer.classList.add('hidden');
         resetCreateEventForm();
       }
@@ -5896,7 +6000,7 @@
       }
       if (btn) {
         btn.innerText = "[ PUBLICAR Y COMPARTIR ]";
-        btn.className = "w-full py-4 px-5 rounded-2xl bg-[#12C061] hover:bg-[#0fa854] active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-all shadow-xl focus:outline-none cursor-pointer";
+        btn.className = "w-full py-4 px-5 rounded-2xl bg-tixel-cta hover:opacity-95 active:scale-95 text-black font-display text-[19px] sm:text-[22px] font-black tracking-wider uppercase flex items-center justify-center transition-transform duration-150 shadow-xl focus:outline-none cursor-pointer";
         btn.removeAttribute('disabled');
       }
     }
@@ -6063,9 +6167,111 @@
 
     let currentEventArtBase64 = null;
 
+    // ====================================================
+    // CATÁLOGO DE PLANTILLAS DE ARTE PREDEFINIDAS (+1)
+    // ====================================================
+    const TEMPLATE_CATEGORIES = [
+      { id: 'previas', label: 'Previas / Juntadas', path: './assets/images/templates/previas/' },
+      { id: 'reggaeton', label: 'Reggaeton / Latino', path: './assets/images/templates/reggaeton/' },
+      { id: 'electronic', label: 'Electrónica / Techno', path: './assets/images/templates/electronic/' },
+      { id: 'clubs', label: 'Clubs / Festivales', path: './assets/images/templates/clubs/' },
+      { id: 'art', label: 'Arte / Teatro', path: './assets/images/templates/art/' },
+      { id: 'sports', label: 'Deportes / Salud', path: './assets/images/templates/sports/' },
+    ];
+
+    let currentTemplateCategory = 'previas';
+
+    const getCategoryImages = (basePath) => [1, 2, 3, 4, 5, 6].map(i => `${basePath}${i}.webp`);
+
+    function openTemplateSelectorModal() {
+      const modal = document.getElementById('templateSelectorModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      renderTemplateCategoryChips();
+      renderTemplateGrid();
+    }
+
+    function closeTemplateSelectorModal() {
+      const modal = document.getElementById('templateSelectorModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function selectTemplateCategory(catId) {
+      currentTemplateCategory = catId;
+      renderTemplateCategoryChips();
+      renderTemplateGrid();
+    }
+
+    function renderTemplateCategoryChips() {
+      const container = document.getElementById('templateCategoryChips');
+      if (!container) return;
+
+      container.innerHTML = TEMPLATE_CATEGORIES.map(cat => {
+        const isActive = cat.id === currentTemplateCategory;
+        return `
+          <button
+            type="button"
+            onclick="selectTemplateCategory('${cat.id}')"
+            class="px-3.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer font-sans ${
+              isActive
+                ? 'border border-[#E87A72] bg-[#22242B] text-white shadow-sm font-bold'
+                : 'bg-[#16171B] border border-[#26282E] text-[#8E8E93] hover:text-white hover:border-neutral-700 font-medium'
+            }"
+          >
+            ${escapeHtml(cat.label)}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderTemplateGrid() {
+      const container = document.getElementById('templateGridContainer');
+      if (!container) return;
+
+      const catObj = TEMPLATE_CATEGORIES.find(c => c.id === currentTemplateCategory) || TEMPLATE_CATEGORIES[0];
+      const images = getCategoryImages(catObj.path);
+
+      container.innerHTML = images.map((imgUrl, idx) => `
+        <div
+          onclick="selectTemplateArt('${imgUrl}')"
+          class="aspect-square rounded-2xl overflow-hidden border border-[#26282E] hover:border-[#E87A72] relative cursor-pointer group bg-[#16171B] shadow-md transition-all active:scale-95"
+        >
+          <img
+            src="${imgUrl}"
+            alt="Plantilla ${idx + 1}"
+            loading="lazy"
+            class="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-300"
+            onerror="this.onerror=null; this.src='${imgUrl.replace('.webp', '.jpg')}';"
+          />
+          <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <span class="px-3 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[11px] font-display font-bold uppercase text-white tracking-wider">
+              ELEGIR
+            </span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectTemplateArt(imgUrl) {
+      currentEventArtBase64 = imgUrl;
+      const previewImg = document.getElementById('createArtPreviewImg');
+      const previewWrapper = document.getElementById('createArtPreviewWrapper');
+      const emptyState = document.getElementById('createArtEmptyState');
+      if (previewImg) previewImg.src = imgUrl;
+      if (emptyState) emptyState.classList.add('hidden');
+      if (previewWrapper) previewWrapper.classList.remove('hidden');
+      closeTemplateSelectorModal();
+      showToast('Plantilla aplicada al evento');
+    }
+
+    function handleChooseFromGallery() {
+      closeTemplateSelectorModal();
+      const fileInput = document.getElementById('createArtFileInput');
+      if (fileInput) fileInput.click();
+    }
+
     function triggerArtFileInput() {
-      const input = document.getElementById('createArtFileInput');
-      if (input) input.click();
+      openTemplateSelectorModal();
     }
 
     function handleRemoveArtImage() {
@@ -9276,7 +9482,7 @@
       if (bannerContainer) bannerContainer.innerHTML = '';
 
       container.innerHTML = `
-        <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-all active:scale-[0.99] group">
+        <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-tixel-cta hover:opacity-95 text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-transform duration-150 active:scale-95 group">
           <div class="flex items-center space-x-3">
             <div class="w-7 h-7 rounded-full bg-[#12C061] flex items-center justify-center text-black shrink-0 shadow-sm">
               <svg class="w-4 h-4 text-black fill-current" viewBox="0 0 24 24">
@@ -11340,6 +11546,7 @@
         'vipTimePickerModal',
         'locationPickerModal',
         'bestPracticesModal',
+        'templateSelectorModal',
         'deleteEventModal',
         'shareEventModal'
       ];
