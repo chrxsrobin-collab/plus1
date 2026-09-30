@@ -2433,26 +2433,26 @@
       <div id="profileFreeView" class="relative z-20 flex-1 flex flex-col w-full max-w-md mx-auto px-5 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-6">
         <!-- 1. TOP BAR -->
         <header class="flex items-center justify-between pb-2 w-full relative z-30">
-          <button onclick="closeProfileScreen()" aria-label="Regresar" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none">
+          <button onclick="closeProfileScreen()" aria-label="Regresar" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-white/90 hover:text-white transition-all active:scale-90 focus:outline-none cursor-pointer">
             <span class="text-xl font-bold leading-none">←</span>
           </button>
-          <span id="profileFreeTopTitle" class="font-display text-neutral-400 text-sm font-bold tracking-widest uppercase">MI PERFIL</span>
-          <button onclick="openPlansBenefitsModal()" aria-label="Planes y beneficios" title="Planes y beneficios" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none font-display font-black text-sm">
+          <span id="profileFreeTopTitle" class="font-display text-neutral-400 text-sm font-medium tracking-widest uppercase">MI PERFIL</span>
+          <button onclick="openPlansBenefitsModal()" aria-label="Planes y beneficios" title="Planes y beneficios" class="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 border border-neutral-800 flex items-center justify-center text-neutral-300 hover:text-white transition-all active:scale-90 focus:outline-none font-display font-black text-sm cursor-pointer">
             ?
           </button>
         </header>
 
         <!-- 2. AVATAR Y DATOS DE PERFIL -->
-        <div class="flex flex-col items-center justify-center pt-3 pb-4 text-center">
-          <div class="relative inline-block">
-            <div class="relative w-24 h-24 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden">
+        <div class="flex flex-col items-center justify-center pt-2 pb-5 text-center">
+          <div class="relative inline-block mt-2">
+            <div class="relative w-28 h-28 rounded-full p-1 border-2 border-[#E87A72] bg-[#16171B] shadow-2xl flex items-center justify-center overflow-hidden mx-auto">
               <img id="profileUserAvatarDisplay" src="./assets/images/avatar_chris.png" alt="Avatar" class="w-full h-full object-cover rounded-full" />
               <div id="profileAvatarSpinner" class="hidden absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center rounded-full">
                 <div class="w-5 h-5 border-2 border-[#E87A72] border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
             <button id="profileFreeAvatarEditBtn" type="button" onclick="document.getElementById('profileAvatarFileInput').click()" aria-label="Cambiar foto de perfil" class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#16171B] hover:bg-[#22252C] border border-white/20 hover:border-[#E87A72] flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer z-10">
-              <svg class="w-3.5 h-3.5 text-[#E87A72] stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="w-3.5 h-3.5 text-white stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </button>
@@ -2460,10 +2460,10 @@
           </div>
 
           <div class="flex items-center justify-center space-x-2 mt-3 group">
-            <h2 id="profileUserNameDisplay" class="font-display text-white text-[32px] sm:text-[36px] font-black tracking-tight uppercase leading-none">
-              CHRIS G.
+            <h2 id="profileUserNameDisplay" class="font-display text-white text-3xl sm:text-4xl font-black tracking-wide uppercase leading-none">
+              CHRIS FREE
             </h2>
-            <button id="profileFreeNameEditBtn" onclick="promptEditUserName()" aria-label="Editar nombre" class="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-[#26282E] flex items-center justify-center text-[#9CA3AF] hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer">
+            <button id="profileFreeNameEditBtn" onclick="promptEditUserName()" aria-label="Editar nombre" class="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer">
               <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
@@ -2472,89 +2472,81 @@
           <div id="profilePartnerBadgeContainer" class="mt-2 flex items-center justify-center"></div>
         </div>
 
-        <!-- 2. MÓDULO DE GESTIÓN: "MIS EVENTOS" -->
-        <div id="profileFreeEventsContainer" class="w-full mt-3">
-          <div onclick="openMyEventsModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/40 flex items-center justify-between shadow-md cursor-pointer transition-colors active:scale-[0.99] group">
-            <div class="text-left pr-2 truncate">
-              <h3 class="font-display text-white text-lg sm:text-xl font-black tracking-wide uppercase leading-tight group-hover:text-[#E87A72] transition-colors">
-                MIS EVENTOS
-              </h3>
-              <p class="font-sans text-xs text-[#9CA3AF] mt-0.5">
-                Gestiona listas y pases de puerta
-              </p>
+        <!-- 3. MENÚ DE LISTA PRINCIPAL (ESTILO VERTICAL BRUTALISTA) -->
+        <div class="w-full flex flex-col mt-2">
+          <!-- Fila 1: MIS EVENTOS (PASTILLA DESTACADA SALMÓN) -->
+          <div id="profileFreeEventsContainer" class="w-full mb-3">
+            <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-all active:scale-[0.99] group">
+              <div class="flex items-center space-x-3">
+                <div class="w-7 h-7 rounded-full bg-[#12C061] flex items-center justify-center text-black shrink-0 shadow-sm">
+                  <svg class="w-4 h-4 text-black fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8L12 2z"/>
+                  </svg>
+                </div>
+                <span class="font-display text-2xl sm:text-3xl tracking-wide text-black font-black uppercase leading-none">
+                  MIS EVENTOS
+                </span>
+              </div>
+              <span class="text-2xl font-black text-black leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
             </div>
-            <button
-              onclick="event.stopPropagation(); closeProfileScreen(); openCreateEventScreen();"
-              class="px-4 py-2 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-all shadow-md shrink-0 active:scale-95 cursor-pointer"
-            >
-              [ + CREAR ]
-            </button>
+          </div>
+
+          <!-- FILAS 2, 3, 4 Y FOOTER (SECCIÓN DE ACCIONES DE CUENTA) -->
+          <div id="profileFreeAccountSection" class="w-full flex flex-col">
+            <!-- Fila 2: RACHAS -->
+            <div onclick="openStreakModal()" class="w-full border-b border-emerald-900/40 py-3.5 flex items-center justify-between px-2 cursor-pointer transition-colors hover:bg-white/[0.02] active:opacity-80 group">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-7 h-7 rounded-lg bg-blue-600/30 border border-blue-400/50 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4h16a2 2 0 0 1 2 2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4V6a2 2 0 0 1 2-2zm4 7h8v2H8v-2z" />
+                  </svg>
+                </div>
+                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                  RACHAS
+                </span>
+              </div>
+              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+            </div>
+
+            <!-- Fila 3: HAZTE PRO -->
+            <div onclick="openSubscriptionModal()" class="w-full border-b border-emerald-900/40 py-3.5 flex items-center justify-between px-2 cursor-pointer transition-colors hover:bg-white/[0.02] active:opacity-80 group">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                  <span class="text-base leading-none">🤝</span>
+                </div>
+                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                  HAZTE PRO
+                </span>
+              </div>
+              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+            </div>
+
+            <!-- Fila 4: SHARE APP -->
+            <div onclick="handleShareApp()" class="w-full border-b border-emerald-900/40 py-3.5 flex items-center justify-between px-2 cursor-pointer transition-colors hover:bg-white/[0.02] active:opacity-80 group">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-7 h-7 rounded-lg bg-teal-500/20 border border-teal-400/40 flex items-center justify-center shrink-0">
+                  <span class="text-base leading-none">📢</span>
+                </div>
+                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                  SHARE APP
+                </span>
+              </div>
+              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+            </div>
+
+            <!-- 4. FOOTER: CERRAR SESIÓN -->
+            <div class="mt-8 text-center pb-10">
+              <button onclick="handleLogoutHtml()" class="text-red-400/80 hover:text-red-400 font-sans text-xs tracking-wider uppercase transition-colors cursor-pointer bg-transparent border-0">
+                CERRAR SESIÓN
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- 3. FILA DE 3 MÉTRICAS INTERACTIVAS -->
-        <div class="grid grid-cols-3 gap-2.5 w-full mt-4">
-          <div onclick="openAttendedEventsModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
-            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
-            <img src="./assets/icons/calendar.webp" alt="Historial" class="w-6 h-6 object-contain mb-1 select-none pointer-events-none">
-            <span id="profileAttendedCount" class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none my-1">0</span>
-            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">HISTORIAL</span>
-          </div>
-          <div onclick="openStreakModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
-            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
-            <div class="text-xl mb-1">⏱️</div>
-            <div class="flex items-center justify-center space-x-1 my-1">
-              <span class="text-2xl filter drop-shadow">🔥</span>
-              <span id="profileStreakCount" class="font-display text-white text-3xl sm:text-[34px] font-black tracking-tight leading-none">3</span>
-            </div>
-            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase">RACHA</span>
-          </div>
-          <div onclick="openStoreModal()" class="relative p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#FAB205]/60 flex flex-col items-center justify-between text-center cursor-pointer transition-colors shadow-lg active:scale-95 group">
-            <span class="absolute top-2.5 right-2.5 text-[#6B7280] group-hover:text-white text-xs font-bold transition-colors">↗</span>
-            <div class="text-xl mb-1">⭐</div>
-            <span id="profilePointsCount" class="font-display text-[#FAB205] text-2xl sm:text-[28px] font-black tracking-tight leading-tight my-auto text-center">380</span>
-            <span class="font-display text-neutral-400 text-[11px] font-bold tracking-wider uppercase mt-1">PERKS</span>
-          </div>
-        </div>
-
-        <div id="profileCreateFirstEventBanner" class="hidden"></div>
-
-        <!-- 4. SECCIÓN SUSCRIPCIÓN Y ACCIONES -->
-        <div id="profileFreeAccountSection" class="w-full mt-4">
-          <div class="space-y-2">
-            <div onclick="openSubscriptionModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
-              <div class="flex items-center space-x-3.5">
-                <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">💳</div>
-                <div class="text-left">
-                  <span id="profileSubAccountText" class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">
-                    HAZTE PRO
-                  </span>
-                  <span id="profileSubAccountDesc" class="font-sans text-neutral-400 text-xs block">
-                    Diseñado para promotores, clubes y organizaciones
-                  </span>
-                </div>
-              </div>
-              <span class="text-neutral-500 font-bold text-lg">›</span>
-            </div>
-
-            <div onclick="handleShareApp()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/50 flex items-center justify-between cursor-pointer transition-colors shadow-md active:scale-98">
-              <div class="flex items-center space-x-3.5">
-                <div class="w-9 h-9 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-lg">🔗</div>
-                <div class="text-left">
-                  <span class="font-display text-white text-base sm:text-lg font-black tracking-tight uppercase block leading-tight">COMPARTIR APP</span>
-                  <span class="font-sans text-neutral-400 text-xs block">Invita a tus amig@s y gana +Perks</span>
-                </div>
-              </div>
-              <span class="text-neutral-500 font-bold text-lg">›</span>
-            </div>
-          </div>
-
-          <!-- 5. CIERRE DE SESIÓN -->
-          <div class="mt-6 text-center pb-4">
-            <button onclick="handleLogoutHtml()" class="text-red-400 font-sans text-xs sm:text-sm tracking-wide hover:underline focus:outline-none cursor-pointer bg-transparent border-0 uppercase">
-              CERRAR SESIÓN
-            </button>
-          </div>
+        <!-- Elementos ocultos para evitar null errors en scripts que sincronicen contadores -->
+        <div class="hidden" aria-hidden="true">
+          <span id="profileAttendedCount">0</span>
+          <div id="profileCreateFirstEventBanner"></div>
         </div>
       </div>
     </div>
@@ -2803,19 +2795,30 @@
           TUS RACHAS ACTIVAS
         </h3>
 
+        <!-- Contador integrado de +Perks -->
+        <div class="my-3 p-3.5 rounded-2xl bg-[#FAB205]/10 border border-[#FAB205]/20 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">🪙</span>
+            <span class="font-display text-xs font-black tracking-wider text-neutral-300 uppercase">RECOMPENSA ACUMULADA</span>
+          </div>
+          <span class="font-display text-sm font-black text-[#FAB205]">
+            <span id="profilePointsCount">380</span> +PERKS GANADOS
+          </span>
+        </div>
+
         <p class="font-sans text-neutral-400 text-xs mb-3 leading-relaxed">
           Cantidad de eventos consecutivos asistidos de un mismo anfitrión o club:
         </p>
 
         <!-- Desglose por organizador con diseño brutalista mate -->
-        <div class="space-y-2.5 my-4">
+        <div class="space-y-2.5 my-3">
           <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
             <div class="text-left">
               <h4 class="font-display text-white text-sm font-black uppercase">Club Cacao</h4>
               <span class="font-sans text-neutral-400 text-[11px]">Recinto VIP · Electrónica</span>
             </div>
             <span class="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30">
-              🔥 3 eventos seguidos
+              🔥 <span id="profileStreakCount">3</span> eventos seguidos
             </span>
           </div>
           <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
@@ -2829,7 +2832,11 @@
           </div>
         </div>
 
-        <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-[#F17D02] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-orange-500 transition-colors cursor-pointer">
+        <p class="font-sans text-neutral-400 text-xs my-3 text-center leading-relaxed">
+          Asiste a eventos consecutivos para mantener tu racha y desbloquear merch oficial de +1.
+        </p>
+
+        <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-[#d66f67] transition-colors cursor-pointer">
           ENTENDIDO
         </button>
       </div>
@@ -3155,6 +3162,74 @@
 
   <script>
     // ==========================================
+    // SERVICIO CENTRALIZADO DE EFECTOS DE AUDIO (SOUND EFFECTS)
+    // ==========================================
+    const soundMap = {};
+
+    function initSoundEffects() {
+      if (typeof window === 'undefined' || typeof Audio === 'undefined') return;
+
+      const soundFiles = {
+        notification: 'notification.wav',
+        event: 'event.wav',
+        qrPositive: 'qrpositive.wav',
+        qrNegative: 'qrnegative.wav'
+      };
+
+      Object.entries(soundFiles).forEach(([key, filename]) => {
+        try {
+          const audio = new Audio(`./assets/sounds/${filename}`);
+          audio.preload = 'auto';
+          audio.volume = 0.85;
+
+          audio.addEventListener('error', () => {
+            if (!audio.src.startsWith(window.location.origin + '/assets/sounds/')) {
+              audio.src = `/assets/sounds/${filename}`;
+              audio.load();
+            }
+          }, { once: true });
+
+          soundMap[key] = audio;
+        } catch (e) {
+          console.warn(`[Audio] Error al instanciar sonido [${key}]:`, e);
+        }
+      });
+    }
+
+    initSoundEffects();
+
+    // Desbloqueo pasivo para políticas de Autoplay en dispositivos móviles
+    const unlockMobileAudio = () => {
+      Object.values(soundMap).forEach((audio) => {
+        if (audio && typeof audio.load === 'function') {
+          try { audio.load(); } catch (_) {}
+        }
+      });
+      window.removeEventListener('click', unlockMobileAudio);
+      window.removeEventListener('touchstart', unlockMobileAudio);
+    };
+    window.addEventListener('click', unlockMobileAudio, { once: true });
+    window.addEventListener('touchstart', unlockMobileAudio, { once: true });
+
+    function playSound(type) {
+      try {
+        const audio = soundMap[type];
+        if (audio) {
+          audio.currentTime = 0; // Reinicia el audio para disparos sucesivos inmediatos
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((err) => {
+              console.warn(`[Audio] Reproducción bloqueada o silenciada para [${type}]:`, err);
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(`[Audio Context] Error no controlado al reproducir [${type}]:`, error);
+      }
+    }
+    window.playSound = playSound;
+
+    // ==========================================
     // UTILIDADES GLOBALES DE ESCAPADO HTML
     // ==========================================
     function escapeHtml(str) {
@@ -3268,9 +3343,35 @@
                 userNotifsUnsubscribe();
                 userNotifsUnsubscribe = null;
               }
+              let isNotifsInitialLoad = false;
               userNotifsUnsubscribe = fbDb.collection('notifications')
                 .where('userId', '==', user.uid)
                 .onSnapshot((querySnap) => {
+                  let hasNewUnread = false;
+                  if (querySnap) {
+                    if (isNotifsInitialLoad) {
+                      querySnap.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                          const data = change.doc.data();
+                          if (data && data.read === false) {
+                            hasNewUnread = true;
+                          }
+                        }
+                      });
+                    } else {
+                      isNotifsInitialLoad = true;
+                    }
+                  } else {
+                    isNotifsInitialLoad = true;
+                  }
+
+                  if (hasNewUnread) {
+                    playSound('notification');
+                    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                      navigator.vibrate(80);
+                    }
+                  }
+
                   const list = [];
                   if (querySnap) {
                     querySnap.forEach((doc) => {
@@ -6253,6 +6354,9 @@
           renderCoverFlow();
         }
 
+        // Dispara efecto sonoro festivo de evento creado
+        playSound('event');
+
         // Microinteracción festiva con confeti
         if (typeof confetti === 'function') {
           confetti({
@@ -9172,21 +9276,18 @@
       if (bannerContainer) bannerContainer.innerHTML = '';
 
       container.innerHTML = `
-        <div onclick="openMyEventsModal()" class="w-full p-4 rounded-2xl bg-[#16171B] border border-[#26282E] hover:border-[#E87A72]/40 flex items-center justify-between shadow-md cursor-pointer transition-colors active:scale-[0.99] group">
-          <div class="text-left pr-2 truncate">
-            <h3 class="font-display text-white text-lg sm:text-xl font-black tracking-wide uppercase leading-tight group-hover:text-[#E87A72] transition-colors">
+        <div onclick="openMyEventsModal()" class="w-full rounded-2xl bg-[#E87A72] hover:bg-[#d66f67] text-black px-4 py-3.5 flex items-center justify-between shadow-md cursor-pointer transition-all active:scale-[0.99] group">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-full bg-[#12C061] flex items-center justify-center text-black shrink-0 shadow-sm">
+              <svg class="w-4 h-4 text-black fill-current" viewBox="0 0 24 24">
+                <path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8L12 2z"/>
+              </svg>
+            </div>
+            <span class="font-display text-2xl sm:text-3xl tracking-wide text-black font-black uppercase leading-none">
               MIS EVENTOS
-            </h3>
-            <p class="font-sans text-xs text-[#9CA3AF] mt-0.5">
-              Gestiona listas y pases de puerta
-            </p>
+            </span>
           </div>
-          <button
-            onclick="event.stopPropagation(); closeProfileScreen(); openCreateEventScreen();"
-            class="px-4 py-2 rounded-xl bg-[#E87A72] hover:bg-[#d66f67] text-black font-display font-black text-xs tracking-wider uppercase transition-all shadow-md shrink-0 active:scale-95 cursor-pointer"
-          >
-            [ + CREAR ]
-          </button>
+          <span class="text-2xl font-black text-black leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
         </div>
       `;
     }
@@ -9283,6 +9384,10 @@
     function closeSubscriptionModal() {
       const modal = document.getElementById('subscriptionModal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    function openProComingSoonModal() {
+      openSubscriptionModal();
     }
 
     async function handleSubscribePartnerHtml() {
@@ -9497,7 +9602,7 @@
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         try {
           if (type === 'success') {
-            navigator.vibrate(70);
+            navigator.vibrate(120);
           } else {
             navigator.vibrate([100, 60, 100]);
           }
@@ -9523,6 +9628,7 @@
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#12C061]/25 backdrop-blur-[2px] border-4 border-[#12C061] shadow-[inset_0_0_80px_rgba(18,192,97,0.6)] animate-flash-glow transition-all duration-300";
         }
+        playSound('qrPositive');
         triggerScannerHaptic('success');
       } else if (status === 'yellow' || status === 'warning' || status === 'half') {
         const text = customMessage || (attendeeName ? `🟡 ACCESO AUTORIZADO · 1/2 · ${attendeeName}` : '🟡 ACCESO AUTORIZADO · 1/2 (+1 PENDIENTE)');
@@ -9532,6 +9638,7 @@
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#FAB205]/25 backdrop-blur-[2px] border-4 border-[#FAB205] shadow-[inset_0_0_80px_rgba(250,178,5,0.6)] animate-flash-glow transition-all duration-300";
         }
+        playSound('qrPositive');
         triggerScannerHaptic('success');
       } else if (status === 'used') {
         const text = customMessage || (attendeeName ? `🔴 PASE YA UTILIZADO · ${attendeeName}` : '🔴 PASE YA UTILIZADO');
@@ -9541,6 +9648,7 @@
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
         }
+        playSound('qrNegative');
         triggerScannerHaptic('error');
       } else if (status === 'invalid') {
         const text = customMessage || '⚠️ CÓDIGO NO VÁLIDO';
@@ -9550,6 +9658,7 @@
         if (glow) {
           glow.className = "fixed inset-0 pointer-events-none z-50 bg-[#DC2626]/30 backdrop-blur-[2px] border-4 border-[#DC2626] shadow-[inset_0_0_80px_rgba(220,38,38,0.7)] animate-shake transition-all duration-200";
         }
+        playSound('qrNegative');
         triggerScannerHaptic('error');
       } else {
         if (fbBox) {
