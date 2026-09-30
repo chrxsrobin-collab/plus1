@@ -2347,48 +2347,46 @@
 
     <!-- MODAL GESTIÓN DE EVENTO Y ASISTENTES (EventManagerModal) -->
     <div id="eventManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
-      <div class="w-full max-w-md max-h-[92vh] rounded-[28px] bg-[#16171B] border border-[#26282E] p-4 sm:p-5 shadow-2xl relative text-left flex flex-col anim-modal-zoom overflow-hidden">
+      <div class="w-full max-w-md mx-auto flex flex-col gap-4 p-4 text-white overflow-y-auto max-h-[90vh] rounded-[28px] bg-[#16171B] border border-[#26282E] shadow-2xl relative text-left anim-modal-zoom">
         
         <!-- Input oculto para cambio de flyer -->
         <input type="file" id="emFileInput" accept="image/*" class="hidden" onchange="handleEmImageSelected(event)" />
 
         <!-- Top Nav -->
-        <div class="flex items-center justify-between pb-2.5">
-          <button onclick="closeEventManagerModal()" class="h-8 px-3 rounded-xl bg-[#121316] hover:bg-neutral-800 border border-[#26282E] flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white transition-colors cursor-pointer">
-            <span class="text-sm font-bold">←</span>
-            <span class="font-display font-bold uppercase tracking-wider text-[10px]">VOLVER</span>
+        <div class="flex items-center justify-between w-full mb-1">
+          <button type="button" onclick="closeEventManagerModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#16171B] border border-[#26282E] text-xs font-sans text-zinc-300 active:scale-95 cursor-pointer">
+            ← VOLVER
           </button>
-          <button onclick="closeEventManagerModal(); closeProfileScreen(); openDoorModal();" title="Modo Escáner" class="h-8 px-3 rounded-xl bg-[#12C061]/15 hover:bg-[#12C061]/25 border border-[#12C061]/30 flex items-center gap-1 text-[#12C061] text-xs font-display font-black tracking-wider uppercase transition-all cursor-pointer">
-            <span class="text-sm">📷</span>
-            <span class="text-[10px]">ESCÁNER</span>
+          <button type="button" onclick="closeEventManagerModal(); closeProfileScreen(); openDoorModal();" title="Modo Escáner" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#12C061]/20 border border-[#12C061]/40 text-[#12C061] text-xs font-sans font-bold active:scale-95 cursor-pointer">
+            📷 ESCÁNER
           </button>
         </div>
 
         <!-- 1. Cabecera con Arte del Evento (Contexto Visual Inmediato) -->
-        <div class="flex items-center gap-3 p-3 bg-[#121316] border border-[#26282E] rounded-2xl mb-3 shadow-lg">
-          <div id="emFlyerContainer" class="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-[#16171B] flex items-center justify-center">
+        <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-3 flex items-center gap-3">
+          <div id="emFlyerContainer" onclick="triggerEmImageEdit()" title="Cambiar arte del evento" class="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-[#121316] flex items-center justify-center cursor-pointer relative group">
             <span id="emFlyerFallback" class="text-[#E87A72] font-display font-black text-xl">+1</span>
             <img id="emFlyerImg" class="w-full h-full object-cover hidden" alt="Flyer" />
           </div>
-          <div class="flex-1 min-w-0">
-            <span class="font-sans text-[#E87A72] text-xs font-bold tracking-wider uppercase block leading-none mb-1">
+          <div class="flex-1 min-w-0 flex flex-col justify-center">
+            <span class="text-[10px] font-sans font-bold text-[#E87A72] uppercase tracking-wider">
               PANEL DEL ANFITRIÓN
             </span>
-            <h3 id="emEventTitle" class="font-display text-white text-base font-black tracking-wide uppercase truncate leading-tight">
+            <h2 id="emEventTitle" class="font-display text-base text-white uppercase truncate">
               GESTIÓN DE EVENTO
-            </h3>
-            <p id="emEventDate" class="font-sans text-xs text-neutral-400 mt-0.5 truncate">
+            </h2>
+            <span id="emEventDate" class="text-xs text-zinc-400 font-sans">
               Fecha por confirmar
-            </p>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="closeEventManagerModal(); closeProfileScreen(); openCreateEventScreen(currentEmEventId)" title="Editar detalles del evento" class="px-3 py-1.5 rounded-xl bg-[#26282E] hover:bg-[#32353D] border border-white/10 text-xs font-sans font-medium text-white hover:border-[#E87A72] flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm">
-              <span>✏️</span>
-              <span class="font-display font-bold uppercase tracking-wider text-[10px]">EDITAR</span>
-            </button>
-            <button onclick="triggerEmImageEdit()" title="Actualizar arte del evento" class="w-8 h-8 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-[#26282E] hover:border-[#E87A72] flex items-center justify-center text-neutral-300 hover:text-white transition-all cursor-pointer shrink-0">
-              <span class="text-sm">📸</span>
-            </button>
+            </span>
           </div>
+          <button
+            type="button"
+            onclick="closeEventManagerModal(); closeProfileScreen(); openCreateEventScreen(currentEmEventId)"
+            class="shrink-0 px-3 py-2 rounded-xl bg-[#26282E] hover:bg-[#32353D] border border-white/10 text-xs font-sans text-white flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+          >
+            <span>✏️</span>
+            <span class="font-semibold">EDITAR</span>
+          </button>
         </div>
 
         <!-- Botón Vincular Staff de Puerta (QR Maestro) -->
@@ -7696,14 +7694,30 @@
 
       container.innerHTML = userCreatedEvents.map(evt => {
         const isPast = evt.isFinished || (evt.status === 'Finalizado');
-        const imgUrl = evt.imageUrl || evt.flyerImage || evt.artImage || './assets/images/event_placeholder.webp';
+        const eventImage = evt.imageUrl || evt.image || evt.flyerUrl || evt.coverUrl || evt.flyerImage || evt.artImage || null;
         const dateStr = evt.date ? (evt.startTime ? `${evt.date} · ${evt.startTime}` : evt.date) : (evt.dateStr || 'Fecha por confirmar');
         const attendeesCount = evt.attendeesCount ?? evt.guestsCount ?? 0;
         const guestLimit = evt.guestLimit ?? evt.maxCapacity ?? 150;
+        const shortTitle = escapeHtml(evt.title ? evt.title.slice(0, 3) : "+1");
 
         return `
           <div onclick="closeMyEventsModal(); openEventManagerModal('${evt.id}')" class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-3 flex items-center gap-3.5 cursor-pointer transition-all duration-150 active:scale-[0.98] hover:border-[#E87A72]/50 shadow-md select-none">
-            <img src="${escapeHtmlAttr(imgUrl)}" alt="${escapeHtmlAttr(evt.title || 'Evento')}" onerror="this.src='./assets/images/fondo_iniciob.webp'" class="w-16 h-16 rounded-xl object-cover shrink-0 border border-white/10 bg-neutral-900" />
+            <div class="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10 relative flex items-center justify-center">
+              ${eventImage ? `
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#26282E] to-[#16171B] p-1">
+                  <span class="font-display text-[10px] text-[#E87A72] font-bold uppercase truncate max-w-full">
+                    ${shortTitle}
+                  </span>
+                </div>
+                <img src="${escapeHtmlAttr(eventImage)}" alt="${escapeHtmlAttr(evt.title || 'Evento')}" onerror="this.style.display='none'" class="w-full h-full object-cover object-center relative z-10" />
+              ` : `
+                <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#26282E] to-[#16171B] p-1">
+                  <span class="font-display text-[10px] text-[#E87A72] font-bold uppercase truncate max-w-full">
+                    ${shortTitle}
+                  </span>
+                </div>
+              `}
+            </div>
             <div class="flex-1 flex flex-col justify-center min-w-0">
               <div class="flex items-center justify-between gap-2">
                 <h4 class="font-display text-white text-base font-black uppercase leading-tight truncate">
