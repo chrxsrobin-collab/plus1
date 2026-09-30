@@ -1846,20 +1846,21 @@
 
           <!-- Botón 2: Instagram Stories -->
           <button id="shareEventStoryBtn" type="button" onclick="generateStoryImageHtml()" class="w-full py-3.5 px-4 rounded-2xl bg-[#16171B] hover:bg-[#1f2228] border border-[#E87A72] text-white font-sans text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg flex items-center justify-center active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg id="shareEventStoryIcon" class="w-5 h-5 mr-3 shrink-0" viewBox="0 0 24 24" fill="none">
-              <defs>
-                <linearGradient id="igGradientHtmlModal" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#fdf497" />
-                  <stop offset="5%" stopColor="#fdf497" />
-                  <stop offset="45%" stopColor="#fd5949" />
-                  <stop offset="60%" stopColor="#d6249f" />
-                  <stop offset="90%" stopColor="#285AEB" />
-                </linearGradient>
-              </defs>
-              <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#igGradientHtmlModal)" strokeWidth="2" />
-              <circle cx="12" cy="12" r="4" stroke="url(#igGradientHtmlModal)" strokeWidth="2" />
-              <circle cx="17.5" cy="6.5" r="1.2" fill="url(#igGradientHtmlModal)" />
-            </svg>
+            <div id="shareEventStoryIcon" class="w-5 h-5 rounded-md p-0.5 flex items-center justify-center shrink-0 mr-3 bg-gradient-to-tr from-[#FFD521] via-[#F50000] to-[#B7007C] shadow-sm">
+              <svg 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="white" 
+                stroke-width="2.2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round" 
+                class="w-full h-full"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+            </div>
             <span id="shareEventStoryBtnText">GENERAR HISTORIA PARA INSTAGRAM</span>
           </button>
 
@@ -2676,18 +2677,17 @@
           ✕
         </button>
 
-        <div class="flex items-center space-x-2.5 mb-3 shrink-0">
-          <span class="text-xl">✨</span>
-          <h3 class="font-display text-white text-xl font-black tracking-wide uppercase">
-            PLANES Y BENEFICIOS +1
+        <div class="flex items-center mb-3 shrink-0">
+          <h3 class="font-display text-white text-xl font-bold tracking-wide uppercase">
+            INFO
           </h3>
         </div>
 
         <div class="overflow-y-auto pr-1 space-y-4 flex-1">
           <!-- TARJETA CUENTA FREE -->
-          <div class="p-4 rounded-2xl bg-[#101114] border border-[#26282E] space-y-2.5">
+          <div class="p-4 rounded-2xl bg-[#16171B] border border-[#26282E] space-y-2.5">
             <div class="flex items-center justify-between">
-              <span class="font-display text-base font-black text-white uppercase tracking-wider">
+              <span class="font-display text-base font-bold text-white uppercase tracking-wider">
                 CUENTA FREE
               </span>
               <span class="px-2 py-0.5 rounded-full bg-white/10 text-neutral-300 font-display text-[10px] font-bold uppercase tracking-wider">
@@ -2695,10 +2695,6 @@
               </span>
             </div>
             <ul class="space-y-1.5 font-sans text-xs text-neutral-300">
-              <li class="flex items-start gap-2">
-                <span class="text-[#12C061]">✓</span>
-                <span>Hasta 2 eventos mensuales (públicos o privados).</span>
-              </li>
               <li class="flex items-start gap-2">
                 <span class="text-[#12C061]">✓</span>
                 <span>Hasta 150 invitados por evento.</span>
@@ -2719,44 +2715,26 @@
           </div>
 
           <!-- TARJETA CUENTA PRO -->
-          <div class="p-4 rounded-2xl bg-gradient-to-b from-[#1b1c22] to-[#121316] border border-[#FAB205]/40 space-y-2.5 shadow-lg">
+          <div class="p-4 rounded-2xl bg-gradient-to-b from-[#1b1c22] to-[#121316] border border-[#FAB205]/40 space-y-3 shadow-lg">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-1.5">
-                <span class="font-display text-base font-black text-[#FAB205] uppercase tracking-wider">
+                <span class="font-display text-base font-bold text-[#FAB205] uppercase tracking-wider">
                   CUENTA PRO
                 </span>
                 <span class="text-xs">👑</span>
               </div>
-              <span class="px-2 py-0.5 rounded-full bg-[#FAB205]/20 text-[#FAB205] font-display text-[10px] font-black uppercase tracking-wider border border-[#FAB205]/40">
-                $US 9.99/MES
+              <span class="px-2.5 py-0.5 rounded-full bg-[#26282E] text-[#FAB205] font-display text-[10px] font-bold uppercase tracking-wider border border-[#FAB205]/30">
+                PRÓXIMAMENTE
               </span>
             </div>
-            <ul class="space-y-1.5 font-sans text-xs text-neutral-200">
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span class="font-semibold text-white">Incluye todo lo de la cuenta Free.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span>Perfil profesional / Fan Page de negocio.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span>Dashboard de estadísticas avanzadas (invitaciones enviadas, ingresos en tiempo real, horas pico).</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span>QR zonal para eventos divididos en áreas (General, VIP, Backstage).</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span>Hasta 5.000 invitados por evento.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-[#FAB205]">✦</span>
-                <span>Venta de tickets y cobro directo.</span>
-              </li>
-            </ul>
+            <div class="space-y-1.5 font-sans text-xs text-[#9CA3AF] leading-relaxed">
+              <p>
+                Herramientas avanzadas para clubes, promotores y eventos masivos: aforo extendido, escaneo multipuerta y analíticas en vivo.
+              </p>
+              <p class="text-[11px] text-[#FAB205]/80 font-medium">
+                Disponible en las próximas actualizaciones.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -4222,7 +4200,7 @@
         );
 
         if (isApproved) {
-          ctaBtn.innerText = 'PASE ACTIVO · VER ENTRADA';
+          ctaBtn.innerText = '🎟️ PASE ACTIVO · VER EN MIS TICKETS';
           ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa854] text-black font-display text-base font-bold tracking-wider uppercase flex items-center justify-center transition-transform duration-100 shadow-lg cursor-pointer active:scale-[0.98]';
           ctaBtn.disabled = false;
           ctaBtn.onclick = () => {
@@ -4230,8 +4208,8 @@
             openTicketsScreen();
           };
         } else if (existingPass && existingPass.status === 'pending') {
-          ctaBtn.innerText = 'SOLICITUD PENDIENTE';
-          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-[#FAB205] font-display text-base font-bold tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
+          ctaBtn.innerText = '⏳ SOLICITUD ENVIADA';
+          ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-white/10 text-neutral-300 font-display text-base font-bold tracking-wider uppercase flex items-center justify-center cursor-not-allowed pointer-events-none shadow-inner select-none';
           ctaBtn.disabled = true;
           ctaBtn.onclick = null;
         } else {
@@ -4342,8 +4320,8 @@
       }
       const ctaBtn = document.getElementById('modalCtaBtn');
       if (ctaBtn) {
-        ctaBtn.innerText = '⏳ SOLICITUD PENDIENTE';
-        ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-[#26282E] text-[#FAB205] font-display text-base font-black tracking-wider uppercase flex items-center justify-center cursor-not-allowed shadow-inner';
+        ctaBtn.innerText = '⏳ SOLICITUD ENVIADA';
+        ctaBtn.className = 'w-full py-3.5 px-4 rounded-xl bg-[#1E2025] border border-white/10 text-neutral-300 font-display text-base font-bold tracking-wider uppercase flex items-center justify-center cursor-not-allowed pointer-events-none shadow-inner select-none';
         ctaBtn.disabled = true;
       }
       try {
