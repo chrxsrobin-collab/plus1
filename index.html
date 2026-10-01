@@ -129,10 +129,11 @@
 
     /* Preservar fondo propio si la etiqueta tiene background translúcido (pills/badges) */
     span.text-\[\#E87A72\][class*="bg-"] {
+      background-image: none !important;
       background-clip: padding-box !important;
       -webkit-background-clip: initial !important;
       -webkit-text-fill-color: initial !important;
-      color: #FF6363 !important;
+      color: #E87A72 !important;
     }
 
     /* 3. BORDE CON DEGRADADO (Para tarjetas activas o avatares) */
@@ -959,24 +960,20 @@
               </span>
             </div>
 
-            <!-- Descripción (solo si existe) -->
-            <p id="inviteDescriptionText" class="hidden font-sans text-xs sm:text-sm text-neutral-300 leading-relaxed px-1">
-            </p>
+            <!-- Subtítulo: Descripción del evento -->
+            <div id="inviteDescriptionBlock" class="space-y-1 px-1">
+              <h4 class="font-display text-xs font-bold uppercase tracking-wider text-[#E87A72]">
+                Descripcion del evento:
+              </h4>
+              <p id="inviteDescriptionText" class="font-sans text-xs sm:text-sm text-neutral-300 leading-relaxed">
+              </p>
+            </div>
 
-            <!-- 5. Selector de Acompañante (+1) -->
-            <div id="invitePlusOneSection" class="space-y-1.5 pt-1">
-              <div class="grid grid-cols-2 gap-2 p-1 bg-[#101114] rounded-2xl border border-[#26282E]">
-                <button type="button" id="inviteSoloBtn" onclick="setInvitePlusOne(false)" class="py-3 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer">
-                  <span>👤</span>
-                  <span>SOLO YO</span>
-                </button>
-                <button type="button" id="invitePlusOneBtn" onclick="setInvitePlusOne(true)" class="py-3 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer">
-                  <span>👥</span>
-                  <span>VOY CON MI +1</span>
-                </button>
-              </div>
-              <p id="invitePlusOneNote" class="text-[11px] font-sans text-center text-neutral-400 px-1 pt-1">
-                Tu pase QR será válido para 1 ingreso individual.
+            <!-- Aviso de tipo de invitación (según configuración del evento) -->
+            <div id="inviteTypeNoticeBox" class="p-3 rounded-xl bg-[#101114] border border-[#26282E] flex items-center gap-2.5">
+              <span id="inviteTypeIcon" class="text-base shrink-0">👥</span>
+              <p id="inviteTypeNoticeText" class="font-sans text-xs text-neutral-300 font-medium">
+                Esta invitación incluye un acompañante (+1).
               </p>
             </div>
           </div>
@@ -1118,7 +1115,7 @@
         <!-- FOOTER CON BOTÓN DE ACCIÓN (SOLO EN MODO INVITE) -->
         <div id="inviteFooterActionBox" class="p-4 bg-[#16171B] border-t border-[#26282E]">
           <!-- Botón de Confirmación Privada -->
-          <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-4 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-base sm:text-lg tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-[#12C061]/25 cursor-pointer">
+          <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-4 rounded-2xl text-black font-display font-black text-base sm:text-lg tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-[#E87A72]/25 cursor-pointer hover:opacity-95" style="background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%);">
             <span>CONFIRMAR Y GENERAR MI QR</span>
           </button>
 
@@ -1669,28 +1666,34 @@
             <div class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl overflow-hidden shadow-none flex">
               <!-- Indicador de Línea de Tiempo Lateral (Timeline Connector) -->
               <div class="flex flex-col items-center justify-between py-4 pl-4 pr-1.5 select-none">
-                <!-- Punto de Inicio: Círculo sólido -->
-                <div class="w-2.5 h-2.5 rounded-full bg-[#E87A72] shrink-0 mt-0.5"></div>
+                <!-- Punto de Inicio: Círculo sólido verde -->
+                <div class="w-2.5 h-2.5 rounded-full bg-[#12C061] shrink-0 mt-0.5"></div>
                 <!-- Línea conectora vertical -->
                 <div class="w-[1.5px] bg-[#26282E] flex-1 my-1.5"></div>
-                <!-- Punto de Cierre: Círculo con borde o aro abierto -->
-                <div class="w-2.5 h-2.5 rounded-full border border-[#8E8E93] bg-transparent shrink-0 mb-0.5"></div>
+                <!-- Punto de Final: Círculo sólido salmón -->
+                <div class="w-2.5 h-2.5 rounded-full bg-[#E87A72] shrink-0 mb-0.5"></div>
               </div>
 
               <!-- Contenedor de Filas Divididas Horizontalmente -->
               <div class="flex-1 flex flex-col min-w-0">
                 <!-- Fila 1: Inicio (Start) -->
                 <div
-                  onclick="openTimelinePickerModal('start')"
-                  role="button"
-                  tabindex="0"
-                  class="w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none"
+                  class="relative w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none overflow-hidden"
                 >
-                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">
+                  <input
+                    type="datetime-local"
+                    id="timelineStartDatetimeInput"
+                    aria-label="Fecha y hora de inicio"
+                    onchange="handleTimelineDatetimeChange('start', this.value)"
+                    onclick="if (this.showPicker) { try { this.showPicker(); } catch(e){} }"
+                    class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer block"
+                    style="-webkit-appearance: none; appearance: none;"
+                  />
+                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors pointer-events-none">
                     Inicio
                   </span>
 
-                  <div class="flex items-center gap-1.5 pl-2 min-w-0">
+                  <div class="flex items-center gap-1.5 pl-2 min-w-0 pointer-events-none">
                     <span id="timelineStartDateDisplay" class="font-sans text-xs sm:text-sm font-semibold text-white tracking-wide text-right truncate">
                       Definir inicio
                     </span>
@@ -1703,20 +1706,26 @@
                 <!-- Línea divisoria sutil -->
                 <div class="w-full border-t border-[#26282E]"></div>
 
-                <!-- Fila 2: Cierre (End / Finalización) -->
+                <!-- Fila 2: Final (End) -->
                 <div
-                  onclick="openTimelinePickerModal('end')"
-                  role="button"
-                  tabindex="0"
-                  class="w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none"
+                  class="relative w-full flex items-center justify-between py-3.5 pr-4 pl-2 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors group select-none overflow-hidden"
                 >
-                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors">
-                    Cierre
+                  <input
+                    type="datetime-local"
+                    id="timelineEndDatetimeInput"
+                    aria-label="Fecha y hora final"
+                    onchange="handleTimelineDatetimeChange('end', this.value)"
+                    onclick="if (this.showPicker) { try { this.showPicker(); } catch(e){} }"
+                    class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer block"
+                    style="-webkit-appearance: none; appearance: none;"
+                  />
+                  <span class="font-sans text-sm font-medium text-zinc-400 group-hover:text-zinc-300 transition-colors pointer-events-none">
+                    Final
                   </span>
 
-                  <div class="flex items-center gap-1.5 pl-2 min-w-0">
+                  <div class="flex items-center gap-1.5 pl-2 min-w-0 pointer-events-none">
                     <span id="timelineEndDateDisplay" class="font-sans text-xs sm:text-sm font-semibold text-white tracking-wide text-right truncate">
-                      Definir cierre
+                      Definir final
                     </span>
                     <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors text-xs font-bold shrink-0">
                       ›
@@ -1784,7 +1793,7 @@
               <textarea
                 id="createEventDescInput"
                 rows="3"
-                maxlength="100"
+                maxlength="500"
                 oninput="handleCreateEventDescInput(this)"
                 placeholder="De qué va la fiesta, promos o vibe general..."
                 class="w-full p-3.5 pb-7 rounded-xl bg-[#16171B] border border-[#26282E] focus:border-[#E87A72] text-white placeholder-[#8E8E93] font-sans text-sm outline-none transition-colors resize-none leading-relaxed"
@@ -1793,7 +1802,7 @@
                 id="createEventDescCounter"
                 class="absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93] pointer-events-none"
               >
-                0/100
+                0/500
               </span>
             </div>
           </div>
@@ -5714,7 +5723,7 @@
       return datePart || timePart || fallback;
     }
 
-    function formatTimelineEndDate(startDateStr, endDateStr, endTimeStr, fallback = 'Definir cierre') {
+    function formatTimelineEndDate(startDateStr, endDateStr, endTimeStr, fallback = 'Definir final') {
       if (!endTimeStr && !endDateStr) return fallback;
       const isDifferentDate = Boolean(endDateStr && startDateStr && endDateStr.trim() !== startDateStr.trim());
       if (isDifferentDate) {
@@ -5733,57 +5742,58 @@
       const startInp = document.getElementById('createEventStartTimeInput');
       const endDateInp = document.getElementById('createEventEndDateInput');
       const endInp = document.getElementById('createEventEndTimeInput');
+      const startDtInp = document.getElementById('timelineStartDatetimeInput');
+      const endDtInp = document.getElementById('timelineEndDatetimeInput');
 
       if (startDisplay) {
         startDisplay.innerText = formatTimelineDate(createEventDate, createEventStartTime, 'Definir inicio');
       }
       if (endDisplay) {
-        endDisplay.innerText = formatTimelineEndDate(createEventDate, createEventEndDate, createEventEndTime, 'Definir cierre');
+        endDisplay.innerText = formatTimelineEndDate(createEventDate, createEventEndDate, createEventEndTime, 'Definir final');
       }
       if (dateInp) dateInp.value = createEventDate;
       if (startInp) startInp.value = createEventStartTime;
       if (endDateInp) endDateInp.value = createEventEndDate || createEventDate;
       if (endInp) endInp.value = createEventEndTime;
+
+      if (startDtInp && createEventDate) {
+        startDtInp.value = `${createEventDate}T${createEventStartTime || '22:00'}`;
+      }
+      if (endDtInp && (createEventEndDate || createEventDate)) {
+        endDtInp.value = `${createEventEndDate || createEventDate}T${createEventEndTime || '04:00'}`;
+      }
+    }
+
+    function handleTimelineDatetimeChange(mode, val) {
+      if (!val) return;
+      const parts = val.split('T');
+      const dVal = parts[0];
+      const tVal = parts[1] ? parts[1].slice(0, 5) : '';
+
+      if (mode === 'start') {
+        createEventDate = dVal;
+        createEventStartTime = tVal || '22:00';
+        if (!createEventEndDate || createEventEndDate < createEventDate) {
+          createEventEndDate = createEventDate;
+        }
+      } else {
+        createEventEndDate = dVal || createEventDate;
+        createEventEndTime = tVal || '04:00';
+      }
+
+      updateTimelineUI();
     }
 
     function openTimelinePickerModal(mode) {
-      activeTimelineMode = mode;
-      const modal = document.getElementById('timelinePickerModal');
-      const title = document.getElementById('timelineModalTitle');
-      const subtitle = document.getElementById('timelineModalSubtitle');
-      const dot = document.getElementById('timelineModalDot');
-      const dateInput = document.getElementById('timelineModalDateInput');
-      const timeInput = document.getElementById('timelineModalTimeInput');
-      const presets = document.getElementById('timelineModalPresetsContainer');
-
-      if (!createEventDate) {
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        createEventDate = `${y}-${m}-${d}`;
+      const inpId = mode === 'start' ? 'timelineStartDatetimeInput' : 'timelineEndDatetimeInput';
+      const inp = document.getElementById(inpId);
+      if (inp) {
+        inp.focus();
+        if (typeof inp.showPicker === 'function') {
+          try { inp.showPicker(); return; } catch (e) {}
+        }
+        try { inp.click(); } catch (e) {}
       }
-      if (!createEventEndDate) {
-        createEventEndDate = createEventDate;
-      }
-
-      if (mode === 'start') {
-        if (title) title.innerText = 'FECHA Y HORA DE INICIO';
-        if (subtitle) subtitle.innerText = 'Define cuándo comienza tu evento para los invitados.';
-        if (dot) dot.className = 'w-3 h-3 rounded-full bg-[#E87A72]';
-        if (dateInput) dateInput.value = createEventDate;
-        if (timeInput) timeInput.value = createEventStartTime || '22:00';
-        if (presets) presets.classList.add('hidden');
-      } else {
-        if (title) title.innerText = 'FECHA Y HORA DE CIERRE';
-        if (subtitle) subtitle.innerText = 'Define el horario de finalización o cierre del evento.';
-        if (dot) dot.className = 'w-3 h-3 rounded-full border-2 border-[#8E8E93] bg-transparent';
-        if (dateInput) dateInput.value = createEventEndDate || createEventDate;
-        if (timeInput) timeInput.value = createEventEndTime || '04:00';
-        if (presets) presets.classList.remove('hidden');
-      }
-
-      if (modal) modal.classList.remove('hidden');
     }
 
     function closeTimelinePickerModal() {
@@ -5897,11 +5907,11 @@
 
     function handleCreateEventDescInput(el) {
       if (!el) return;
-      if (el.value.length > 100) el.value = el.value.slice(0, 100);
+      if (el.value.length > 500) el.value = el.value.slice(0, 500);
       const counter = document.getElementById('createEventDescCounter');
       if (counter) {
-        counter.innerText = `${el.value.length}/100`;
-        counter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${el.value.length >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+        counter.innerText = `${el.value.length}/500`;
+        counter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${el.value.length >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
       }
     }
 
@@ -6032,7 +6042,7 @@
       if (nameInput) nameInput.value = '';
       if (descInput) descInput.value = '';
       if (descCounter) {
-        descCounter.innerText = '0/100';
+        descCounter.innerText = '0/500';
         descCounter.className = 'absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider text-[#8E8E93] pointer-events-none';
       }
       deactivateCreateDressCode();
@@ -6091,11 +6101,11 @@
 
       if (nameInput) nameInput.value = data.title || '';
       if (descInput) {
-        descInput.value = (data.description || '').slice(0, 100);
+        descInput.value = (data.description || '').slice(0, 500);
         if (descCounter) {
           const len = descInput.value.length;
-          descCounter.innerText = `${len}/100`;
-          descCounter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${len >= 100 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
+          descCounter.innerText = `${len}/500`;
+          descCounter.className = `absolute bottom-2.5 right-3 font-sans text-[11px] font-semibold tracking-wider pointer-events-none ${len >= 500 ? 'text-[#E87A72]' : 'text-[#8E8E93]'}`;
         }
       }
       if (data.dressCode) {
@@ -6556,7 +6566,7 @@
       }
 
       const title = document.getElementById('createEventNameInput')?.value.trim();
-      const description = document.getElementById('createEventDescInput')?.value.slice(0, 100) || '';
+      const description = document.getElementById('createEventDescInput')?.value.slice(0, 500) || '';
       const dressCode = createDressCodeActive ? (document.getElementById('createEventDressCodeInput')?.value.trim().slice(0, 30) || '') : null;
       const date = createEventDate || document.getElementById('createEventDateInput')?.value || '';
       const startTime = createEventStartTime || document.getElementById('createEventStartTimeInput')?.value || '';
@@ -7755,8 +7765,8 @@
                     <img src="./assets/icons/location.webp" alt="Ubicación" class="w-3.5 h-3.5 object-contain shrink-0 select-none pointer-events-none">
                     <span class="truncate">${event.location}</span>
                   </div>
-                  <div class="mt-1.5 flex items-center">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-sans font-bold uppercase tracking-wider bg-[#E87A72]/15 text-[#E87A72] border border-[#E87A72]/30">
+                  <div class="mt-1 flex items-center">
+                    <span class="font-display font-black text-xs tracking-wider uppercase" style="color: #E87A72 !important; background: none !important; -webkit-text-fill-color: #E87A72 !important; -webkit-background-clip: initial !important;">
                       ${badgeText}
                     </span>
                   </div>
@@ -11364,26 +11374,26 @@
         }
       }
 
-      // Descripción (solo si existe)
+      // Descripción (con subtítulo 'Descripcion del evento:')
       const descEl = document.getElementById('inviteDescriptionText');
       if (descEl) {
         if (currentInviteData.description && currentInviteData.description.trim()) {
           descEl.innerText = currentInviteData.description;
-          descEl.classList.remove('hidden');
         } else {
-          descEl.innerText = '';
-          descEl.classList.add('hidden');
+          descEl.innerText = 'Sin descripción adicional.';
         }
       }
 
-      // Selector de acompañante (+1)
-      const plusOneSection = document.getElementById('invitePlusOneSection');
-      if (plusOneSection) {
-        if (currentInviteData.allowsPlusOne === false) {
-          plusOneSection.classList.add('hidden');
-        } else {
-          plusOneSection.classList.remove('hidden');
-        }
+      // Aviso de tipo de invitación (según configuración del evento)
+      invitePlusOneSelected = Boolean(currentInviteData.allowsPlusOne !== false);
+      const inviteTypeIcon = document.getElementById('inviteTypeIcon');
+      const inviteTypeNoticeText = document.getElementById('inviteTypeNoticeText');
+      if (currentInviteData.allowsPlusOne !== false) {
+        if (inviteTypeIcon) inviteTypeIcon.innerText = '👥';
+        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación incluye un acompañante (+1).';
+      } else {
+        if (inviteTypeIcon) inviteTypeIcon.innerText = '👤';
+        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación es válida para 1 ingreso individual.';
       }
 
       const attendeesEl = document.getElementById('inviteAttendeesText');
@@ -11559,6 +11569,12 @@
       document.getElementById('inviteLocationLocked').classList.add('hidden');
       document.getElementById('inviteLocationUnlocked').classList.remove('hidden');
       document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " confirmados";
+      const ticketHolder = document.getElementById('ticketHolderText');
+      if (ticketHolder) {
+        ticketHolder.innerText = currentInviteData.allowsPlusOne !== false
+          ? "CRIS G. · +1 INCLUIDO (2 INGRESOS)"
+          : "CRIS G. · ADMISIÓN INDIVIDUAL";
+      }
       switchInviteView('ticket');
       updateInviteTicketQr(currentInviteData.id);
       showToast('¡Asistencia confirmada! Pase QR generado');
