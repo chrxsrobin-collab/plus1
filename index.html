@@ -3770,6 +3770,41 @@
           return dateStr;
         }
 
+        // Obtener miniatura / arte del evento con fallbacks inteligentes por categoría
+        function getEventThumbnail(d) {
+          if (!d) return './assets/images/fondo_b.webp';
+          if (d.imageUrl && typeof d.imageUrl === 'string' && d.imageUrl.trim()) return d.imageUrl.trim();
+          if (d.artImage && typeof d.artImage === 'string' && d.artImage.trim()) return d.artImage.trim();
+          if (d.flyerImage && typeof d.flyerImage === 'string' && d.flyerImage.trim()) return d.flyerImage.trim();
+          if (d.image && typeof d.image === 'string' && d.image.trim()) return d.image.trim();
+          if (d.flyerUrl && typeof d.flyerUrl === 'string' && d.flyerUrl.trim()) return d.flyerUrl.trim();
+          if (d.coverUrl && typeof d.coverUrl === 'string' && d.coverUrl.trim()) return d.coverUrl.trim();
+
+          const title = (d.title || '').toLowerCase();
+          const tags = Array.isArray(d.tags) ? d.tags.join(' ').toLowerCase() : (d.tags || '').toLowerCase();
+
+          if (title.includes('perreo') || title.includes('reggaeton') || tags.includes('reggaeton')) {
+            return './assets/images/templates/reggaeton/1.webp';
+          }
+          if (title.includes('underground') || title.includes('electronic') || title.includes('techno') || tags.includes('electronic')) {
+            return './assets/images/templates/electronic/1.webp';
+          }
+          if (title.includes('oktoberfest') || title.includes('previa') || title.includes('juntada') || tags.includes('previas') || title.includes('cerveza')) {
+            return './assets/images/templates/previas/1.webp';
+          }
+          if (title.includes('club') || title.includes('fiesta') || tags.includes('clubs')) {
+            return './assets/images/templates/clubs/1.webp';
+          }
+          if (title.includes('arte') || title.includes('teatro') || tags.includes('art')) {
+            return './assets/images/templates/art/1.webp';
+          }
+          if (title.includes('sport') || title.includes('deporte') || tags.includes('sports')) {
+            return './assets/images/templates/sports/1.webp';
+          }
+
+          return './assets/images/fondo_b.webp';
+        }
+
         // Sincronización en tiempo real de eventos públicos para Cover Flow (con filtro estricto de expiración)
         fbDb.collection('events').where('type', '==', 'public').onSnapshot((querySnapshot) => {
           const liveEvents = [];
@@ -3840,15 +3875,31 @@
               if (isMine) {
                 const eventEnd = d.endTimestamp || computeEventEndTimestamp(d.date, d.endTime, d.startTime);
                 const isFinished = eventEnd <= now;
+                const thumb = getEventThumbnail(d);
                 myEvts.push({
                   id: doc.id,
                   title: d.title || 'Evento sin título',
+                  date: d.date || '',
+                  startTime: d.startTime || '',
+                  endTime: d.endTime || '',
                   dateStr: d.date ? `${formatCardDate(d.date)} · ${d.startTime || ''}` : 'Próximamente',
+                  imageUrl: thumb,
+                  artImage: thumb,
+                  flyerImage: thumb,
                   status: isFinished ? 'Finalizado' : 'Activo',
                   isFinished: isFinished,
                   endTimestamp: eventEnd,
-                  guestsCount: d.confirmedCount || 0,
-                  maxCapacity: d.maxCapacity || 150
+                  guestsCount: d.confirmedCount || d.guestsCount || 0,
+                  confirmedCount: d.confirmedCount || d.guestsCount || 0,
+                  maxCapacity: d.maxCapacity || d.guestLimit || 150,
+                  guestLimit: d.guestLimit || d.maxCapacity || 150,
+                  location: d.location || d.venueName || '',
+                  venueName: d.venueName || d.location || '',
+                  exactAddress: d.exactAddress || d.location || '',
+                  description: d.description || '',
+                  allowsPlusOne: d.allowsPlusOne !== false,
+                  hostUserId: d.hostUserId || '',
+                  hostName: d.hostName || ''
                 });
               }
             });
@@ -4961,20 +5012,26 @@
       document.getElementById('eventDetailModal').classList.add('hidden');
       if (window.location.hash.startsWith('#/e/')) {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } else if (window.location.pathname.startsWith('/e/')) {
+        window.history.replaceState(null, '', '/' + window.location.search);
       }
     }
 
     function checkHashDeepLink() {
+      let eventId = null;
       const hash = window.location.hash;
       if (hash.startsWith('#/e/')) {
         const rawPath = hash.replace('#/e/', '').trim();
-        const [eventId] = rawPath.split('?');
-        if (eventId) {
-          setTimeout(() => {
-            closeEventDetail();
-            openEventInviteModal(eventId);
-          }, 200);
-        }
+        eventId = rawPath.split('?')[0];
+      } else if (window.location.pathname.startsWith('/e/')) {
+        const rawPath = window.location.pathname.replace('/e/', '').trim();
+        eventId = rawPath.split('?')[0];
+      }
+      if (eventId) {
+        setTimeout(() => {
+          closeEventDetail();
+          openEventInviteModal(eventId);
+        }, 150);
       }
     }
     window.addEventListener('hashchange', checkHashDeepLink);
@@ -6599,35 +6656,36 @@
 
       const calculatedEndTimestamp = computeEventEndTimestamp(date, endTime, startTime);
 
-      const eventPayload = {
-        title: title,
-        description: description,
-        dressCode: dressCode,
-        accessType: 'FREE_PASS',
-        isPaid: false,
-        ticketPrice: 0,
-        isVip: false,
-        type: createPrivacyMode || 'private',
-        date: date,
-        startDate: date,
-        startTime: startTime,
-        endDate: endDate,
-        endTime: endTime || null,
-        endTimestamp: calculatedEndTimestamp,
-        location: location,
-        coordinates: createEventCoordinates || null,
-        allowsPlusOne: Boolean(createPlusOneEnabled),
-        guestLimit: Number(createCapacity) || 100,
-        maxCapacity: Number(createCapacity) || 100,
-        tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
-        vipCutoffTime: null,
-        hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
-        hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
-        hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
-        imageUrl: currentEventArtBase64 || null,
-        artImage: currentEventArtBase64 || null,
-        createdAt: new Date().toISOString()
-      };
+        const finalArt = currentEventArtBase64 || getEventThumbnail({ title, tags: createEventSelectedTags });
+        const eventPayload = {
+          title: title,
+          description: description,
+          dressCode: dressCode,
+          accessType: 'FREE_PASS',
+          isPaid: false,
+          ticketPrice: 0,
+          isVip: false,
+          type: createPrivacyMode || 'private',
+          date: date,
+          startDate: date,
+          startTime: startTime,
+          endDate: endDate,
+          endTime: endTime || null,
+          endTimestamp: calculatedEndTimestamp,
+          location: location,
+          coordinates: createEventCoordinates || null,
+          allowsPlusOne: Boolean(createPlusOneEnabled),
+          guestLimit: Number(createCapacity) || 100,
+          maxCapacity: Number(createCapacity) || 100,
+          tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
+          vipCutoffTime: null,
+          hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
+          hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
+          hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
+          imageUrl: finalArt,
+          artImage: finalArt,
+          createdAt: new Date().toISOString()
+        };
 
       try {
         if (editingEventId) {
@@ -8590,9 +8648,9 @@
 
       container.innerHTML = userCreatedEvents.map(evt => {
         const isPast = evt.isFinished || (evt.status === 'Finalizado');
-        const eventImage = evt.imageUrl || evt.image || evt.flyerUrl || evt.coverUrl || evt.flyerImage || evt.artImage || null;
+        const eventImage = getEventThumbnail(evt);
         const dateStr = evt.date ? (evt.startTime ? `${evt.date} · ${evt.startTime}` : evt.date) : (evt.dateStr || 'Fecha por confirmar');
-        const attendeesCount = evt.attendeesCount ?? evt.guestsCount ?? 0;
+        const attendeesCount = evt.attendeesCount ?? evt.guestsCount ?? evt.confirmedCount ?? 0;
         const guestLimit = evt.guestLimit ?? evt.maxCapacity ?? 150;
         const shortTitle = escapeHtml(evt.title ? evt.title.slice(0, 3) : "+1");
 
@@ -8600,12 +8658,7 @@
           <div onclick="closeMyEventsModal(); openEventManagerModal('${evt.id}')" class="w-full bg-[#16171B] border border-[#26282E] rounded-2xl p-3 flex items-center gap-3.5 cursor-pointer transition-all duration-150 active:scale-[0.98] hover:border-[#E87A72]/50 shadow-md select-none">
             <div class="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#1A1C20] border border-white/10 relative flex items-center justify-center">
               ${eventImage ? `
-                <div class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#26282E] to-[#16171B] p-1">
-                  <span class="font-display text-[10px] text-[#E87A72] font-bold uppercase truncate max-w-full">
-                    ${shortTitle}
-                  </span>
-                </div>
-                <img src="${escapeHtmlAttr(eventImage)}" alt="${escapeHtmlAttr(evt.title || 'Evento')}" onerror="this.style.display='none'" class="w-full h-full object-cover object-center relative z-10" />
+                <img src="${escapeHtmlAttr(eventImage)}" alt="${escapeHtmlAttr(evt.title || 'Evento')}" onerror="this.onerror=null; this.src='./assets/images/fondo_b.webp';" class="w-full h-full object-cover object-center relative z-10 rounded-xl" />
               ` : `
                 <div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#26282E] to-[#16171B] p-1">
                   <span class="font-display text-[10px] text-[#E87A72] font-bold uppercase truncate max-w-full">
@@ -9399,13 +9452,15 @@
       const eventsContainer = document.getElementById('profileProEventsContainer');
       if (eventsContainer) {
         if (userCreatedEvents && userCreatedEvents.length > 0) {
-          eventsContainer.innerHTML = userCreatedEvents.map(evt => `
+          eventsContainer.innerHTML = userCreatedEvents.map(evt => {
+            const thumb = getEventThumbnail(evt);
+            return `
             <div class="w-full p-3.5 rounded-2xl bg-[#16171B] border border-[#26282E] flex items-center justify-between shadow-md">
               <div class="flex items-center space-x-3 truncate pr-2">
-                <span class="text-2xl shrink-0">🎪</span>
+                <img src="${escapeHtmlAttr(thumb)}" alt="${escapeHtmlAttr(evt.title || 'Evento')}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/10" onerror="this.onerror=null; this.src='./assets/images/fondo_b.webp';" />
                 <div class="truncate text-left">
                   <h4 class="font-display text-white text-base sm:text-lg font-black tracking-wide uppercase truncate leading-tight">
-                    ${evt.title || 'EVENTO SIN TÍTULO'}
+                    ${escapeHtml(evt.title || 'EVENTO SIN TÍTULO')}
                   </h4>
                   <span class="font-sans text-xs text-[#9CA3AF] font-medium block mt-0.5">
                     👥 ${evt.guestsCount || evt.confirmedCount || 0} CONFIRMADOS
@@ -9419,7 +9474,8 @@
                 GESTIONAR
               </button>
             </div>
-          `).join('') + `
+          `;
+          }).join('') + `
             <button 
               onclick="closeProfileScreen(); openCreateEventScreen()" 
               class="w-full py-3 rounded-2xl bg-neutral-900 hover:bg-neutral-800 border border-dashed border-[#26282E] text-white font-display text-xs font-black tracking-wider uppercase transition-colors mt-2 text-center cursor-pointer"
@@ -11261,12 +11317,179 @@
     let inviteHasRequestedVip = false;
 
     let currentReferrerId = null;
+    let currentInviteUnsubscribe = null;
+
+    function mapEventToInviteData(raw, id) {
+      if (!raw) return null;
+      const targetId = id || raw.id || 'evento';
+      const calculatedDate = raw.date ? (typeof formatCardDate === 'function' ? formatCardDate(raw.date) : raw.date) : (raw.dateDisplay || 'PRÓXIMAMENTE');
+      const timeStr = (raw.startTime && raw.endTime)
+        ? `${raw.startTime} — ${raw.endTime}`
+        : (raw.timeRange || raw.startTime || '22:00');
+      const isPriv = (raw.isPrivate === true || raw.type === 'private');
+
+      return {
+        id: targetId,
+        title: raw.title || 'EVENTO +1',
+        subtitle: raw.subtitle || (isPriv ? (raw.allowsPlusOne ? 'Pase VIP (+1 Incluido)' : 'Acceso Individual Nominal') : 'Evento Abierto'),
+        hostName: raw.hostName || 'El Anfitrión',
+        hostUserId: raw.hostUserId || '',
+        isPrivate: isPriv,
+        flyerImage: raw.flyerImage || raw.imageUrl || raw.artImage || './assets/images/fondo_b.webp',
+        imageUrl: raw.imageUrl || raw.artImage || raw.flyerImage || '',
+        dateDisplay: raw.dateDisplay || calculatedDate,
+        date: raw.date || '',
+        startTime: raw.startTime || '',
+        endTime: raw.endTime || '',
+        timeRange: timeStr,
+        venueName: raw.venueName || raw.venue || raw.location || 'Por definir',
+        exactAddress: raw.exactAddress || raw.location || '',
+        confirmedCount: typeof raw.confirmedCount === 'number' ? raw.confirmedCount : (raw.guestsCount || 0),
+        allowsPlusOne: raw.allowsPlusOne !== false,
+        description: raw.description || ''
+      };
+    }
+
+    function renderInviteModalUI(data) {
+      if (!data) return;
+      currentInviteData = data;
+
+      const titleEl = document.getElementById('inviteTitleText');
+      if (titleEl) titleEl.innerText = data.title || 'EVENTO +1';
+
+      const ticketHeaderEl = document.getElementById('ticketTitleHeader');
+      if (ticketHeaderEl) ticketHeaderEl.innerText = data.title || 'EVENTO +1';
+
+      const subtitleEl = document.getElementById('inviteSubtitleText');
+      if (subtitleEl) {
+        if (data.subtitle) {
+          subtitleEl.innerText = data.subtitle;
+          subtitleEl.classList.remove('hidden');
+        } else {
+          subtitleEl.innerText = '';
+          subtitleEl.classList.add('hidden');
+        }
+      }
+
+      const dateEl = document.getElementById('inviteDateText');
+      if (dateEl) dateEl.innerText = data.dateDisplay || 'PRÓXIMAMENTE';
+
+      const timeEl = document.getElementById('inviteTimeText');
+      if (timeEl) timeEl.innerText = data.timeRange || '22:00';
+
+      const venueEl = document.getElementById('inviteVenueText');
+      if (venueEl) venueEl.innerText = data.venueName || data.location || 'Por definir';
+
+      const flyerImgEl = document.getElementById('inviteFlyerImg');
+      const flyerPlaceholderEl = document.getElementById('inviteFlyerPlaceholder');
+      const flyerUrl = data.flyerImage || data.imageUrl || data.artImage;
+      if (flyerImgEl && flyerPlaceholderEl) {
+        if (flyerUrl) {
+          flyerImgEl.src = flyerUrl;
+          flyerImgEl.alt = data.title || 'Flyer del evento';
+          flyerImgEl.classList.remove('hidden');
+          flyerPlaceholderEl.classList.add('hidden');
+        } else {
+          flyerImgEl.src = '';
+          flyerImgEl.classList.add('hidden');
+          flyerPlaceholderEl.classList.remove('hidden');
+        }
+      }
+
+      const descEl = document.getElementById('inviteDescriptionText');
+      if (descEl) {
+        if (data.description && data.description.trim()) {
+          descEl.innerText = data.description;
+        } else {
+          descEl.innerText = 'Sin descripción adicional.';
+        }
+      }
+
+      invitePlusOneSelected = Boolean(data.allowsPlusOne !== false);
+      const inviteTypeIcon = document.getElementById('inviteTypeIcon');
+      const inviteTypeNoticeText = document.getElementById('inviteTypeNoticeText');
+      if (data.allowsPlusOne !== false) {
+        if (inviteTypeIcon) inviteTypeIcon.innerText = '👥';
+        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación incluye un acompañante (+1).';
+      } else {
+        if (inviteTypeIcon) inviteTypeIcon.innerText = '👤';
+        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación es válida para 1 ingreso individual.';
+      }
+
+      const attendeesEl = document.getElementById('inviteAttendeesText');
+      if (attendeesEl) attendeesEl.innerText = (data.confirmedCount || 0) + " confirmados";
+
+      const addressEl = document.getElementById('inviteExactAddressText');
+      if (addressEl) addressEl.innerText = data.exactAddress || data.venueName || data.location || '';
+
+      const ticketAddrEl = document.getElementById('ticketExactAddressDisplay');
+      if (ticketAddrEl) ticketAddrEl.innerText = data.exactAddress || data.venueName || data.location || '';
+
+      const qrCenter = document.getElementById('inviteTicketQrCenter');
+      if (qrCenter) {
+        if (flyerUrl) {
+          qrCenter.innerHTML = `<img src="${escapeHtmlAttr(flyerUrl)}" alt="${escapeHtmlAttr(data.title)}" class="w-full h-full object-cover rounded-lg">`;
+        } else {
+          const shortTitle = (data.title || '+1').slice(0, 4);
+          qrCenter.innerHTML = `<div class="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5"><span class="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">${escapeHtmlAttr(shortTitle)}</span></div>`;
+        }
+      }
+
+      updateInviteTicketQr(data.id);
+      updateOpenGraphMetaHtml(data);
+
+      const badge = document.getElementById('invitePrivacyBadge');
+      const badgeText = document.getElementById('invitePrivacyBadgeText');
+      const hostBadge = document.getElementById('inviteHostBadge');
+      const locLocked = document.getElementById('inviteLocationLocked');
+      const locUnlocked = document.getElementById('inviteLocationUnlocked');
+      const confirmPrivBtn = document.getElementById('inviteConfirmPrivateBtn');
+      const requestVipBtn = document.getElementById('inviteRequestVipBtn');
+      const pendingVipBox = document.getElementById('invitePendingVipBox');
+
+      if (data.isPrivate) {
+        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        if (badgeText) badgeText.innerText = "FIESTA PRIVADA";
+        if (hostBadge) {
+          hostBadge.innerText = "INVITACIÓN POR " + (data.hostName || 'EL ANFITRIÓN').toUpperCase();
+          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block";
+        }
+        if (locLocked) locLocked.classList.remove('hidden');
+        if (locUnlocked) locUnlocked.classList.add('hidden');
+        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
+        if (requestVipBtn) requestVipBtn.classList.add('hidden');
+        if (pendingVipBox) pendingVipBox.classList.add('hidden');
+      } else {
+        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#12C061]/40 text-[#12C061] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        if (badgeText) badgeText.innerText = "✦ EVENTO ABIERTO";
+        if (hostBadge) {
+          hostBadge.innerText = "INVITACIÓN POR " + (data.hostName || 'EL ANFITRIÓN').toUpperCase();
+          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#12C061] uppercase block";
+        }
+        if (locLocked) locLocked.classList.remove('hidden');
+        if (locUnlocked) locUnlocked.classList.add('hidden');
+        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
+        if (requestVipBtn) requestVipBtn.classList.add('hidden');
+        if (pendingVipBox) pendingVipBox.classList.add('hidden');
+      }
+
+      setInvitePlusOne(false);
+      switchInviteView('invite');
+      const modal = document.getElementById('eventInviteModal');
+      if (modal) modal.classList.remove('hidden');
+    }
 
     function openEventInviteModal(eventId) {
       const modal = document.getElementById('eventInviteModal');
       if (!modal) return;
 
-      // Extraer parámetro ref si existe
+      // Cancelar suscripción previa si existe
+      if (currentInviteUnsubscribe) {
+        currentInviteUnsubscribe();
+        currentInviteUnsubscribe = null;
+      }
+
+      // Extraer parámetro ref si existe en hash o search
       currentReferrerId = null;
       if (window.location.hash.includes('?')) {
         const hashQuery = window.location.hash.split('?')[1];
@@ -11280,25 +11503,41 @@
       inviteHasConfirmed = false;
       inviteHasRequestedVip = false;
 
-      const matched = (typeof eventsData !== 'undefined' && Array.isArray(eventsData)) ? eventsData.find(e => e.id === eventId) : null;
+      // 1. Búsqueda en memoria local (eventsData, userCreatedEvents o latestCreatedEvent)
+      let matched = null;
+      if (typeof eventsData !== 'undefined' && Array.isArray(eventsData)) {
+        matched = eventsData.find(e => e.id === eventId);
+      }
+      if (!matched && typeof userCreatedEvents !== 'undefined' && Array.isArray(userCreatedEvents)) {
+        matched = userCreatedEvents.find(e => e.id === eventId);
+      }
+      if (!matched && typeof latestCreatedEvent !== 'undefined' && latestCreatedEvent && latestCreatedEvent.id === eventId) {
+        matched = latestCreatedEvent;
+      }
+
       if (matched) {
-        currentInviteData = {
-          id: matched.id,
-          title: matched.title,
-          subtitle: matched.subtitle || '',
-          hostName: matched.hostName || 'El Anfitrión',
-          isPrivate: matched.isPrivate === true || matched.type === 'private',
-          flyerImage: matched.flyerImage || matched.imageUrl || './assets/images/fondo_b.webp',
-          dateDisplay: matched.dateDisplay || matched.date || 'PRÓXIMAMENTE',
-          timeRange: matched.timeRange || (matched.startTime ? `${matched.startTime} — ${matched.endTime || '04:00'}` : '22:00 — 04:00'),
-          venueName: matched.venueName || matched.location || 'Por definir',
-          exactAddress: matched.exactAddress || matched.location || '',
-          confirmedCount: matched.confirmedCount || 24,
-          allowsPlusOne: matched.allowsPlusOne !== false,
-          description: matched.description || ''
-        };
-      } else if (eventId === 'indie-night') {
-        currentInviteData = {
+        const inviteData = mapEventToInviteData(matched, eventId);
+        renderInviteModalUI(inviteData);
+
+        // Suscripción reactiva si está conectado a Firestore
+        if (fbDb && eventId && eventId !== 'pepe-birthday' && eventId !== 'indie-night') {
+          currentInviteUnsubscribe = fbDb.collection('events').doc(eventId).onSnapshot((snap) => {
+            if (snap && snap.exists) {
+              const d = snap.data();
+              if (d && typeof d.confirmedCount === 'number' && currentInviteData) {
+                currentInviteData.confirmedCount = d.confirmedCount;
+                const countElem = document.getElementById('inviteAttendeesText');
+                if (countElem) countElem.innerText = d.confirmedCount + " confirmados";
+              }
+            }
+          }, (err) => console.warn('[+1] Event snap note:', err));
+        }
+        return;
+      }
+
+      // 2. Mocks exclusivos para demos o tests
+      if (eventId === 'indie-night') {
+        const indieData = {
           id: 'indie-night',
           title: 'INDIE NIGHT LIVE',
           subtitle: 'The Strokes + Foals Tribute',
@@ -11313,8 +11552,12 @@
           allowsPlusOne: true,
           description: 'La sesión indie más esperada del mes con tributo en vivo a The Strokes y Foals. Acceso preferencial a preventas y solicitudes VIP para miembros de la comunidad +1.'
         };
-      } else {
-        currentInviteData = {
+        renderInviteModalUI(indieData);
+        return;
+      }
+
+      if (eventId === 'pepe-birthday') {
+        const pepeData = {
           id: 'pepe-birthday',
           title: 'CUMPLE DE PEPE 🎂',
           subtitle: 'Fiesta Privada de Cumpleaños',
@@ -11329,140 +11572,83 @@
           allowsPlusOne: true,
           description: 'Celebrando los 28 con barra libre de cócteles artesanales, música en vivo y los de siempre. Acceso estrictamente controlado en puerta mediante código QR personal o con acompañante +1 registrado.'
         };
+        renderInviteModalUI(pepeData);
+        return;
       }
 
-      // Actualizar UI con guardas de seguridad
-      const titleEl = document.getElementById('inviteTitleText');
-      if (titleEl) titleEl.innerText = currentInviteData.title || 'EVENTO +1';
+      // 3. Estado de carga inicial mientras se consulta el documento en Firestore
+      const loadingState = {
+        id: eventId,
+        title: 'CARGANDO EVENTO...',
+        subtitle: 'Obteniendo invitación exclusiva...',
+        hostName: 'COMUNIDAD +1',
+        isPrivate: true,
+        flyerImage: './assets/images/fondo_b.webp',
+        dateDisplay: 'CARGANDO...',
+        timeRange: '--:--',
+        venueName: 'Cargando ubicación...',
+        exactAddress: '',
+        confirmedCount: 0,
+        allowsPlusOne: true,
+        description: 'Cargando los detalles del evento compartido...'
+      };
+      renderInviteModalUI(loadingState);
 
-      const ticketHeaderEl = document.getElementById('ticketTitleHeader');
-      if (ticketHeaderEl) ticketHeaderEl.innerText = currentInviteData.title || 'EVENTO +1';
+      // 4. Consulta asíncrona directa en Firestore (soporta eventos públicos y privados por ID)
+      if (fbDb) {
+        fbDb.collection('events').doc(eventId).get().then((docSnap) => {
+          if (docSnap && docSnap.exists) {
+            const data = mapEventToInviteData(docSnap.data(), docSnap.id);
+            renderInviteModalUI(data);
 
-      const subtitleEl = document.getElementById('inviteSubtitleText');
-      if (subtitleEl) {
-        if (currentInviteData.subtitle) {
-          subtitleEl.innerText = currentInviteData.subtitle;
-          subtitleEl.classList.remove('hidden');
-        } else {
-          subtitleEl.innerText = '';
-          subtitleEl.classList.add('hidden');
-        }
+            currentInviteUnsubscribe = fbDb.collection('events').doc(eventId).onSnapshot((snap) => {
+              if (snap && snap.exists) {
+                const d = snap.data();
+                if (d && typeof d.confirmedCount === 'number' && currentInviteData) {
+                  currentInviteData.confirmedCount = d.confirmedCount;
+                  const countElem = document.getElementById('inviteAttendeesText');
+                  if (countElem) countElem.innerText = d.confirmedCount + " confirmados";
+                }
+              }
+            }, (err) => console.warn('[+1] Event snap note:', err));
+          } else {
+            fbDb.collection('invites').doc(eventId).get().then((invSnap) => {
+              if (invSnap && invSnap.exists) {
+                const invData = mapEventToInviteData(invSnap.data(), invSnap.id);
+                renderInviteModalUI(invData);
+              } else {
+                showToast('No se encontró el evento correspondiente');
+                const titleEl = document.getElementById('inviteTitleText');
+                if (titleEl) titleEl.innerText = 'EVENTO NO ENCONTRADO';
+                const subEl = document.getElementById('inviteSubtitleText');
+                if (subEl) {
+                  subEl.innerText = 'El enlace no corresponde a un evento activo o ha expirado.';
+                  subEl.classList.remove('hidden');
+                }
+              }
+            }).catch(() => {
+              showToast('No se encontró el evento');
+            });
+          }
+        }).catch((err) => {
+          console.error('[+1 Firestore] Error al cargar invitación compartida:', err);
+          showToast('Error al cargar datos del evento');
+        });
       }
-
-      const dateEl = document.getElementById('inviteDateText');
-      if (dateEl) dateEl.innerText = currentInviteData.dateDisplay || 'PRÓXIMAMENTE';
-
-      const timeEl = document.getElementById('inviteTimeText');
-      if (timeEl) timeEl.innerText = currentInviteData.timeRange || '22:00';
-
-      const venueEl = document.getElementById('inviteVenueText');
-      if (venueEl) venueEl.innerText = currentInviteData.venueName || 'Por definir';
-
-      // Imagen flyer dinámica o placeholder editorial +1
-      const flyerImgEl = document.getElementById('inviteFlyerImg');
-      const flyerPlaceholderEl = document.getElementById('inviteFlyerPlaceholder');
-      if (flyerImgEl && flyerPlaceholderEl) {
-        if (currentInviteData.flyerImage || currentInviteData.imageUrl) {
-          flyerImgEl.src = currentInviteData.flyerImage || currentInviteData.imageUrl;
-          flyerImgEl.alt = currentInviteData.title;
-          flyerImgEl.classList.remove('hidden');
-          flyerPlaceholderEl.classList.add('hidden');
-        } else {
-          flyerImgEl.src = '';
-          flyerImgEl.classList.add('hidden');
-          flyerPlaceholderEl.classList.remove('hidden');
-        }
-      }
-
-      // Descripción (con subtítulo 'Descripcion del evento:')
-      const descEl = document.getElementById('inviteDescriptionText');
-      if (descEl) {
-        if (currentInviteData.description && currentInviteData.description.trim()) {
-          descEl.innerText = currentInviteData.description;
-        } else {
-          descEl.innerText = 'Sin descripción adicional.';
-        }
-      }
-
-      // Aviso de tipo de invitación (según configuración del evento)
-      invitePlusOneSelected = Boolean(currentInviteData.allowsPlusOne !== false);
-      const inviteTypeIcon = document.getElementById('inviteTypeIcon');
-      const inviteTypeNoticeText = document.getElementById('inviteTypeNoticeText');
-      if (currentInviteData.allowsPlusOne !== false) {
-        if (inviteTypeIcon) inviteTypeIcon.innerText = '👥';
-        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación incluye un acompañante (+1).';
-      } else {
-        if (inviteTypeIcon) inviteTypeIcon.innerText = '👤';
-        if (inviteTypeNoticeText) inviteTypeNoticeText.innerText = 'Esta invitación es válida para 1 ingreso individual.';
-      }
-
-      const attendeesEl = document.getElementById('inviteAttendeesText');
-      if (attendeesEl) attendeesEl.innerText = (currentInviteData.confirmedCount || 0) + " confirmados";
-
-      const addressEl = document.getElementById('inviteExactAddressText');
-      if (addressEl) addressEl.innerText = currentInviteData.exactAddress || '';
-
-      const ticketAddrEl = document.getElementById('ticketExactAddressDisplay');
-      if (ticketAddrEl) ticketAddrEl.innerText = currentInviteData.exactAddress || '';
-
-      // Actualizar isotipo central del QR con la imagen del evento
-      const qrCenter = document.getElementById('inviteTicketQrCenter');
-      if (qrCenter) {
-        const imgUrl = currentInviteData.imageUrl || currentInviteData.eventImageUrl;
-        if (imgUrl) {
-          qrCenter.innerHTML = `<img src="${escapeHtmlAttr(imgUrl)}" alt="${escapeHtmlAttr(currentInviteData.title)}" class="w-full h-full object-cover rounded-lg">`;
-        } else {
-          const shortTitle = (currentInviteData.title || '+1').slice(0, 4);
-          qrCenter.innerHTML = `<div class="w-full h-full bg-[#1A1C20] flex items-center justify-center text-center p-0.5"><span class="font-display text-[#E87A72] text-[10px] font-black uppercase leading-none tracking-tight">${escapeHtmlAttr(shortTitle)}</span></div>`;
-        }
-      }
-
-      updateInviteTicketQr(currentInviteData.id);
-      updateOpenGraphMetaHtml(currentInviteData);
-
-      const badge = document.getElementById('invitePrivacyBadge');
-      const badgeText = document.getElementById('invitePrivacyBadgeText');
-      const hostBadge = document.getElementById('inviteHostBadge');
-      const locLocked = document.getElementById('inviteLocationLocked');
-      const locUnlocked = document.getElementById('inviteLocationUnlocked');
-      const confirmPrivBtn = document.getElementById('inviteConfirmPrivateBtn');
-      const requestVipBtn = document.getElementById('inviteRequestVipBtn');
-      const pendingVipBox = document.getElementById('invitePendingVipBox');
-
-      if (currentInviteData.isPrivate) {
-        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider";
-        if (badgeText) badgeText.innerText = "FIESTA PRIVADA";
-        if (hostBadge) {
-          hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
-          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block";
-        }
-        if (locLocked) locLocked.classList.remove('hidden');
-        if (locUnlocked) locUnlocked.classList.add('hidden');
-        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
-        if (requestVipBtn) requestVipBtn.classList.add('hidden');
-        if (pendingVipBox) pendingVipBox.classList.add('hidden');
-      } else {
-        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#12C061]/40 text-[#12C061] text-[11px] font-display font-extrabold uppercase tracking-wider";
-        if (badgeText) badgeText.innerText = "✦ EVENTO ABIERTO";
-        if (hostBadge) {
-          hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
-          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#12C061] uppercase block";
-        }
-        if (locLocked) locLocked.classList.add('hidden');
-        if (locUnlocked) locUnlocked.classList.remove('hidden');
-        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
-        if (requestVipBtn) requestVipBtn.classList.add('hidden');
-        if (pendingVipBox) pendingVipBox.classList.add('hidden');
-      }
-
-      setInvitePlusOne(false);
-      switchInviteView('invite');
-      if (modal) modal.classList.remove('hidden');
     }
 
     function closeEventInviteModal() {
       const modal = document.getElementById('eventInviteModal');
       if (modal) modal.classList.add('hidden');
+      if (currentInviteUnsubscribe) {
+        currentInviteUnsubscribe();
+        currentInviteUnsubscribe = null;
+      }
+      if (window.location.hash.startsWith('#/e/')) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } else if (window.location.pathname.startsWith('/e/')) {
+        window.history.replaceState(null, '', '/' + window.location.search);
+      }
     }
 
     function updateInviteTicketQr(passId) {
@@ -11568,31 +11754,50 @@
       inviteHasConfirmed = true;
       document.getElementById('inviteLocationLocked').classList.add('hidden');
       document.getElementById('inviteLocationUnlocked').classList.remove('hidden');
-      document.getElementById('inviteAttendeesText').innerText = (currentInviteData.confirmedCount + 1) + " confirmados";
+
+      if (currentInviteData) {
+        currentInviteData.confirmedCount = (currentInviteData.confirmedCount || 0) + 1;
+        const attendeesEl = document.getElementById('inviteAttendeesText');
+        if (attendeesEl) attendeesEl.innerText = currentInviteData.confirmedCount + " confirmados";
+      }
+
+      const attendeeName = (fbCurrentUser && fbCurrentUser.displayName) || (typeof currentUserName !== 'undefined' && currentUserName) || 'CRIS G.';
       const ticketHolder = document.getElementById('ticketHolderText');
       if (ticketHolder) {
-        ticketHolder.innerText = currentInviteData.allowsPlusOne !== false
-          ? "CRIS G. · +1 INCLUIDO (2 INGRESOS)"
-          : "CRIS G. · ADMISIÓN INDIVIDUAL";
+        ticketHolder.innerText = (currentInviteData && currentInviteData.allowsPlusOne !== false)
+          ? `${attendeeName.toUpperCase()} · +1 INCLUIDO (2 INGRESOS)`
+          : `${attendeeName.toUpperCase()} · ADMISIÓN INDIVIDUAL`;
       }
       switchInviteView('ticket');
-      updateInviteTicketQr(currentInviteData.id);
+      updateInviteTicketQr(currentInviteData ? currentInviteData.id : 'pepe-birthday');
       showToast('¡Asistencia confirmada! Pase QR generado');
 
       // Sincronización en tiempo real con Firestore entre dispositivos
-      if (fbDb && typeof firebase !== 'undefined') {
+      if (fbDb && typeof firebase !== 'undefined' && currentInviteData) {
         try {
-          fbDb.collection('invites').doc('pepe-birthday').set({
+          const targetEvtId = currentInviteData.id || 'pepe-birthday';
+          // Incrementar contador en el documento del evento
+          fbDb.collection('events').doc(targetEvtId).set({
             confirmedCount: firebase.firestore.FieldValue.increment(1),
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true }).catch((err) => console.warn('Sync increment note:', err));
 
-          fbDb.collection('invites').doc('pepe-birthday').collection('attendees').add({
-            name: 'CRIS G.',
+          // Registrar en la subcolección de asistentes del evento
+          fbDb.collection('events').doc(targetEvtId).collection('attendees').add({
+            name: attendeeName,
+            userId: (fbCurrentUser && fbCurrentUser.uid) || null,
             withPlusOne: invitePlusOneSelected,
             referredBy: currentReferrerId || null,
             confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
           }).catch((err) => console.warn('Sync attendee doc note:', err));
+
+          // Mantener compatibilidad si es pepe-birthday
+          if (targetEvtId === 'pepe-birthday') {
+            fbDb.collection('invites').doc('pepe-birthday').set({
+              confirmedCount: firebase.firestore.FieldValue.increment(1),
+              lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(() => {});
+          }
         } catch (e) {
           console.warn('Firestore sync note:', e);
         }
