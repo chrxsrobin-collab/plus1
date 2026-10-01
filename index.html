@@ -1894,17 +1894,17 @@
                   <span class="text-base shrink-0">🍻</span>
                   <span class="truncate">Previas / Juntadas</span>
                 </button>
-                <button type="button" onclick="toggleCreateEventTagHtml('clubs_djs')" id="createTag_clubs_djs" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                <button type="button" onclick="toggleCreateEventTagHtml('clubs_festivales')" id="createTag_clubs_festivales" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
                   <span class="text-base shrink-0">🪩</span>
-                  <span class="truncate">Clubs / DJs</span>
+                  <span class="truncate">Clubs / Festivales</span>
                 </button>
                 <button type="button" onclick="toggleCreateEventTagHtml('arte_teatro')" id="createTag_arte_teatro" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
                   <span class="text-base shrink-0">🎭</span>
                   <span class="truncate">Arte / Teatro</span>
                 </button>
-                <button type="button" onclick="toggleCreateEventTagHtml('salud_fitness')" id="createTag_salud_fitness" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
+                <button type="button" onclick="toggleCreateEventTagHtml('deportes_salud')" id="createTag_deportes_salud" class="py-2.5 px-3 rounded-xl font-sans text-xs transition-all cursor-pointer border bg-[#16171B] border-[#26282E] text-[#8E8E93] hover:border-white/20 hover:text-white font-medium flex items-center gap-2 active:scale-95 text-left">
                   <span class="text-base shrink-0">🏃</span>
-                  <span class="truncate">Salud / Fitness</span>
+                  <span class="truncate">Deportes / Salud</span>
                 </button>
               </div>
             </div>
@@ -3786,19 +3786,19 @@
           if (title.includes('perreo') || title.includes('reggaeton') || tags.includes('reggaeton')) {
             return './assets/images/templates/reggaeton/1.webp';
           }
-          if (title.includes('underground') || title.includes('electronic') || title.includes('techno') || tags.includes('electronic')) {
+          if (title.includes('underground') || title.includes('electronic') || title.includes('techno') || tags.includes('electronic') || tags.includes('techno')) {
             return './assets/images/templates/electronic/1.webp';
           }
           if (title.includes('oktoberfest') || title.includes('previa') || title.includes('juntada') || tags.includes('previas') || title.includes('cerveza')) {
             return './assets/images/templates/previas/1.webp';
           }
-          if (title.includes('club') || title.includes('fiesta') || tags.includes('clubs')) {
+          if (title.includes('club') || title.includes('fiesta') || tags.includes('clubs') || tags.includes('festivales')) {
             return './assets/images/templates/clubs/1.webp';
           }
-          if (title.includes('arte') || title.includes('teatro') || tags.includes('art')) {
+          if (title.includes('arte') || title.includes('teatro') || tags.includes('art') || tags.includes('teatro')) {
             return './assets/images/templates/art/1.webp';
           }
-          if (title.includes('sport') || title.includes('deporte') || tags.includes('sports')) {
+          if (title.includes('sport') || title.includes('deporte') || tags.includes('sports') || tags.includes('salud') || tags.includes('fitness')) {
             return './assets/images/templates/sports/1.webp';
           }
 
@@ -4952,7 +4952,7 @@
             tier: tier,
             accessTier: tier,
             accessType: accessType,
-            allowsPlusOne: allowsPlusOne
+            allowsPlusOne: isPassPlusOne
           });
         }
 
@@ -5738,9 +5738,9 @@
       { id: "reggaeton_latino", label: "Reggaeton / Latino", emoji: "🍑" },
       { id: "electronica_techno", label: "Electrónica / Techno", emoji: "🎧" },
       { id: "previas_juntadas", label: "Previas / Juntadas", emoji: "🍻" },
-      { id: "clubs_djs", label: "Clubs / DJs", emoji: "🪩", legacyId: "clubs_festivales" },
+      { id: "clubs_festivales", label: "Clubs / Festivales", emoji: "🪩", legacyId: "clubs_djs" },
       { id: "arte_teatro", label: "Arte / Teatro", emoji: "🎭" },
-      { id: "salud_fitness", label: "Salud / Fitness", emoji: "🏃", legacyId: "deportes_salud" },
+      { id: "deportes_salud", label: "Deportes / Salud", emoji: "🏃", legacyId: "salud_fitness" },
     ];
     const CREATE_EVENT_AVAILABLE_TAGS = AVAILABLE_CATEGORIES;
 
@@ -5886,8 +5886,8 @@
 
     function toggleCreateEventTagHtml(rawTagId) {
       let tagId = rawTagId;
-      if (tagId === 'clubs_festivales') tagId = 'clubs_djs';
-      if (tagId === 'deportes_salud') tagId = 'salud_fitness';
+      if (tagId === 'clubs_djs') tagId = 'clubs_festivales';
+      if (tagId === 'salud_fitness') tagId = 'deportes_salud';
 
       const idx = createEventSelectedTags.indexOf(tagId);
       if (idx > -1) {
@@ -6212,9 +6212,9 @@
           if (t === 'reggaeton' || (typeof t === 'string' && t.includes('Reggaet'))) return 'reggaeton_latino';
           if (t === 'techno' || (typeof t === 'string' && t.includes('Electrónica'))) return 'electronica_techno';
           if (t === 'previas' || (typeof t === 'string' && t.includes('Previas'))) return 'previas_juntadas';
-          if (t === 'boliches' || t === 'festivales' || t === 'clubs_festivales' || (typeof t === 'string' && (t.includes('Clubs') || t.includes('Festivales') || t.includes('DJs')))) return 'clubs_djs';
-          if (t === 'arte_cocktails' || (typeof t === 'string' && t.includes('Arte'))) return 'arte_teatro';
-          if (t === 'deportes_salud' || (typeof t === 'string' && (t.includes('Deportes') || t.includes('Salud') || t.includes('Fitness')))) return 'salud_fitness';
+          if (t === 'boliches' || t === 'festivales' || t === 'clubs_djs' || t === 'clubs_festivales' || (typeof t === 'string' && (t.includes('Clubs') || t.includes('Festivales') || t.includes('DJs')))) return 'clubs_festivales';
+          if (t === 'arte_cocktails' || t === 'arte_teatro' || (typeof t === 'string' && t.includes('Arte'))) return 'arte_teatro';
+          if (t === 'salud_fitness' || t === 'deportes_salud' || (typeof t === 'string' && (t.includes('Deportes') || t.includes('Salud') || t.includes('Fitness')))) return 'deportes_salud';
           const found = CREATE_EVENT_AVAILABLE_TAGS.find(at => at.id === t || at.label === t || at.legacyId === t);
           return found ? found.id : t;
         }).filter(t => CREATE_EVENT_AVAILABLE_TAGS.some(at => at.id === t || at.legacyId === t));
@@ -6313,17 +6313,32 @@
     // Patrón: Carpetas en Cascada Inversa (Stacked Cards)
     // ====================================================
     const TEMPLATE_FOLDERS = [
-      { id: 'art', label: 'ARTE / TEATRO' },
-      { id: 'reggaeton', label: 'REGGAETON / LATINO' },
-      { id: 'electronic', label: 'ELECTRÓNICA / TECHNO' },
-      { id: 'previas', label: 'PREVIAS / JUNTADAS' },
-      { id: 'clubs', label: 'CLUBS / FESTIVALES' },
-      { id: 'sports', label: 'DEPORTES / SALUD' },
+      { id: 'reggaeton_latino', folder: 'reggaeton', label: 'REGGAETON / LATINO' },
+      { id: 'electronica_techno', folder: 'electronic', label: 'ELECTRÓNICA / TECHNO' },
+      { id: 'previas_juntadas', folder: 'previas', label: 'PREVIAS / JUNTADAS' },
+      { id: 'clubs_festivales', folder: 'clubs', label: 'CLUBS / FESTIVALES' },
+      { id: 'arte_teatro', folder: 'art', label: 'ARTE / TEATRO' },
+      { id: 'deportes_salud', folder: 'sports', label: 'DEPORTES / SALUD' },
     ];
 
     let selectedFolder = null; // null = Vista 1 (Carpetas), string = Vista 2 (Detalle con 6 imágenes)
 
-    function getTemplateImageUrl(folder, num) {
+    function getTemplateImageUrl(folderOrId, num) {
+      const folderMap = {
+        'reggaeton_latino': 'reggaeton',
+        'electronica_techno': 'electronic',
+        'previas_juntadas': 'previas',
+        'clubs_festivales': 'clubs',
+        'arte_teatro': 'art',
+        'deportes_salud': 'sports',
+        'reggaeton': 'reggaeton',
+        'electronic': 'electronic',
+        'previas': 'previas',
+        'clubs': 'clubs',
+        'art': 'art',
+        'sports': 'sports'
+      };
+      const folder = folderMap[folderOrId] || folderOrId;
       const base = window.location.pathname.includes('/plus1') ? '/plus1' : '.';
       return `${base}/assets/images/templates/${folder}/${num}.webp`;
     }
@@ -6636,17 +6651,8 @@
         return;
       }
 
-      if (createAccessType === 'paid') {
-        const pNum = Number(createTicketPrice);
-        if (!createTicketPrice || isNaN(pNum) || pNum < 20) {
-          showToast('El precio mínimo de venta es de 20 Bs');
-          const errorMsg = document.getElementById('createTicketPriceError');
-          if (errorMsg) errorMsg.classList.remove('hidden');
-          const priceInput = document.getElementById('createTicketPriceInput');
-          if (priceInput) priceInput.className = 'w-full h-11 px-4 rounded-xl bg-[#0E0F12] border border-[#E87A72] focus:border-[#E87A72] text-white font-sans text-sm outline-none transition-colors';
-          return;
-        }
-      }
+      // Enforce versión Free (máximo 150 personas, pase individual o bipersonal +1, acceso gratuito)
+      const sanitizedCapacity = Math.min(150, Math.max(1, Number(createCapacity) || 100));
 
       const btn = document.getElementById('publishEventBtn');
       if (btn) {
@@ -6656,36 +6662,36 @@
 
       const calculatedEndTimestamp = computeEventEndTimestamp(date, endTime, startTime);
 
-        const finalArt = currentEventArtBase64 || getEventThumbnail({ title, tags: createEventSelectedTags });
-        const eventPayload = {
-          title: title,
-          description: description,
-          dressCode: dressCode,
-          accessType: 'FREE_PASS',
-          isPaid: false,
-          ticketPrice: 0,
-          isVip: false,
-          type: createPrivacyMode || 'private',
-          date: date,
-          startDate: date,
-          startTime: startTime,
-          endDate: endDate,
-          endTime: endTime || null,
-          endTimestamp: calculatedEndTimestamp,
-          location: location,
-          coordinates: createEventCoordinates || null,
-          allowsPlusOne: Boolean(createPlusOneEnabled),
-          guestLimit: Number(createCapacity) || 100,
-          maxCapacity: Number(createCapacity) || 100,
-          tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
-          vipCutoffTime: null,
-          hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
-          hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
-          hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
-          imageUrl: finalArt,
-          artImage: finalArt,
-          createdAt: new Date().toISOString()
-        };
+      const finalArt = currentEventArtBase64 || getEventThumbnail({ title, tags: createEventSelectedTags });
+      const eventPayload = {
+        title: title,
+        description: description,
+        dressCode: dressCode,
+        accessType: 'FREE_PASS',
+        isPaid: false,
+        ticketPrice: 0,
+        isVip: false,
+        type: createPrivacyMode || 'private',
+        date: date,
+        startDate: date,
+        startTime: startTime,
+        endDate: endDate,
+        endTime: endTime || null,
+        endTimestamp: calculatedEndTimestamp,
+        location: location,
+        coordinates: createEventCoordinates || null,
+        allowsPlusOne: Boolean(createPlusOneEnabled),
+        guestLimit: sanitizedCapacity,
+        maxCapacity: sanitizedCapacity,
+        tags: createPrivacyMode === 'public' && createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
+        vipCutoffTime: null,
+        hostUserId: fbCurrentUser ? fbCurrentUser.uid : null,
+        hostName: fbCurrentUser ? (fbCurrentUser.displayName || (typeof currentUserName !== 'undefined' && currentUserName ? currentUserName : 'Anfitrión')) : 'Anfitrión',
+        hostPhotoUrl: fbCurrentUser ? (fbCurrentUser.photoURL || (typeof currentUserAvatar !== 'undefined' ? currentUserAvatar : null)) : null,
+        imageUrl: finalArt,
+        artImage: finalArt,
+        createdAt: new Date().toISOString()
+      };
 
       try {
         if (editingEventId) {
@@ -6694,10 +6700,10 @@
               title: eventPayload.title,
               description: eventPayload.description,
               dressCode: eventPayload.dressCode,
-              accessType: eventPayload.accessType,
-              isPaid: eventPayload.isPaid,
-              ticketPrice: eventPayload.ticketPrice,
-              isVip: eventPayload.isVip,
+              accessType: 'FREE_PASS',
+              isPaid: false,
+              ticketPrice: 0,
+              isVip: false,
               type: eventPayload.type,
               tags: createEventSelectedTags.length > 0 ? createEventSelectedTags : ['previas_juntadas'],
               date: eventPayload.date,
@@ -6708,12 +6714,12 @@
               endTimestamp: calculatedEndTimestamp,
               location: eventPayload.location,
               coordinates: eventPayload.coordinates,
-              allowsPlusOne: eventPayload.allowsPlusOne,
-              guestLimit: Number(eventPayload.maxCapacity),
-              maxCapacity: Number(eventPayload.maxCapacity),
+              allowsPlusOne: Boolean(createPlusOneEnabled),
+              guestLimit: sanitizedCapacity,
+              maxCapacity: sanitizedCapacity,
               imageUrl: eventPayload.imageUrl,
               artImage: eventPayload.artImage,
-              vipCutoffTime: eventPayload.vipCutoffTime,
+              vipCutoffTime: null,
               updatedAt: Date.now()
             });
           }
@@ -6792,7 +6798,7 @@
           endTime: eventPayload.endTime,
           location: eventPayload.location,
           imageUrl: eventPayload.imageUrl
-        });
+        }, true);
 
       } catch (err) {
         console.error('[+1 Firestore] Error al publicar evento:', err);
@@ -6951,8 +6957,6 @@
       }
     }
 
-    let mapVenueSearchDebounce = null;
-
     async function reverseGeocodeMapCoords(lat, lng) {
       const loader = document.getElementById('mapAddressLoader');
       const loaderText = document.getElementById('mapAddressLoaderText');
@@ -7016,115 +7020,6 @@
         if (loader) loader.classList.add('hidden');
         if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
       }
-    }
-
-    function handleMapVenueSearchInput(val) {
-      const clearBtn = document.getElementById('mapVenueSearchClearBtn');
-      if (clearBtn) {
-        if (val && val.trim().length > 0) {
-          clearBtn.classList.remove('hidden');
-        } else {
-          clearBtn.classList.add('hidden');
-        }
-      }
-      if (mapVenueSearchDebounce) clearTimeout(mapVenueSearchDebounce);
-      if (!val || val.trim().length < 2) {
-        hideMapVenueSearchResults();
-        return;
-      }
-      mapVenueSearchDebounce = setTimeout(() => {
-        executeMapVenueSearch(val);
-      }, 380);
-    }
-
-    function clearMapVenueSearch() {
-      const input = document.getElementById('mapVenueSearchInput');
-      const clearBtn = document.getElementById('mapVenueSearchClearBtn');
-      if (input) input.value = '';
-      if (clearBtn) clearBtn.classList.add('hidden');
-      hideMapVenueSearchResults();
-    }
-
-    function hideMapVenueSearchResults() {
-      const dropdown = document.getElementById('mapVenueSearchResultsDropdown');
-      if (dropdown) {
-        dropdown.classList.add('hidden');
-        dropdown.innerHTML = '';
-      }
-    }
-
-    async function executeMapVenueSearch(query) {
-      const q = (query || '').trim();
-      if (!q || q.length < 2) return;
-
-      const dropdown = document.getElementById('mapVenueSearchResultsDropdown');
-      if (dropdown) {
-        dropdown.classList.remove('hidden');
-        dropdown.innerHTML = `<div class="p-3 text-center text-xs text-neutral-400 font-sans">Buscando salones y recintos...</div>`;
-      }
-
-      try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=5`, {
-          headers: { 'Accept-Language': 'es, en' }
-        });
-        if (resp.ok) {
-          const results = await resp.json();
-          if (Array.isArray(results) && results.length > 0) {
-            if (dropdown) {
-              dropdown.innerHTML = results.map((res) => {
-                const aData = res.address || {};
-                const name = res.name || aData.amenity || aData.building || aData.tourism || res.display_name.split(',')[0];
-                const subtitle = res.display_name.split(',').slice(1, 4).join(', ');
-                const isVenue = Boolean(aData.amenity || aData.leisure || aData.building || aData.tourism);
-                const safeName = (name || '').replace(/'/g, "\\'");
-                const safeFull = (res.display_name || '').replace(/'/g, "\\'");
-
-                return `
-                  <button type="button" onclick="selectMapVenueSearchResult(${res.lat}, ${res.lon}, '${safeName}', '${safeFull}')" class="w-full p-2.5 text-left hover:bg-[#1E2025] transition-colors flex items-start gap-2.5 cursor-pointer focus:outline-none">
-                    ${isVenue ? '<span class="text-sm mt-0.5 shrink-0">🏛️</span>' : '<img src="./assets/icons/location.webp" alt="Ubicación" class="w-4 h-4 object-contain mt-0.5 shrink-0 select-none pointer-events-none">'}
-                    <div class="min-w-0 flex-1">
-                      <p class="font-display font-black text-xs text-white uppercase tracking-wide truncate">
-                        ${escapeHtml(name)}
-                      </p>
-                      <p class="font-sans text-[11px] text-neutral-400 truncate mt-0.5">
-                        ${escapeHtml(subtitle || res.display_name)}
-                      </p>
-                    </div>
-                  </button>
-                `;
-              }).join('');
-            }
-          } else {
-            if (dropdown) dropdown.innerHTML = `<div class="p-3 text-center text-xs text-neutral-400 font-sans">No se encontraron recintos con ese nombre</div>`;
-          }
-        }
-      } catch (e) {
-        console.warn('Error en búsqueda de venues:', e);
-        if (dropdown) dropdown.innerHTML = `<div class="p-3 text-center text-xs text-red-400 font-sans">Error al conectar con el mapa</div>`;
-      }
-    }
-
-    function selectMapVenueSearchResult(lat, lng, name, fullName) {
-      tempPickerCoords = { lat: Number(lat), lng: Number(lng) };
-      if (locationPickerMap && locationPickerMarker) {
-        locationPickerMap.setView([lat, lng], 17);
-        locationPickerMarker.setLatLng([lat, lng]);
-      }
-      const coordsDisplay = document.getElementById('mapDetectedCoordsText');
-      const addrDisplay = document.getElementById('mapDetectedAddressText');
-      if (coordsDisplay) coordsDisplay.innerText = `Lat: ${Number(lat).toFixed(5)} · Lng: ${Number(lng).toFixed(5)}`;
-
-      let formatted = name;
-      if (fullName && fullName !== name) {
-        const parts = fullName.split(',').slice(1, 3).map(p => p.trim()).filter(Boolean);
-        if (parts.length > 0) {
-          formatted = `${name} · ${parts.join(', ')}`;
-        }
-      }
-      tempPickerAddress = formatted.trim();
-      if (addrDisplay) addrDisplay.innerText = tempPickerAddress;
-
-      clearMapVenueSearch();
     }
 
     function centerMapOnCurrentLocation() {
@@ -7194,13 +7089,23 @@
         if (badgeEl) {
           badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#12C061]/15 border border-[#12C061]/30 mb-2';
         }
-        if (bottomBtn) bottomBtn.innerText = 'IR AL INICIO';
+        if (bottomBtn) {
+          bottomBtn.innerText = '¡Listo!';
+          bottomBtn.className = 'w-full py-3.5 sm:py-4 px-4 rounded-2xl text-black font-display font-black text-base sm:text-lg tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-[#E87A72]/25 cursor-pointer hover:opacity-95 mt-2';
+          bottomBtn.style.background = 'linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%)';
+          bottomBtn.onclick = goToHomeFromShareModal;
+        }
       } else {
         if (badgeText) badgeText.innerText = '✦ DIFUNDIR EVENTO';
         if (badgeEl) {
           badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E87A72]/15 border border-[#E87A72]/30 mb-2';
         }
-        if (bottomBtn) bottomBtn.innerText = 'CERRAR';
+        if (bottomBtn) {
+          bottomBtn.innerText = 'CERRAR';
+          bottomBtn.className = 'w-full py-2 bg-transparent text-[#9CA3AF] hover:text-white font-display text-xs sm:text-sm font-bold tracking-wider uppercase transition-colors cursor-pointer mt-0.5';
+          bottomBtn.style.background = 'transparent';
+          bottomBtn.onclick = closeShareEventModal;
+        }
       }
 
       const imgUrl = eventData.imageUrl || eventData.image || eventData.flyerUrl;
@@ -7254,14 +7159,27 @@
       if (twImg) twImg.setAttribute('content', img);
     }
 
+    function goToHomeFromShareModal() {
+      const modal = document.getElementById('shareEventModal');
+      if (modal) modal.classList.add('hidden');
+      closeCreateEventScreen();
+      const profileModal = document.getElementById('profileScreen');
+      if (profileModal && !profileModal.classList.contains('hidden')) {
+        closeProfileScreen();
+      }
+      const managerModal = document.getElementById('eventManagerModal');
+      if (managerModal && !managerModal.classList.contains('hidden')) {
+        closeEventManagerModal();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function closeShareEventModal() {
       const modal = document.getElementById('shareEventModal');
       if (modal) modal.classList.add('hidden');
       if (isNewlyCreatedShareModal) {
         closeCreateEventScreen();
-        if (latestCreatedEvent && latestCreatedEvent.id) {
-          openEventManagerModal(latestCreatedEvent.id);
-        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
 
@@ -7563,42 +7481,53 @@
         ctx.font = '700 24px "Cabinet Grotesk", sans-serif';
         ctx.fillText('[ 🔗 COLOCA AQUÍ EL STICKER DE LINK ]', 540, stickerBoxY + stickerBoxHeight / 2);
 
-        // 6. Exportación nativa
+        // 6. Exportación nativa segura con manejo de excepciones
         const shareUrl = `${window.location.origin}${window.location.pathname}#/e/${latestCreatedEvent.id || ''}`;
         const filename = `${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-story.png`;
 
-        canvas.toBlob(async (blob) => {
-          if (!blob) {
-            showToast('Error al generar la imagen');
-            return;
-          }
-
-          const file = new File([blob], filename, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({
-                files: [file],
-                title: latestCreatedEvent.title,
-                text: `¡Te invito a mi evento en +1! 🔥 Pide tu pase aquí: ${shareUrl}`,
-              });
-              showToast('¡Historia compartida con éxito!');
+        try {
+          canvas.toBlob(async (blob) => {
+            if (!blob) {
+              showToast('Error al generar la imagen');
               return;
-            } catch (err) {
-              // Si cancela, no romper
             }
-          }
 
-          // Fallback descarga
-          const downloadLink = document.createElement('a');
-          downloadLink.download = filename;
-          const objUrl = URL.createObjectURL(blob);
-          downloadLink.href = objUrl;
-          document.body.appendChild(downloadLink);
-          downloadLink.click();
-          document.body.removeChild(downloadLink);
-          setTimeout(() => URL.revokeObjectURL(objUrl), 3000);
-          showToast('¡Imagen guardada! Súbela a Instagram con tu link');
-        }, 'image/png');
+            try {
+              const file = new File([blob], filename, { type: 'image/png' });
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                  await navigator.share({
+                    files: [file],
+                    title: latestCreatedEvent.title,
+                    text: `¡Te invito a mi evento en +1! 🔥 Pide tu pase aquí: ${shareUrl}`,
+                  });
+                  showToast('¡Historia compartida con éxito!');
+                  return;
+                } catch (shareErr) {
+                  if (shareErr && shareErr.name === 'AbortError') return;
+                  console.warn('Share nativo no completado:', shareErr);
+                }
+              }
+
+              // Fallback descarga
+              const downloadLink = document.createElement('a');
+              downloadLink.download = filename;
+              const objUrl = URL.createObjectURL(blob);
+              downloadLink.href = objUrl;
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+              setTimeout(() => URL.revokeObjectURL(objUrl), 3000);
+              showToast('¡Imagen guardada! Súbela a Instagram con tu link');
+            } catch (blobErr) {
+              console.warn('Error al procesar blob de imagen:', blobErr);
+              showToast('Error al descargar la imagen');
+            }
+          }, 'image/png');
+        } catch (canvasErr) {
+          console.warn('Error al exportar canvas a blob:', canvasErr);
+          showToast('No se pudo exportar la imagen');
+        }
 
       } catch (err) {
         console.error('Error al generar imagen de historia:', err);
