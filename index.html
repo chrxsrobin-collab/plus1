@@ -73,37 +73,69 @@
 
     /* ==================================================== */
     /* TOKENS DE DEGRADADO CÁLIDO (SISTEMA TIXEL)           */
+    /* (Salmón mate #FF6363 -> Coral #E87A72 -> Fuego #F17D02) */
     /* ==================================================== */
     :root {
       --grad-tixel-cta: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%);
+      --grad-tixel-flame: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
       --ambient-glow-tixel: radial-gradient(circle, rgba(232, 122, 114, 0.16) 0%, rgba(14, 15, 18, 0) 70%);
     }
 
-    .bg-tixel-cta {
+    /* 1. TODOS LOS CONTENEDORES Y FONDOS SALMÓN ENTERO -> DEGRADADO TIXEL */
+    .bg-tixel-cta,
+    .bg-\[\#E87A72\],
+    .shape-grad-flame {
       background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%) !important;
+    }
+
+    button.bg-\[\#E87A72\],
+    .bg-tixel-cta {
       color: #000000 !important;
-      font-family: 'Antonio', -apple-system, sans-serif !important;
-      font-weight: 700 !important;
-      text-transform: uppercase !important;
+      font-weight: 700;
       transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), opacity 150ms ease, box-shadow 150ms ease !important;
     }
+
+    button.bg-\[\#E87A72\]:active,
     .bg-tixel-cta:active {
       transform: scale(0.95) !important;
+    }
+
+    .hover\:bg-\[\#E87A72\]:hover {
+      background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%) !important;
+      color: #000000 !important;
     }
 
     .ambient-glow-tixel {
       background: radial-gradient(circle, rgba(232, 122, 114, 0.16) 0%, rgba(14, 15, 18, 0) 70%) !important;
     }
 
-    /* 1. TEXTO CON DEGRADADO (Para títulos en Antonio Bold) */
-    .text-grad-flame {
-      background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    /* 2. TODOS LOS TEXTOS CON SALMÓN ENTERO -> DEGRADADO TIXEL */
+    .text-grad-flame,
+    span.text-\[\#E87A72\],
+    h1.text-\[\#E87A72\],
+    h2.text-\[\#E87A72\],
+    h3.text-\[\#E87A72\],
+    h4.text-\[\#E87A72\],
+    p.text-\[\#E87A72\],
+    strong.text-\[\#E87A72\],
+    b.text-\[\#E87A72\],
+    code.text-\[\#E87A72\],
+    label.text-\[\#E87A72\] {
+      background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
       display: inline-block;
     }
 
-    /* 2. BORDE CON DEGRADADO (Para tarjetas activas o avatares) */
+    /* Preservar fondo propio si la etiqueta tiene background translúcido (pills/badges) */
+    span.text-\[\#E87A72\][class*="bg-"] {
+      background-clip: padding-box !important;
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: initial !important;
+      color: #FF6363 !important;
+    }
+
+    /* 3. BORDE CON DEGRADADO (Para tarjetas activas o avatares) */
     .border-grad-flame {
       border: 1.5px solid transparent;
       background-origin: border-box;
@@ -113,9 +145,17 @@
         linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
     }
 
-    /* 3. FORMAS Y BADGES DECORATIVOS */
-    .shape-grad-flame {
-      background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);
+    /* 4. ICONOS SVG SALMÓN -> DEGRADADO TIXEL */
+    svg.text-\[\#E87A72\],
+    .text-\[\#E87A72\] svg {
+      stroke: url(#tixel-flame-grad) !important;
+    }
+    svg.text-\[\#E87A72\][fill="currentColor"],
+    .text-\[\#E87A72\] svg[fill="currentColor"],
+    svg.text-\[\#E87A72\] path:not([fill="none"]),
+    .text-\[\#E87A72\] svg path:not([fill="none"]) {
+      fill: url(#tixel-flame-grad) !important;
+      stroke: none !important;
     }
     
     /* Animaciones suaves */
@@ -172,6 +212,34 @@
     .anim-bottom-nav { animation: slideUpFade 0.3s ease-out 0.4s both; }
     .anim-modal-zoom { animation: smoothZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .anim-modal-slide { animation: modalSlideUp 0.22s ease-out forwards; }
+    @keyframes screenSlideUpEnter {
+      0% {
+        transform: translateY(100%);
+        opacity: 0.85;
+      }
+      100% {
+        transform: translateY(0%);
+        opacity: 1;
+      }
+    }
+    @keyframes screenSlideDownExit {
+      0% {
+        transform: translateY(0%);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100%);
+        opacity: 0.85;
+      }
+    }
+    .anim-screen-slide-up {
+      animation: screenSlideUpEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+    }
+    .anim-screen-slide-down {
+      animation: screenSlideDownExit 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      will-change: transform, opacity;
+    }
     @keyframes modalSlideDownExit {
       0% { opacity: 1; transform: translateY(0); }
       100% { opacity: 0; transform: translateY(22px); }
@@ -221,6 +289,17 @@
   </style>
 </head>
 <body class="bg-black text-white min-h-[100dvh] w-full m-0 p-0 overflow-x-hidden font-sans select-none">
+
+  <!-- SVG Global Defs: Degradado Cálido Tixel para Iconos y Trazos -->
+  <svg width="0" height="0" class="absolute pointer-events-none opacity-0 -z-50" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="tixel-flame-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FF6363" />
+        <stop offset="50%" stop-color="#E87A72" />
+        <stop offset="100%" stop-color="#F17D02" />
+      </linearGradient>
+    </defs>
+  </svg>
 
   <!-- Contenedor Raíz Nativo (100% Pantalla) -->
   <div class="w-full min-h-[100dvh] relative bg-black flex flex-col justify-between overflow-hidden bg-cover bg-center bg-no-repeat bg-fixed"
@@ -300,7 +379,7 @@
             </span>
           </div>
           <button type="button" onclick="openSearchEventsModal()" aria-label="Buscar eventos" class="bg-[#16171B] border border-[#26282E] p-2 rounded-full hover:border-[#E87A72] transition-colors flex items-center justify-center text-[#E87A72] active:scale-95 cursor-pointer shadow-sm">
-            <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="w-4 h-4 fill-none" stroke="url(#tixel-flame-grad)" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="7"></circle>
               <line x1="16.5" y1="16.5" x2="22" y2="22"></line>
             </svg>
@@ -1197,9 +1276,9 @@
           <div class="flex flex-col space-y-1.5">
             <label for="onboardingCitySelectHtml" class="font-sans text-[11px] uppercase tracking-wider text-[#8E8E93] font-bold ml-1 flex items-center justify-between">
               <span>CIUDAD ACTUAL</span>
-              <span class="text-[10px] text-[#E87A72] font-semibold inline-flex items-center gap-1">
+              <span class="text-[10px] font-semibold inline-flex items-center gap-1">
                 <img src="./assets/icons/location.webp" alt="" class="w-3 h-3 object-contain shrink-0 select-none pointer-events-none">
-                COBERTURA ACTIVA
+                <span class="text-grad-flame">COBERTURA ACTIVA</span>
               </span>
             </label>
             <div class="relative">
@@ -1458,7 +1537,7 @@
             CHECK-IN MANUAL
           </h2>
           <p class="font-sans text-xs text-[#8E8E93] mt-0.5 leading-normal">
-            Busca por nombre o código corto del pase (ej. #1JLXM).
+            Busca por nombre o código del pase (ej. #ABC12).
           </p>
         </div>
 
@@ -1522,13 +1601,8 @@
             </span>
           </button>
 
-          <!-- Botón de Compartir (Deshabilitado antes de publicar) -->
-          <button id="shareEventTopBtn" onclick="handleShareEvent()" aria-label="Compartir evento" disabled class="w-10 h-10 rounded-full border border-neutral-900 bg-neutral-950 text-[#52525B] flex items-center justify-center transition-all focus:outline-none cursor-not-allowed pointer-events-none">
-            <svg class="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="7" y1="17" x2="17" y2="7" />
-              <polyline points="7 7 17 7 17 17" />
-            </svg>
-          </button>
+          <!-- Espaciador simétrico para centrar el título -->
+          <div class="w-10 h-10 pointer-events-none"></div>
         </header>
 
         <!-- 2. FORMULARIO PRINCIPAL EN SCROLL -->
@@ -1885,6 +1959,8 @@
         </main>
 
       </div>
+    </div>
+
     <!-- ==================================================== -->
     <!-- MODAL: SELECCIÓN DE ARTE / PLANTILLAS PREDETERMINADAS -->
     <!-- ==================================================== -->
@@ -1910,19 +1986,23 @@
           <div class="w-9 h-9"></div>
         </header>
 
-        <!-- Selector de Pestañas / Chips de Categorías (Scroll Horizontal) -->
-        <div id="templateCategoryTabs" class="flex items-center gap-2 px-4 py-2.5 overflow-x-auto no-scrollbar border-b border-[#26282E]/50 shrink-0">
-          <!-- Renderizado dinámicamente vía renderTemplateCategoriesHtml() -->
+        <!-- Sub-header de Navegación (visible en Vista 2: detalle) -->
+        <div id="templateFolderSubHeader" class="hidden px-4 py-2.5 bg-[#141518] border-b border-[#26282E]/60 flex items-center justify-between shrink-0">
+          <button type="button" onclick="closeTemplateFolderView()" class="text-zinc-400 hover:text-white text-xs font-sans flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95">
+            <span class="text-sm">←</span>
+            <span>Volver a Categorías</span>
+          </button>
+          <span id="templateFolderSubHeaderTitle" class="font-display font-extrabold text-xs sm:text-sm text-white tracking-wider uppercase"></span>
         </div>
 
-        <!-- Cuadrícula de Plantillas (Grid 2 Columnas) -->
-        <div id="templateGridContainer" class="flex-1 overflow-y-auto px-4 py-3 grid grid-cols-2 gap-3 min-h-0 no-scrollbar">
-          <!-- Renderizado dinámicamente vía renderTemplateGridHtml() -->
+        <!-- Contenedor dinámico (Vista 1: Carpetas en Cascada Inversa / Vista 2: Grid 6 Imágenes) -->
+        <div id="templateModalContent" class="flex-1 overflow-y-auto min-h-0 no-scrollbar">
+          <!-- Renderizado dinámicamente vía renderTemplateModal() -->
         </div>
 
         <!-- Botón Fijo al Pie: ELEGIR DE MI GALERÍA -->
-        <div class="p-4 bg-gradient-to-t from-[#0E0F12] via-[#0E0F12] to-transparent border-t border-[#26282E]/40 shrink-0">
-          <button type="button" onclick="handleChooseFromGallery()" class="w-full py-4 rounded-2xl bg-tixel-cta text-black font-display font-bold text-base tracking-wider uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform duration-150 cursor-pointer shadow-lg">
+        <div class="px-4 pt-3 pb-[26px] sm:pb-6 bg-gradient-to-t from-[#0E0F12] via-[#0E0F12] to-transparent border-t border-[#26282E]/40 shrink-0">
+          <button type="button" onclick="handleChooseFromGallery()" class="w-full py-4 rounded-2xl text-black font-display font-bold text-base tracking-wider uppercase flex items-center justify-center gap-2 active:scale-95 transition-transform duration-150 cursor-pointer shadow-lg" style="background: linear-gradient(135deg, #FF6363 0%, #E87A72 40%, #F17D02 75%, #FAB205 100%);">
             <span>📷</span>
             <span>ELEGIR DE MI GALERÍA</span>
           </button>
@@ -2554,7 +2634,7 @@
           </div>
 
           <div class="flex items-center justify-center space-x-2 mt-3 group">
-            <h2 id="profileUserNameDisplay" class="font-display text-white text-3xl sm:text-4xl font-black tracking-wide uppercase leading-none">
+            <h2 id="profileUserNameDisplay" class="font-display text-white text-2xl sm:text-3xl font-black tracking-wide uppercase leading-none">
               CHRIS FREE
             </h2>
             <button id="profileFreeNameEditBtn" onclick="promptEditUserName()" aria-label="Editar nombre" class="w-7 h-7 rounded-full bg-[#16171B] hover:bg-neutral-800 border border-white/10 flex items-center justify-center text-zinc-400 hover:text-[#E87A72] transition-colors active:scale-90 focus:outline-none cursor-pointer">
@@ -2577,11 +2657,14 @@
                     <path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8L12 2z"/>
                   </svg>
                 </div>
-                <span class="font-display text-2xl sm:text-3xl tracking-wide text-black font-black uppercase leading-none">
+                <span class="font-display text-xl sm:text-2xl tracking-wide text-black font-black uppercase leading-none">
                   MIS EVENTOS
                 </span>
               </div>
-              <span class="text-2xl font-black text-black leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+              <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px] text-black stroke-current shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
             </div>
           </div>
 
@@ -2595,11 +2678,14 @@
                     <path d="M4 4h16a2 2 0 0 1 2 2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4V6a2 2 0 0 1 2-2zm4 7h8v2H8v-2z" />
                   </svg>
                 </div>
-                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                <span class="font-display text-xl sm:text-2xl tracking-wide text-white font-black uppercase leading-none">
                   RACHAS
                 </span>
               </div>
-              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+              <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px] text-zinc-400 group-hover:text-white stroke-current shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
             </div>
 
             <!-- Fila 3: HAZTE PRO -->
@@ -2608,11 +2694,14 @@
                 <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
                   <span class="text-base leading-none">🤝</span>
                 </div>
-                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                <span class="font-display text-xl sm:text-2xl tracking-wide text-white font-black uppercase leading-none">
                   HAZTE PRO
                 </span>
               </div>
-              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+              <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px] text-zinc-400 group-hover:text-white stroke-current shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
             </div>
 
             <!-- Fila 4: SHARE APP -->
@@ -2621,11 +2710,14 @@
                 <div class="w-7 h-7 rounded-lg bg-teal-500/20 border border-teal-400/40 flex items-center justify-center shrink-0">
                   <span class="text-base leading-none">📢</span>
                 </div>
-                <span class="font-display text-2xl sm:text-3xl tracking-wide text-white font-black uppercase leading-none">
+                <span class="font-display text-xl sm:text-2xl tracking-wide text-white font-black uppercase leading-none">
                   SHARE APP
                 </span>
               </div>
-              <span class="text-2xl font-black text-white/90 leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+              <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px] text-zinc-400 group-hover:text-white stroke-current shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
+              </svg>
             </div>
 
             <!-- 4. FOOTER: CERRAR SESIÓN -->
@@ -2896,41 +2988,24 @@
             <span class="font-display text-xs font-black tracking-wider text-neutral-300 uppercase">RECOMPENSA ACUMULADA</span>
           </div>
           <span class="font-display text-sm font-black text-[#FAB205]">
-            <span id="profilePointsCount">380</span> +PERKS GANADOS
+            <span id="streakModalPointsCount">0</span> +PERKS
           </span>
         </div>
 
         <p class="font-sans text-neutral-400 text-xs mb-3 leading-relaxed">
-          Cantidad de eventos consecutivos asistidos de un mismo anfitrión o club:
+          Eventos consecutivos asistidos por club o anfitrión:
         </p>
 
-        <!-- Desglose por organizador con diseño brutalista mate -->
-        <div class="space-y-2.5 my-3">
-          <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
-            <div class="text-left">
-              <h4 class="font-display text-white text-sm font-black uppercase">Club Cacao</h4>
-              <span class="font-sans text-neutral-400 text-[11px]">Recinto VIP · Electrónica</span>
-            </div>
-            <span class="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30">
-              🔥 <span id="profileStreakCount">3</span> eventos seguidos
-            </span>
-          </div>
-          <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between">
-            <div class="text-left">
-              <h4 class="font-display text-white text-sm font-black uppercase">Drop Sessions</h4>
-              <span class="font-sans text-neutral-400 text-[11px]">Club Nocturno · Underground</span>
-            </div>
-            <span class="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30">
-              🔥 2 eventos seguidos
-            </span>
-          </div>
+        <!-- Desglose dinámico por organizador (Sin mockups) -->
+        <div id="streakOrganizersListContainer" class="space-y-2.5 my-3 max-h-60 overflow-y-auto no-scrollbar">
+          <!-- Renderizado dinámico vía renderStreakModalContent() -->
         </div>
 
         <p class="font-sans text-neutral-400 text-xs my-3 text-center leading-relaxed">
-          Asiste a eventos consecutivos para mantener tu racha y desbloquear merch oficial de +1.
+          Asiste a eventos consecutivos para mantener tu racha y desbloquear perks y accesos VIP en +1.
         </p>
 
-        <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-[#E87A72] text-black font-display font-black text-sm tracking-wider uppercase hover:bg-[#d66f67] transition-colors cursor-pointer">
+        <button onclick="closeStreakModal()" class="w-full py-3 rounded-xl bg-tixel-cta text-black font-display font-black text-sm tracking-wider uppercase active:scale-95 transition-all cursor-pointer">
           ENTENDIDO
         </button>
       </div>
@@ -3510,6 +3585,9 @@
                       const cleanHolder = (data.holderName || data.userName || user.displayName || 'INVITADO')
                         .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
                         .trim();
+                      if (cleanHolder.toLowerCase().includes('camila') || cleanHolder.toLowerCase().includes('(test)') || doc.id.toLowerCase().startsWith('hsfmt')) {
+                        return;
+                      }
                       const statusText = isUsed
                         ? (allowsPlusOne && checkInCount === 1 ? 'INGRESO 1/2' : (checkInCount >= 2 ? 'PASE UTILIZADO (2/2)' : 'PASE UTILIZADO'))
                         : 'PASE ACTIVO';
@@ -3778,7 +3856,13 @@
           const passesList = [];
           if (querySnapshot) {
             querySnapshot.forEach((doc) => {
-              passesList.push({ id: doc.id, ...doc.data() });
+              const d = doc.data();
+              const h = (d.holderName || d.userName || '').toLowerCase();
+              if (h.includes('camila') || h.includes('(test)') || doc.id.toLowerCase().startsWith('hsfmt') || doc.id === 'TEST_PASS_123') {
+                fbDb.collection('passes').doc(doc.id).delete().catch(() => {});
+                return;
+              }
+              passesList.push({ id: doc.id, ...d });
             });
           }
           globalPassesList = passesList;
@@ -3958,7 +4042,7 @@
             <p class="font-sans text-neutral-300 text-sm sm:text-base font-medium tracking-wide uppercase leading-relaxed max-w-[260px]">
               NO HAY EVENTOS PÚBLICOS ACTIVOS · SÉ EL PRIMERO EN CREAR UNO
             </p>
-            <button onclick="handleCreateEventAction()" class="mt-6 py-3 px-6 rounded-2xl bg-tixel-cta text-black font-display font-black text-sm tracking-wider uppercase transition-transform duration-150 active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer">
+            <button onclick="handleNavigation('/create-event')" class="mt-6 py-3 px-6 rounded-2xl bg-tixel-cta text-black font-display font-black text-sm tracking-wider uppercase transition-transform duration-150 active:scale-95 shadow-lg shadow-[#E87A72]/20 cursor-pointer">
               [ + ] CREAR EVENTO
             </button>
           </div>
@@ -4150,7 +4234,6 @@
             <div class="h-px flex-1 bg-white/10"></div>
           </div>
           ${group.events.map(event => {
-            const parts = getDayPartsHtml(event.date);
             const social = getEventSocialData(event);
             const cleanTitle = (event.title || 'SIN TÍTULO').replace(/^FLYER.*?:\s*/i, '').trim();
             const userCity = window.currentUserCity || 'Tu Ciudad';
@@ -4174,21 +4257,11 @@
                 onclick="openEventDetail('${event.id}')"
                 class="bg-[#16171B] border border-[#26282E] rounded-xl p-2.5 flex items-center gap-3 mb-2.5 mx-4 active:scale-[0.99] transition-transform cursor-pointer hover:border-white/20 shadow-md"
               >
-                <!-- Columna Día (Izquierda) -->
-                <div class="w-12 h-14 rounded-lg bg-black/60 border border-[#26282E] flex flex-col items-center justify-center shrink-0">
-                  <span class="font-display text-[11px] text-[#E87A72] font-black uppercase tracking-wider leading-none">
-                    ${parts.dayOfWeek}
-                  </span>
-                  <span class="font-display text-lg text-white font-black leading-tight mt-0.5">
-                    ${parts.dayNum}
-                  </span>
-                </div>
-
-                <!-- Miniatura Cuadrada -->
+                <!-- Arte del Evento (Miniatura Cuadrada) -->
                 ${event.imageUrl ? `
-                  <img src="${event.imageUrl}" alt="${cleanTitle}" class="w-14 h-14 rounded-lg object-cover bg-zinc-800 shrink-0" />
+                  <img src="${event.imageUrl}" alt="${cleanTitle}" class="w-14 h-14 rounded-xl object-cover bg-zinc-800 shrink-0" />
                 ` : `
-                  <div class="w-14 h-14 rounded-lg bg-zinc-800 border border-white/5 flex items-center justify-center text-xl shrink-0">
+                  <div class="w-14 h-14 rounded-xl bg-zinc-800 border border-white/5 flex items-center justify-center text-xl shrink-0">
                     🎪
                   </div>
                 `}
@@ -5540,6 +5613,8 @@
     }
 
     function openCreateEventScreen(editId = null) {
+      if (typeof closeProfileScreen === 'function') closeProfileScreen();
+      if (typeof closePassScreen === 'function') closePassScreen();
       editingEventId = editId;
       const screen = document.getElementById('createEventScreenView');
       const titleEl = document.getElementById('createEventScreenTitle');
@@ -5584,7 +5659,9 @@
       renderCreateAccessTypeUI();
 
       if (screen) {
-        screen.classList.remove('hidden');
+        screen.classList.remove('hidden', 'anim-screen-slide-down');
+        screen.classList.add('anim-screen-slide-up');
+        screen.scrollTop = 0;
       }
     }
 
@@ -6095,7 +6172,12 @@
     function closeCreateEventScreen() {
       const screen = document.getElementById('createEventScreenView');
       if (screen) {
-        screen.classList.add('hidden');
+        screen.classList.remove('anim-screen-slide-up');
+        screen.classList.add('anim-screen-slide-down');
+        setTimeout(() => {
+          screen.classList.add('hidden');
+          screen.classList.remove('anim-screen-slide-down');
+        }, 280);
       }
     }
 
@@ -6160,26 +6242,30 @@
 
     // ====================================================
     // CATÁLOGO DE PLANTILLAS DE ARTE (+1 TEMPLATES)
+    // Patrón: Carpetas en Cascada Inversa (Stacked Cards)
     // ====================================================
-    const TEMPLATE_CATEGORIES = [
-      { id: 'previas', label: 'Previas / Juntadas', path: './assets/images/templates/previas/' },
-      { id: 'reggaeton', label: 'Reggaeton / Latino', path: './assets/images/templates/reggaeton/' },
-      { id: 'electronic', label: 'Electrónica / Techno', path: './assets/images/templates/electronic/' },
-      { id: 'clubs', label: 'Clubs / Festivales', path: './assets/images/templates/clubs/' },
-      { id: 'art', label: 'Arte / Teatro', path: './assets/images/templates/art/' },
-      { id: 'sports', label: 'Deportes / Salud', path: './assets/images/templates/sports/' },
+    const TEMPLATE_FOLDERS = [
+      { id: 'art', label: 'ARTE / TEATRO' },
+      { id: 'reggaeton', label: 'REGGAETON / LATINO' },
+      { id: 'electronic', label: 'ELECTRÓNICA / TECHNO' },
+      { id: 'previas', label: 'PREVIAS / JUNTADAS' },
+      { id: 'clubs', label: 'CLUBS / FESTIVALES' },
+      { id: 'sports', label: 'DEPORTES / SALUD' },
     ];
 
-    const getCategoryImages = (basePath) => [1, 2, 3, 4, 5, 6].map(i => `${basePath}${i}.webp`);
+    let selectedFolder = null; // null = Vista 1 (Carpetas), string = Vista 2 (Detalle con 6 imágenes)
 
-    let selectedTemplateCategoryId = 'previas';
+    function getTemplateImageUrl(folder, num) {
+      const base = window.location.pathname.includes('/plus1') ? '/plus1' : '.';
+      return `${base}/assets/images/templates/${folder}/${num}.webp`;
+    }
 
     function openTemplateSelectorModal() {
       const modal = document.getElementById('templateSelectorModal');
       if (modal) {
         modal.classList.remove('hidden');
-        renderTemplateCategoriesHtml();
-        renderTemplateGridHtml();
+        selectedFolder = null; // Inicializar en Vista 1 (Grid de carpetas apiladas)
+        renderTemplateModal();
       }
     }
 
@@ -6190,58 +6276,101 @@
       }
     }
 
-    function setTemplateCategory(catId) {
-      selectedTemplateCategoryId = catId;
-      renderTemplateCategoriesHtml();
-      renderTemplateGridHtml();
+    function selectTemplateFolder(folderId) {
+      selectedFolder = folderId;
+      renderTemplateModal();
     }
 
-    function renderTemplateCategoriesHtml() {
-      const container = document.getElementById('templateCategoryTabs');
-      if (!container) return;
-      container.innerHTML = TEMPLATE_CATEGORIES.map(cat => {
-        const isActive = cat.id === selectedTemplateCategoryId;
-        const activeClasses = isActive
-          ? 'bg-[#E87A72] text-black font-bold border-[#E87A72] shadow-sm'
-          : 'bg-[#16171B] text-zinc-400 border-[#26282E] hover:text-white hover:border-zinc-500';
-        return `
-          <button
-            type="button"
-            onclick="setTemplateCategory('${cat.id}')"
-            class="px-3.5 py-1.5 rounded-full text-xs font-sans whitespace-nowrap border transition-all cursor-pointer ${activeClasses}"
-          >
-            ${cat.label}
-          </button>
-        `;
-      }).join('');
+    function closeTemplateFolderView() {
+      selectedFolder = null;
+      renderTemplateModal();
     }
 
-    function renderTemplateGridHtml() {
-      const grid = document.getElementById('templateGridContainer');
-      if (!grid) return;
-      const cat = TEMPLATE_CATEGORIES.find(c => c.id === selectedTemplateCategoryId) || TEMPLATE_CATEGORIES[0];
-      const images = getCategoryImages(cat.path);
+    function renderTemplateModal() {
+      const content = document.getElementById('templateModalContent');
+      const subHeader = document.getElementById('templateFolderSubHeader');
+      const subHeaderTitle = document.getElementById('templateFolderSubHeaderTitle');
+      if (!content) return;
 
-      grid.innerHTML = images.map((imgUrl, idx) => {
-        return `
-          <div
-            onclick="handleSelectTemplateImage('${imgUrl}')"
-            class="group relative aspect-square rounded-2xl bg-[#16171B] border-2 border-[#26282E] overflow-hidden cursor-pointer hover:border-[#E87A72] active:scale-95 transition-all shadow-md"
-          >
-            <img
-              src="${imgUrl}"
-              alt="Plantilla ${cat.label} ${idx + 1}"
-              loading="lazy"
-              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span class="px-2.5 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[#E87A72] text-[11px] font-bold uppercase tracking-wider">
-                Elegir
-              </span>
-            </div>
+      if (!selectedFolder) {
+        // ----------------------------------------------------
+        // VISTA 1: CARPETAS EN CASCADA INVERSA (GRID CATEGORÍAS)
+        // ----------------------------------------------------
+        if (subHeader) subHeader.classList.add('hidden');
+
+        content.innerHTML = `
+          <div class="p-4 grid grid-cols-2 gap-3.5 sm:gap-4 anim-modal-zoom">
+            ${TEMPLATE_FOLDERS.map(folder => {
+              const img1 = getTemplateImageUrl(folder.id, 1);
+              const img2 = getTemplateImageUrl(folder.id, 2);
+              const img3 = getTemplateImageUrl(folder.id, 3);
+              return `
+                <div
+                  onclick="selectTemplateFolder('${folder.id}')"
+                  class="relative aspect-square rounded-2xl bg-[#16171B] border border-[#26282E] overflow-hidden cursor-pointer group active:scale-95 transition-all duration-200 shadow-xl flex flex-col justify-end"
+                >
+                  <!-- Pila de imágenes en cascada (Profundidad Inversa) -->
+                  <div class="absolute inset-0 pb-12 overflow-hidden flex items-center justify-center p-3 select-none">
+                    <!-- Capa 3 (Fondo superior): 3.webp -->
+                    <div class="absolute w-[80%] h-[80%] top-2 rounded-xl overflow-hidden transform scale-90 -translate-y-4 -rotate-3 opacity-40 shadow border border-white/10 pointer-events-none transition-transform duration-300 group-hover:-translate-y-5">
+                      <img src="${img3}" alt="${folder.label} 3" class="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <!-- Capa 2 (Media): 2.webp -->
+                    <div class="absolute w-[85%] h-[85%] top-3.5 rounded-xl overflow-hidden transform scale-95 -translate-y-2 rotate-2 opacity-70 shadow border border-white/10 pointer-events-none transition-transform duration-300 group-hover:-translate-y-3">
+                      <img src="${img2}" alt="${folder.label} 2" class="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <!-- Capa 1 (Frontal / Principal): 1.webp -->
+                    <div class="relative w-[92%] h-[92%] rounded-xl overflow-hidden shadow-2xl border border-white/15 z-[2] transition-transform duration-300 group-hover:scale-[1.02]">
+                      <img src="${img1}" alt="${folder.label} 1" class="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  </div>
+
+                  <!-- Barra Blanca Inferior (Réplica de Referencia) -->
+                  <div class="bg-white w-full py-3 px-1.5 flex items-center justify-center absolute bottom-0 inset-x-0 z-10 shadow-lg">
+                    <span class="text-black font-display font-extrabold tracking-wider text-center text-xs sm:text-sm uppercase leading-none truncate max-w-full">
+                      ${folder.label}
+                    </span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         `;
-      }).join('');
+      } else {
+        // ----------------------------------------------------
+        // VISTA 2: DESPLIEGUE Y SELECCIÓN DE ARTE (EXPANDIDA)
+        // ----------------------------------------------------
+        const currentFolderObj = TEMPLATE_FOLDERS.find(f => f.id === selectedFolder) || TEMPLATE_FOLDERS[0];
+        if (subHeader) {
+          subHeader.classList.remove('hidden');
+          if (subHeaderTitle) subHeaderTitle.innerText = currentFolderObj.label;
+        }
+
+        const images = [1, 2, 3, 4, 5, 6].map(num => getTemplateImageUrl(currentFolderObj.id, num));
+
+        content.innerHTML = `
+          <div class="p-4 grid grid-cols-2 gap-3 min-h-0 anim-modal-zoom">
+            ${images.map((imgUrl, idx) => `
+              <div
+                onclick="handleSelectTemplateImage('${imgUrl}')"
+                class="group relative aspect-square rounded-2xl bg-[#16171B] border-2 border-[#26282E] overflow-hidden cursor-pointer hover:border-[#E87A72] active:scale-95 transition-all shadow-md"
+              >
+                <img
+                  src="${imgUrl}"
+                  alt="${currentFolderObj.label} ${idx + 1}"
+                  loading="lazy"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                  <span class="px-2.5 py-1 rounded-full bg-black/80 border border-[#E87A72] text-[#E87A72] text-[11px] font-bold uppercase tracking-wider">
+                    Elegir
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
     }
 
     function handleSelectTemplateImage(selectedUrl) {
@@ -6688,10 +6817,10 @@
 
       const customPinHtml = `
         <div style="position: relative; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%); pointer-events: auto; cursor: grab;">
-          <div style="background: #E87A72; color: #000000; font-family: 'Antonio', -apple-system, sans-serif; font-weight: 800; font-size: 11px; padding: 3px 9px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(232, 122, 114, 0.45); display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em;">
+          <div style="background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%); color: #000000; font-family: 'Antonio', -apple-system, sans-serif; font-weight: 800; font-size: 11px; padding: 3px 9px; border-radius: 9999px; box-shadow: 0 4px 14px rgba(232, 122, 114, 0.45); display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.04em;">
             <span style="font-weight: 900;">EVENTO +1</span>
           </div>
-          <div style="width: 12px; height: 12px; background: #E87A72; transform: rotate(45deg); margin-top: -6px; border-right: 1.5px solid #FFFFFF; border-bottom: 1.5px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></div>
+          <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #FF6363 0%, #E87A72 50%, #F17D02 100%); transform: rotate(45deg); margin-top: -6px; border-right: 1.5px solid #FFFFFF; border-bottom: 1.5px solid #FFFFFF; box-shadow: 0 2px 4px rgba(0,0,0,0.25);"></div>
         </div>
       `;
 
@@ -8928,7 +9057,92 @@
       if (modal) modal.classList.add('hidden');
     }
 
+    function renderStreakModalContent() {
+      // 1. Puntos reales acumulados
+      const pointsEl = document.getElementById('streakModalPointsCount');
+      let points = 0;
+      if (window.currentUserData && typeof window.currentUserData.points === 'number') {
+        points = window.currentUserData.points;
+      } else {
+        const parsed = parseInt(document.getElementById('profilePointsCount')?.innerText || '0', 10);
+        points = isNaN(parsed) ? 0 : parsed;
+      }
+      if (pointsEl) pointsEl.innerText = points;
+
+      // 2. Rachas por anfitrión / club desde los pases asistidos reales
+      const listContainer = document.getElementById('streakOrganizersListContainer');
+      if (!listContainer) return;
+
+      const streaksByHost = {};
+      if (Array.isArray(userAttendedEvents) && userAttendedEvents.length > 0) {
+        userAttendedEvents.forEach(evt => {
+          const host = (evt.hostName || evt.location || 'Anfitrión +1').trim();
+          if (!streaksByHost[host]) {
+            streaksByHost[host] = {
+              hostName: host,
+              count: 0,
+              category: evt.location || 'Club / Recinto Oficial'
+            };
+          }
+          streaksByHost[host].count += 1;
+        });
+      }
+
+      const activeStreakEntries = Object.values(streaksByHost);
+
+      // Racha global guardada en el perfil
+      let globalStreak = 0;
+      if (window.currentUserData && typeof window.currentUserData.streak === 'number') {
+        globalStreak = window.currentUserData.streak;
+      } else {
+        const parsedStreak = parseInt(document.getElementById('profileStreakCount')?.innerText || '0', 10);
+        globalStreak = isNaN(parsedStreak) ? 0 : parsedStreak;
+      }
+
+      if (activeStreakEntries.length > 0) {
+        listContainer.innerHTML = activeStreakEntries.map(entry => `
+          <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between shadow-sm">
+            <div class="text-left truncate pr-2">
+              <h4 class="font-display text-white text-sm font-black uppercase truncate">${escapeHtmlAttr(entry.hostName)}</h4>
+              <span class="font-sans text-neutral-400 text-[11px] truncate block">${escapeHtmlAttr(entry.category)}</span>
+            </div>
+            <span class="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30 shrink-0">
+              🔥 ${entry.count} ${entry.count === 1 ? 'evento asistido' : 'eventos seguidos'}
+            </span>
+          </div>
+        `).join('');
+      } else if (globalStreak > 0) {
+        listContainer.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-between shadow-sm">
+            <div class="text-left truncate pr-2">
+              <h4 class="font-display text-white text-sm font-black uppercase truncate">Comunidad +1</h4>
+              <span class="font-sans text-neutral-400 text-[11px] truncate block">Racha de asistencia activa</span>
+            </div>
+            <span class="font-display text-[#FAB205] text-xs font-black px-2.5 py-1 rounded-full bg-[#FAB205]/10 border border-[#FAB205]/30 shrink-0">
+              🔥 ${globalStreak} ${globalStreak === 1 ? 'evento asistido' : 'eventos seguidos'}
+            </span>
+          </div>
+        `;
+      } else {
+        listContainer.innerHTML = `
+          <div class="p-4 rounded-2xl bg-[#16171B] border border-dashed border-[#26282E] flex flex-col items-center justify-center text-center py-5 shadow-inner">
+            <span class="text-2xl mb-1.5 opacity-80 select-none">🔥</span>
+            <h4 class="font-display text-white text-xs font-bold uppercase tracking-wider mb-1">
+              AÚN NO TIENES RACHAS ACTIVAS
+            </h4>
+            <p class="font-sans text-neutral-400 text-[11px] max-w-[230px] leading-relaxed mb-3">
+              Valida tus pases en puerta para iniciar tu racha y acumular +Perks canjeables.
+            </p>
+            <button onclick="closeStreakModal(); closeProfileScreen(); handleNavigation('/home');" class="px-3.5 py-2 rounded-xl bg-[#26282E] hover:bg-[#32363E] text-white font-display text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer">
+              EXPLORAR EVENTOS
+            </button>
+          </div>
+        `;
+      }
+    }
+
     function openStreakModal() {
+      renderStreakModalContent();
       const modal = document.getElementById('streakModal');
       if (modal) modal.classList.remove('hidden');
     }
@@ -9487,11 +9701,14 @@
                 <path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.8-3.7 5.3-.8L12 2z"/>
               </svg>
             </div>
-            <span class="font-display text-2xl sm:text-3xl tracking-wide text-black font-black uppercase leading-none">
+            <span class="font-display text-xl sm:text-2xl tracking-wide text-black font-black uppercase leading-none">
               MIS EVENTOS
             </span>
           </div>
-          <span class="text-2xl font-black text-black leading-none group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform">↗</span>
+          <svg class="w-4 h-4 sm:w-[18px] sm:h-[18px] text-black stroke-current shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="7" y1="17" x2="17" y2="7"></line>
+            <polyline points="7 7 17 7 17 17"></polyline>
+          </svg>
         </div>
       `;
     }
@@ -10127,59 +10344,6 @@
     let manualPassesCache = [];
     let manualPassesUnsubscribe = null;
 
-    const DEMO_MANUAL_PASSES_HTML = [
-      {
-        id: 'TEST_PASS_123',
-        holderName: 'INVITADO VIP (TEST)',
-        ticketId: '#1JLXM',
-        listType: 'VIP',
-        allowsPlusOne: true,
-        status: 'active',
-        checkInCount: 0,
-        checkedInAt: null,
-      },
-      {
-        id: 'pepe-birthday',
-        holderName: 'PEPE RODRÍGUEZ',
-        ticketId: '#PEP77',
-        listType: 'VIP',
-        allowsPlusOne: true,
-        status: 'active',
-        checkInCount: 1,
-        checkedInAt: Date.now() - 1500000,
-      },
-      {
-        id: 'pass_sofia',
-        holderName: 'SOFÍA GÓMEZ',
-        ticketId: '#SOF99',
-        listType: 'GENERAL',
-        allowsPlusOne: false,
-        status: 'used',
-        checkInCount: 1,
-        checkedInAt: Date.now() - 3600000,
-      },
-      {
-        id: 'pass_mateo',
-        holderName: 'MATEO MORALES',
-        ticketId: '#MAT01',
-        listType: 'VIP',
-        allowsPlusOne: false,
-        status: 'active',
-        checkInCount: 0,
-        checkedInAt: null,
-      },
-      {
-        id: 'pass_lucia',
-        holderName: 'LUCÍA FERNÁNDEZ',
-        ticketId: '#LUC42',
-        listType: 'VIP',
-        allowsPlusOne: true,
-        status: 'active',
-        checkInCount: 0,
-        checkedInAt: null,
-      }
-    ];
-
     function openManualCheckInModal() {
       if (html5QrCodeScanner) {
         try { html5QrCodeScanner.pause(); } catch (e) {}
@@ -10225,7 +10389,40 @@
     }
 
     function loadManualCheckInPasses() {
-      manualPassesCache = [...DEMO_MANUAL_PASSES_HTML];
+      manualPassesCache = [];
+
+      // Si hay tickets en memoria de la app, usarlos como lista inicial de respaldo
+      if (Array.isArray(userTickets) && userTickets.length > 0) {
+        const localList = (currentScannerEventId
+          ? userTickets.filter(t => t.eventId === currentScannerEventId)
+          : userTickets
+        ).filter(t => {
+          const name = (t.holderName || t.userName || t.userDisplayName || '').toLowerCase();
+          return !name.includes('camila') && !name.includes('(test)') && !String(t.id).startsWith('DEMO_') && !String(t.id).toLowerCase().startsWith('hsfmt');
+        }).map(t => {
+          const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? t.allowPlusOne ?? (t.companionsCount && t.companionsCount > 0));
+          const checkInCount = typeof t.checkInCount === 'number'
+            ? t.checkInCount
+            : (typeof t.checkedInCount === 'number' ? t.checkedInCount : (t.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0));
+          return {
+            id: t.id || 'pass_' + Math.random().toString(36).substring(2, 9),
+            eventId: t.eventId,
+            holderName: (t.holderName || t.userName || t.userDisplayName || 'Invitado')
+              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+              .trim(),
+            ticketId: t.ticketId || '#' + (t.id ? t.id.slice(0, 5).toUpperCase() : 'PASS1'),
+            listType: t.listType || 'VIP',
+            allowsPlusOne: allowsPlusOne,
+            status: t.status || 'active',
+            checkInCount: checkInCount,
+            checkedInAt: t.checkedInAt || t.usedAt || null
+          };
+        });
+        if (localList.length > 0) {
+          manualPassesCache = localList;
+        }
+      }
+
       renderManualCheckInList(manualPassesCache);
 
       if (fbDb) {
@@ -10234,22 +10431,42 @@
           if (currentScannerEventId) {
             ref = ref.where('eventId', '==', currentScannerEventId);
           } else {
-            ref = ref.limit(60);
+            ref = ref.limit(100);
           }
 
           if (manualPassesUnsubscribe) manualPassesUnsubscribe();
           manualPassesUnsubscribe = ref.onSnapshot((snapshot) => {
-            if (snapshot && !snapshot.empty) {
+            if (snapshot) {
               const live = [];
               snapshot.forEach((doc) => {
                 const data = doc.data();
-                const cleanHolder = (data.holderName || data.userName || 'Invitado')
+                const rawName = (data.holderName || data.userName || 'Invitado');
+                const cleanHolder = rawName
                   .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
                   .trim();
+
+                // Detección y purga inmediata en Firestore de pases mockup/test residuales (ej. Camila L. #645)
+                const isMockup = 
+                  cleanHolder.toLowerCase().includes('camila') ||
+                  cleanHolder.toLowerCase().includes('(test)') ||
+                  cleanHolder.toLowerCase().includes('test pass') ||
+                  doc.id === 'TEST_PASS_123' ||
+                  doc.id.toLowerCase().startsWith('demo_') ||
+                  doc.id.toLowerCase().startsWith('test_') ||
+                  doc.id.toLowerCase().startsWith('hsfmt') ||
+                  (data.ticketId && data.ticketId.toLowerCase().includes('hsfmt'));
+
+                if (isMockup) {
+                  fbDb.collection('passes').doc(doc.id).delete().catch((e) => console.warn('Purga mockup pass:', e));
+                  return;
+                }
+
                 const allowsPlusOne = Boolean(data.allowsPlusOne ?? data.withPlusOne ?? data.allowPlusOne ?? (data.companionsCount && data.companionsCount > 0));
                 const checkInCount = typeof data.checkInCount === 'number'
                   ? data.checkInCount
-                  : (data.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0);
+                  : (typeof data.checkedInCount === 'number'
+                    ? data.checkedInCount
+                    : (data.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0));
 
                 live.push({
                   id: doc.id,
@@ -10260,13 +10477,11 @@
                   allowsPlusOne: allowsPlusOne,
                   status: data.status || 'active',
                   checkInCount: checkInCount,
-                  checkedInAt: data.checkedInAt || data.usedAt || null
+                  checkedInAt: data.checkedInAt || data.usedAt || data.lastCheckIn || null
                 });
               });
 
-              // Mantener los de test para pruebas instantáneas
-              const hasTest = live.some(p => p.id === 'TEST_PASS_123');
-              manualPassesCache = hasTest ? live : [...DEMO_MANUAL_PASSES_HTML, ...live];
+              manualPassesCache = live;
               filterManualCheckInList();
             }
           }, (err) => console.warn('Error fetching manual check in passes:', err));
@@ -10319,6 +10534,9 @@
     function renderManualCheckInList(passes) {
       const container = document.getElementById('manualCheckInListContainer');
       const badge = document.getElementById('manualCheckInCountBadge');
+      const searchInput = document.getElementById('manualCheckInSearchInput');
+      const hasSearch = searchInput && searchInput.value.trim().length > 0;
+
       if (badge) {
         badge.innerText = `${passes.length} ${passes.length === 1 ? 'PASE' : 'PASES'}`;
       }
@@ -10327,35 +10545,48 @@
       if (!passes || passes.length === 0) {
         container.innerHTML = `
           <div class="h-64 flex flex-col items-center justify-center text-center p-6 bg-[#16171B]/50 border border-dashed border-[#26282E] rounded-3xl mt-4">
-            <span class="text-3xl mb-2">🔍</span>
-            <p class="font-display text-white text-base font-bold uppercase tracking-wider">NO SE ENCONTRARON PASES</p>
-            <p class="font-sans text-xs text-[#8E8E93] mt-1 max-w-[240px]">Verifica el nombre o los caracteres del código del boleto.</p>
+            <span class="text-3xl mb-2">${hasSearch ? '🔍' : '🎟️'}</span>
+            <p class="font-display text-white text-base font-bold uppercase tracking-wider">
+              ${hasSearch ? 'NO SE ENCONTRARON PASES' : 'NO HAY PASES REGISTRADOS'}
+            </p>
+            <p class="font-sans text-xs text-[#8E8E93] mt-1 max-w-[240px]">
+              ${hasSearch ? 'Verifica el nombre o los caracteres del código del boleto.' : 'Los pases aprobados para este evento aparecerán aquí.'}
+            </p>
           </div>
         `;
         return;
       }
 
       container.innerHTML = passes.map((pass) => {
-        const isFullyEntered = pass.status === 'used' && (pass.checkInCount >= (pass.allowsPlusOne ? 2 : 1) || !pass.allowsPlusOne);
-        const isPartialEntered = pass.allowsPlusOne && pass.checkInCount === 1 && pass.status !== 'used';
+        const maxAllowed = pass.allowsPlusOne ? 2 : 1;
+        const isFullyEntered = pass.status === 'used' || pass.checkInCount >= maxAllowed;
+        const isPartialEntered = pass.allowsPlusOne && pass.checkInCount === 1 && !isFullyEntered;
 
         let statusBadgeHtml = '';
         if (isFullyEntered) {
           statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/20 px-2.5 py-1 rounded-full uppercase">🔴 INGRESÓ ${pass.checkedInAt ? 'A LAS ' + formatManualTime(pass.checkedInAt) : ''}</span>`;
         } else if (isPartialEntered) {
-          statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/20 px-2.5 py-1 rounded-full uppercase">🟡 INGRESÓ 1/2</span>`;
+          statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#FAB205] bg-[#FAB205]/10 border border-[#FAB205]/20 px-2.5 py-1 rounded-full uppercase">🟡 INGRESÓ 1/2 (+1 RESTANTE)</span>`;
         } else {
           statusBadgeHtml = `<span class="inline-flex items-center text-[11px] font-sans font-bold text-[#12C061] bg-[#12C061]/10 border border-[#12C061]/20 px-2.5 py-1 rounded-full uppercase">🟢 PENDIENTE DE INGRESO</span>`;
         }
 
         let buttonsHtml = '';
         if (isFullyEntered) {
-          buttonsHtml = `<div class="w-full py-2 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-center text-xs font-sans text-neutral-500 font-semibold uppercase tracking-wider">PASE AGOTADO (ACCESO COMPLETADO)</div>`;
+          buttonsHtml = `<div class="w-full py-2.5 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-center text-xs font-sans text-neutral-500 font-semibold uppercase tracking-wider">PASE AGOTADO (ACCESO COMPLETADO)</div>`;
+        } else if (isPartialEntered) {
+          // El titular ya ingresó; queda admitir al acompañante
+          buttonsHtml = `
+            <button onclick="executeManualCheckIn('${pass.id}', 1)" class="w-full py-2.5 px-4 rounded-xl bg-[#FAB205] hover:bg-[#e5a304] text-black font-display text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-2 transition-transform active:scale-95 shadow-md cursor-pointer focus:outline-none">
+              <span>👥</span>
+              <span>ADMITIR ACOMPAÑANTE (+1)</span>
+            </button>
+          `;
         } else if (!pass.allowsPlusOne) {
           buttonsHtml = `
             <button onclick="executeManualCheckIn('${pass.id}', 1)" class="w-full py-2.5 px-4 rounded-xl bg-[#12C061] hover:bg-[#0fa653] text-black font-display text-sm font-black tracking-wider uppercase flex items-center justify-center space-x-1.5 transition-transform active:scale-95 shadow-md cursor-pointer focus:outline-none">
               <span>🟢</span>
-              <span>ADMITIR</span>
+              <span>ADMITIR (1)</span>
             </button>
           `;
         } else {
@@ -10387,8 +10618,11 @@
                   ${pass.allowsPlusOne ? '<span class="font-display text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full bg-[#fe97de]/15 border border-[#fe97de]/30 text-[#fe97de]">👥 +1 PERMITIDO</span>' : ''}
                 </div>
               </div>
-              <div class="flex-shrink-0 text-right">
+              <div class="flex items-center gap-1.5 flex-shrink-0">
                 ${statusBadgeHtml}
+                <button onclick="event.stopPropagation(); deleteManualCheckInPass('${pass.id}', '${escapeHtmlAttr(pass.holderName)}')" title="Eliminar pase" class="p-1 rounded-lg text-neutral-500 hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all cursor-pointer focus:outline-none">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
               </div>
             </div>
             <div class="w-full pt-1">
@@ -10399,27 +10633,57 @@
       }).join('');
     }
 
+    async function deleteManualCheckInPass(passId, passName) {
+      if (!passId) return;
+      if (!confirm(`¿Eliminar el pase de ${passName || 'este invitado'}?`)) return;
+      manualPassesCache = manualPassesCache.filter(p => p.id !== passId);
+      filterManualCheckInList();
+      if (fbDb) {
+        try {
+          await fbDb.collection('passes').doc(passId).delete();
+          triggerScannerHaptic('medium');
+        } catch (e) {
+          console.warn('Error eliminando pase:', e);
+        }
+      }
+    }
+
     async function executeManualCheckIn(passId, count) {
       const now = Date.now();
       const targetPass = manualPassesCache.find(p => p.id === passId);
       const name = targetPass ? targetPass.holderName : 'Invitado';
+      const maxAllowed = targetPass && targetPass.allowsPlusOne ? 2 : 1;
+      const currentCount = targetPass ? (targetPass.checkInCount || 0) : 0;
+      
+      let newCount = currentCount + count;
+      if (newCount > maxAllowed) newCount = maxAllowed;
+      const isNowUsed = newCount >= maxAllowed;
 
       // 1. Háptico
       triggerScannerHaptic('success');
 
-      // 2. Toast
+      // 2. Toast informativo
       const toast = document.getElementById('manualCheckInToast');
       const toastText = document.getElementById('manualCheckInToastText');
       if (toast && toastText) {
-        toastText.innerText = `INGRESO CONFIRMADO: ${name}`;
+        if (targetPass && targetPass.allowsPlusOne) {
+          if (newCount === 1) {
+            toastText.innerText = `INGRESO 1/2: ${name}`;
+          } else {
+            toastText.innerText = `INGRESO TOTAL (2/2): ${name}`;
+          }
+        } else {
+          toastText.innerText = `INGRESO CONFIRMADO: ${name}`;
+        }
         toast.classList.remove('hidden');
       }
 
       // 3. Actualizar memoria local
       if (targetPass) {
-        targetPass.status = 'used';
-        targetPass.checkInCount = count;
-        targetPass.checkedInAt = now;
+        targetPass.status = isNowUsed ? 'used' : 'active';
+        targetPass.checkInCount = newCount;
+        if (!targetPass.checkedInAt) targetPass.checkedInAt = now;
+        targetPass.lastCheckIn = now;
         filterManualCheckInList();
       }
 
@@ -10427,10 +10691,12 @@
       if (fbDb && passId) {
         try {
           await fbDb.collection('passes').doc(passId).update({
-            status: 'used',
-            checkInCount: count,
-            checkedInAt: now,
-            lastCheckedInAt: now
+            status: isNowUsed ? 'used' : 'active',
+            checkInCount: newCount,
+            checkedInCount: newCount,
+            checkedInAt: targetPass && targetPass.checkedInAt ? targetPass.checkedInAt : now,
+            lastCheckedInAt: now,
+            lastCheckIn: now
           });
         } catch (e) {
           console.warn('Actualización Firestore pase manual:', e);
@@ -11550,7 +11816,10 @@
       ];
       modalIds.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
+        if (el) {
+          el.classList.add('hidden');
+          el.classList.remove('anim-screen-slide-up', 'anim-screen-slide-down');
+        }
       });
       if (typeof html5QrCodeScanner !== 'undefined' && html5QrCodeScanner) {
         try { html5QrCodeScanner.stop(); } catch(e) {}
