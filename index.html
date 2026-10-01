@@ -908,6 +908,8 @@
               <h2 id="inviteTitleText" class="font-display text-2xl sm:text-3xl font-black tracking-tight uppercase leading-tight text-white">
                 EVENTO +1
               </h2>
+              <p id="inviteSubtitleText" class="font-sans text-xs text-neutral-400 font-medium hidden">
+              </p>
             </div>
 
             <!-- 2. Bloque de Fecha y Hora -->
@@ -939,10 +941,7 @@
                   <span class="font-sans text-xs text-neutral-400">Dirección exacta visible tras confirmar asistencia</span>
                 </div>
                 <div id="inviteLocationUnlocked" class="hidden mt-1">
-                  <span class="text-[11px] font-bold text-[#12C061] flex items-center gap-1">
-                    <span>🔓 Dirección desbloqueada:</span>
-                  </span>
-                  <p id="inviteExactAddressText" class="font-sans text-xs text-neutral-200 mt-0.5 font-medium leading-relaxed">
+                  <p id="inviteExactAddressText" class="font-sans text-xs text-neutral-200 font-medium leading-relaxed">
                   </p>
                 </div>
               </div>
@@ -976,6 +975,9 @@
                   <span>VOY CON MI +1</span>
                 </button>
               </div>
+              <p id="invitePlusOneNote" class="text-[11px] font-sans text-center text-neutral-400 px-1 pt-1">
+                Tu pase QR será válido para 1 ingreso individual.
+              </p>
             </div>
           </div>
 
@@ -1117,7 +1119,7 @@
         <div id="inviteFooterActionBox" class="p-4 bg-[#16171B] border-t border-[#26282E]">
           <!-- Botón de Confirmación Privada -->
           <button id="inviteConfirmPrivateBtn" type="button" onclick="confirmInvitePrivate()" class="w-full py-4 rounded-2xl bg-[#12C061] hover:bg-[#10a855] text-black font-display font-black text-base sm:text-lg tracking-wider uppercase flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-xl shadow-[#12C061]/25 cursor-pointer">
-            <span>[ GENERAR MI QR DE INGRESO ]</span>
+            <span>CONFIRMAR Y GENERAR MI QR</span>
           </button>
 
           <!-- Botón de Solicitud VIP Pública -->
@@ -1487,15 +1489,14 @@
     </div>
 
     <!-- PANTALLA DE ESCÁNER QR: /scanner (ScannerScreen) -->
-    <div id="scannerScreenView" class="hidden fixed inset-0 z-50 bg-[#0E0F12] text-white flex flex-col justify-between p-4 select-none font-sans">
+    <div id="scannerScreenView" class="hidden fixed inset-0 z-50 bg-[#0E0F12] text-white flex flex-col justify-between p-4 select-none font-sans" style="background-image: url('./assets/images/fondo_scan.webp'); background-size: cover; background-position: center; background-repeat: no-repeat;">
       <!-- Resplandor Completo de Pantalla (Flash Glow) -->
       <div id="scannerFlashGlowOverlay" class="hidden fixed inset-0 pointer-events-none z-50 transition-all duration-300"></div>
 
       <!-- Top Bar -->
-      <div class="flex justify-between items-center text-white py-2 relative z-10">
-        <button onclick="closeScannerScreen()" class="font-bold cursor-pointer hover:opacity-80 transition-opacity focus:outline-none">✕ CERRAR</button>
-        <span class="font-display tracking-widest text-lg">CONTROL DE PUERTA EN VIVO</span>
-        <div class="w-8"></div>
+      <div class="flex justify-between items-center text-white py-2 relative z-10 px-1">
+        <h1 class="font-display font-black text-xl tracking-wider uppercase text-white">Control de ingreso</h1>
+        <button onclick="closeScannerScreen()" aria-label="Cerrar" class="w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 border border-white/15 flex items-center justify-center text-white font-bold text-base transition-transform active:scale-90 focus:outline-none cursor-pointer">✕</button>
       </div>
 
       <!-- Visor cuadrado amplio (1:1) de la cámara con html5-qrcode -->
@@ -1536,7 +1537,7 @@
           <h2 class="font-display text-white text-2xl font-black tracking-wide uppercase leading-tight">
             CHECK-IN MANUAL
           </h2>
-          <p class="font-sans text-xs text-[#8E8E93] mt-0.5 leading-normal">
+          <p id="manualCheckInModalSubtitle" class="font-sans text-xs text-[#8E8E93] mt-0.5 leading-normal truncate">
             Busca por nombre o código del pase (ej. #ABC12).
           </p>
         </div>
@@ -10344,13 +10345,30 @@
     let manualPassesCache = [];
     let manualPassesUnsubscribe = null;
 
-    function openManualCheckInModal() {
+    function openManualCheckInModal(eventId, eventTitle) {
+      if (eventId) {
+        currentScannerEventId = eventId;
+      } else if (!currentScannerEventId) {
+        currentScannerEventId = localStorage.getItem('plus1_active_door_event') || '';
+      }
+
       if (html5QrCodeScanner) {
         try { html5QrCodeScanner.pause(); } catch (e) {}
       }
 
       const modal = document.getElementById('manualCheckInModalView');
       if (modal) modal.classList.remove('hidden');
+
+      const subtitleEl = document.getElementById('manualCheckInModalSubtitle');
+      if (subtitleEl) {
+        if (eventTitle) {
+          subtitleEl.innerText = `Evento: ${eventTitle}`;
+        } else if (currentScannerEventId) {
+          subtitleEl.innerText = `Filtrando asistentes del evento activo`;
+        } else {
+          subtitleEl.innerText = `Busca por nombre o código del pase (ej. #ABC12).`;
+        }
+      }
 
       const searchInput = document.getElementById('manualCheckInSearchInput');
       if (searchInput) {
@@ -10391,33 +10409,38 @@
     function loadManualCheckInPasses() {
       manualPassesCache = [];
 
-      // Si hay tickets en memoria de la app, usarlos como lista inicial de respaldo
+      // 1. AISLAMIENTO ESTRICTO POR EVENTO: Si no hay evento activo, no listar pases
+      if (!currentScannerEventId || !currentScannerEventId.trim()) {
+        renderManualCheckInList([]);
+        return;
+      }
+
+      // 2. Si hay tickets en memoria del evento activo, usarlos como respaldo offline inicial
       if (Array.isArray(userTickets) && userTickets.length > 0) {
-        const localList = (currentScannerEventId
-          ? userTickets.filter(t => t.eventId === currentScannerEventId)
-          : userTickets
-        ).filter(t => {
-          const name = (t.holderName || t.userName || t.userDisplayName || '').toLowerCase();
-          return !name.includes('camila') && !name.includes('(test)') && !String(t.id).startsWith('DEMO_') && !String(t.id).toLowerCase().startsWith('hsfmt');
-        }).map(t => {
-          const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? t.allowPlusOne ?? (t.companionsCount && t.companionsCount > 0));
-          const checkInCount = typeof t.checkInCount === 'number'
-            ? t.checkInCount
-            : (typeof t.checkedInCount === 'number' ? t.checkedInCount : (t.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0));
-          return {
-            id: t.id || 'pass_' + Math.random().toString(36).substring(2, 9),
-            eventId: t.eventId,
-            holderName: (t.holderName || t.userName || t.userDisplayName || 'Invitado')
-              .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
-              .trim(),
-            ticketId: t.ticketId || '#' + (t.id ? t.id.slice(0, 5).toUpperCase() : 'PASS1'),
-            listType: t.listType || 'VIP',
-            allowsPlusOne: allowsPlusOne,
-            status: t.status || 'active',
-            checkInCount: checkInCount,
-            checkedInAt: t.checkedInAt || t.usedAt || null
-          };
-        });
+        const localList = userTickets
+          .filter(t => t.eventId === currentScannerEventId)
+          .filter(t => {
+            const name = (t.holderName || t.userName || t.userDisplayName || '').toLowerCase();
+            return !name.includes('camila') && !name.includes('(test)') && !String(t.id).startsWith('DEMO_') && !String(t.id).toLowerCase().startsWith('hsfmt');
+          }).map(t => {
+            const allowsPlusOne = Boolean(t.allowsPlusOne ?? t.withPlusOne ?? t.allowPlusOne ?? (t.companionsCount && t.companionsCount > 0));
+            const checkInCount = typeof t.checkInCount === 'number'
+              ? t.checkInCount
+              : (typeof t.checkedInCount === 'number' ? t.checkedInCount : (t.status === 'used' ? (allowsPlusOne ? 2 : 1) : 0));
+            return {
+              id: t.id || 'pass_' + Math.random().toString(36).substring(2, 9),
+              eventId: currentScannerEventId,
+              holderName: (t.holderName || t.userName || t.userDisplayName || 'Invitado')
+                .replace(/\s*·\s*(\+1(\s*INCLUIDO)?|INDIVIDUAL)$/i, '')
+                .trim(),
+              ticketId: t.ticketId || '#' + (t.id ? t.id.slice(0, 5).toUpperCase() : 'PASS1'),
+              listType: t.listType || 'VIP',
+              allowsPlusOne: allowsPlusOne,
+              status: t.status || 'active',
+              checkInCount: checkInCount,
+              checkedInAt: t.checkedInAt || t.usedAt || null
+            };
+          });
         if (localList.length > 0) {
           manualPassesCache = localList;
         }
@@ -10425,14 +10448,10 @@
 
       renderManualCheckInList(manualPassesCache);
 
+      // 3. Consulta en tiempo real en Firestore EXCLUSIVAMENTE para el evento activo
       if (fbDb) {
         try {
-          let ref = fbDb.collection('passes');
-          if (currentScannerEventId) {
-            ref = ref.where('eventId', '==', currentScannerEventId);
-          } else {
-            ref = ref.limit(100);
-          }
+          const ref = fbDb.collection('passes').where('eventId', '==', currentScannerEventId);
 
           if (manualPassesUnsubscribe) manualPassesUnsubscribe();
           manualPassesUnsubscribe = ref.onSnapshot((snapshot) => {
@@ -10470,7 +10489,7 @@
 
                 live.push({
                   id: doc.id,
-                  eventId: data.eventId,
+                  eventId: data.eventId || currentScannerEventId,
                   holderName: cleanHolder,
                   ticketId: data.ticketId || '#' + doc.id.slice(0, 5).toUpperCase(),
                   listType: data.listType || 'VIP',
@@ -10542,15 +10561,26 @@
       }
       if (!container) return;
 
+      if (!currentScannerEventId || !currentScannerEventId.trim()) {
+        container.innerHTML = `
+          <div class="h-64 flex flex-col items-center justify-center text-center p-6 bg-[#16171B]/50 border border-dashed border-[#26282E] rounded-3xl mt-4">
+            <span class="text-3xl mb-2">⚠️</span>
+            <p class="font-display text-white text-base font-bold uppercase tracking-wider">SIN EVENTO ACTIVO</p>
+            <p class="font-sans text-xs text-[#8E8E93] mt-1 max-w-[240px]">Configura o empareja el evento en la puerta para buscar sus asistentes.</p>
+          </div>
+        `;
+        return;
+      }
+
       if (!passes || passes.length === 0) {
         container.innerHTML = `
           <div class="h-64 flex flex-col items-center justify-center text-center p-6 bg-[#16171B]/50 border border-dashed border-[#26282E] rounded-3xl mt-4">
             <span class="text-3xl mb-2">${hasSearch ? '🔍' : '🎟️'}</span>
             <p class="font-display text-white text-base font-bold uppercase tracking-wider">
-              ${hasSearch ? 'NO SE ENCONTRARON PASES' : 'NO HAY PASES REGISTRADOS'}
+              ${hasSearch ? 'NO SE ENCONTRARON PASES' : 'NO HAY PASES EMITIDOS'}
             </p>
             <p class="font-sans text-xs text-[#8E8E93] mt-1 max-w-[240px]">
-              ${hasSearch ? 'Verifica el nombre o los caracteres del código del boleto.' : 'Los pases aprobados para este evento aparecerán aquí.'}
+              ${hasSearch ? 'Verifica el nombre o los caracteres del código del boleto.' : 'Los asistentes confirmados para este evento aparecerán aquí.'}
             </p>
           </div>
         `;
@@ -11291,13 +11321,32 @@
         };
       }
 
-      // Actualizar UI
-      document.getElementById('inviteTitleText').innerText = currentInviteData.title;
-      document.getElementById('ticketTitleHeader').innerText = currentInviteData.title;
-      document.getElementById('inviteSubtitleText').innerText = currentInviteData.subtitle || '';
-      document.getElementById('inviteDateText').innerText = currentInviteData.dateDisplay;
-      document.getElementById('inviteTimeText').innerText = currentInviteData.timeRange;
-      document.getElementById('inviteVenueText').innerText = currentInviteData.venueName;
+      // Actualizar UI con guardas de seguridad
+      const titleEl = document.getElementById('inviteTitleText');
+      if (titleEl) titleEl.innerText = currentInviteData.title || 'EVENTO +1';
+
+      const ticketHeaderEl = document.getElementById('ticketTitleHeader');
+      if (ticketHeaderEl) ticketHeaderEl.innerText = currentInviteData.title || 'EVENTO +1';
+
+      const subtitleEl = document.getElementById('inviteSubtitleText');
+      if (subtitleEl) {
+        if (currentInviteData.subtitle) {
+          subtitleEl.innerText = currentInviteData.subtitle;
+          subtitleEl.classList.remove('hidden');
+        } else {
+          subtitleEl.innerText = '';
+          subtitleEl.classList.add('hidden');
+        }
+      }
+
+      const dateEl = document.getElementById('inviteDateText');
+      if (dateEl) dateEl.innerText = currentInviteData.dateDisplay || 'PRÓXIMAMENTE';
+
+      const timeEl = document.getElementById('inviteTimeText');
+      if (timeEl) timeEl.innerText = currentInviteData.timeRange || '22:00';
+
+      const venueEl = document.getElementById('inviteVenueText');
+      if (venueEl) venueEl.innerText = currentInviteData.venueName || 'Por definir';
 
       // Imagen flyer dinámica o placeholder editorial +1
       const flyerImgEl = document.getElementById('inviteFlyerImg');
@@ -11337,9 +11386,14 @@
         }
       }
 
-      document.getElementById('inviteAttendeesText').innerText = currentInviteData.confirmedCount + " confirmados";
-      document.getElementById('inviteExactAddressText').innerText = currentInviteData.exactAddress;
-      document.getElementById('ticketExactAddressDisplay').innerText = currentInviteData.exactAddress;
+      const attendeesEl = document.getElementById('inviteAttendeesText');
+      if (attendeesEl) attendeesEl.innerText = (currentInviteData.confirmedCount || 0) + " confirmados";
+
+      const addressEl = document.getElementById('inviteExactAddressText');
+      if (addressEl) addressEl.innerText = currentInviteData.exactAddress || '';
+
+      const ticketAddrEl = document.getElementById('ticketExactAddressDisplay');
+      if (ticketAddrEl) ticketAddrEl.innerText = currentInviteData.exactAddress || '';
 
       // Actualizar isotipo central del QR con la imagen del evento
       const qrCenter = document.getElementById('inviteTicketQrCenter');
@@ -11356,7 +11410,6 @@
       updateInviteTicketQr(currentInviteData.id);
       updateOpenGraphMetaHtml(currentInviteData);
 
-
       const badge = document.getElementById('invitePrivacyBadge');
       const badgeText = document.getElementById('invitePrivacyBadgeText');
       const hostBadge = document.getElementById('inviteHostBadge');
@@ -11367,30 +11420,34 @@
       const pendingVipBox = document.getElementById('invitePendingVipBox');
 
       if (currentInviteData.isPrivate) {
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider";
-        badgeText.innerText = "FIESTA PRIVADA";
-        hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
-        hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block";
-        locLocked.classList.remove('hidden');
-        locUnlocked.classList.add('hidden');
-        confirmPrivBtn.classList.remove('hidden');
-        requestVipBtn.classList.add('hidden');
-        pendingVipBox.classList.add('hidden');
+        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#E87A72]/40 text-[#E87A72] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        if (badgeText) badgeText.innerText = "FIESTA PRIVADA";
+        if (hostBadge) {
+          hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
+          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#E87A72] uppercase block";
+        }
+        if (locLocked) locLocked.classList.remove('hidden');
+        if (locUnlocked) locUnlocked.classList.add('hidden');
+        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
+        if (requestVipBtn) requestVipBtn.classList.add('hidden');
+        if (pendingVipBox) pendingVipBox.classList.add('hidden');
       } else {
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#12C061]/40 text-[#12C061] text-[11px] font-display font-extrabold uppercase tracking-wider";
-        badgeText.innerText = "✦ EVENTO ABIERTO";
-        hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
-        hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#12C061] uppercase block";
-        locLocked.classList.add('hidden');
-        locUnlocked.classList.remove('hidden');
-        confirmPrivBtn.classList.remove('hidden');
-        requestVipBtn.classList.add('hidden');
-        pendingVipBox.classList.add('hidden');
+        if (badge) badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-[#12C061]/40 text-[#12C061] text-[11px] font-display font-extrabold uppercase tracking-wider";
+        if (badgeText) badgeText.innerText = "✦ EVENTO ABIERTO";
+        if (hostBadge) {
+          hostBadge.innerText = "INVITACIÓN POR " + (currentInviteData.hostName || 'EL ANFITRIÓN').toUpperCase();
+          hostBadge.className = "text-[11px] font-display font-black tracking-widest text-[#12C061] uppercase block";
+        }
+        if (locLocked) locLocked.classList.add('hidden');
+        if (locUnlocked) locUnlocked.classList.remove('hidden');
+        if (confirmPrivBtn) confirmPrivBtn.classList.remove('hidden');
+        if (requestVipBtn) requestVipBtn.classList.add('hidden');
+        if (pendingVipBox) pendingVipBox.classList.add('hidden');
       }
 
       setInvitePlusOne(false);
       switchInviteView('invite');
-      modal.classList.remove('hidden');
+      if (modal) modal.classList.remove('hidden');
     }
 
     function closeEventInviteModal() {
@@ -11461,14 +11518,14 @@
       const ticketHolder = document.getElementById('ticketHolderText');
 
       if (isPlusOne) {
-        plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-[#12C061] text-black shadow-lg shadow-[#12C061]/20 border border-[#12C061] cursor-pointer";
-        soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
-        note.innerHTML = '<span class="text-[#12C061] font-semibold">✨ Tu pase QR habilitará 2 ingresos en puerta.</span>';
+        if (plusOneBtn) plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-[#12C061] text-black shadow-lg shadow-[#12C061]/20 border border-[#12C061] cursor-pointer";
+        if (soloBtn) soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
+        if (note) note.innerHTML = '<span class="text-[#12C061] font-semibold">✨ Tu pase QR habilitará 2 ingresos en puerta.</span>';
         if (ticketHolder) ticketHolder.innerText = "CRIS G. · +1 INCLUIDO (2 INGRESOS)";
       } else {
-        soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer";
-        plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
-        note.innerHTML = 'Tu pase QR será válido para 1 ingreso individual.';
+        if (soloBtn) soloBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 bg-neutral-800 text-white shadow-md border border-neutral-700 cursor-pointer";
+        if (plusOneBtn) plusOneBtn.className = "py-2.5 px-3 rounded-xl font-display text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 text-neutral-400 hover:text-white cursor-pointer";
+        if (note) note.innerHTML = 'Tu pase QR será válido para 1 ingreso individual.';
         if (ticketHolder) ticketHolder.innerText = "CRIS G. · ADMISIÓN INDIVIDUAL";
       }
     }
@@ -11896,7 +11953,8 @@
           showToast('🔔 Onboarding: Paso 2');
           break;
         case 'invite':
-          openEventInviteModal('pepe-birthday');
+          const targetInviteEvtId = (typeof eventsData !== 'undefined' && Array.isArray(eventsData) && eventsData.length > 0) ? eventsData[0].id : 'pepe-birthday';
+          openEventInviteModal(targetInviteEvtId);
           updateDevConsoleScreen('InviteModal');
           showToast('💌 Invitación de Evento');
           break;
